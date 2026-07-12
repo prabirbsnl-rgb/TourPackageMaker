@@ -1,0 +1,552 @@
+{
+  "Kashmir": {
+    "3 Star": [
+      {
+        "hotelName": "Royal Heritage Srinagar",
+        "city": "Srinagar",
+        "roomType": "Deluxe Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 3200,
+        "sellingCost": 4500,
+        "remarks": "Near Dal Lake"
+      }
+    ],
+    "4 Star": [
+      {
+        "hotelName": "Four Points Srinagar",
+        "city": "Srinagar",
+        "roomType": "Superior Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 5500,
+        "sellingCost": 7200,
+        "remarks": "Lake View"
+      }
+    ],
+    "5 Star": [
+      {
+        "hotelName": "Taj Dal View",
+        "city": "Srinagar",
+        "roomType": "Luxury Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 12000,
+        "sellingCost": 15000,
+        "remarks": "Luxury Resort"
+      }
+    ]
+  },
+
+  "Kerala": {
+    "3 Star": [
+      {
+        "hotelName": "Abad Atrium",
+        "city": "Cochin",
+        "roomType": "Standard Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 2500,
+        "sellingCost": 3500,
+        "remarks": "City Hotel"
+      }
+    ],
+    "4 Star": [
+      {
+        "hotelName": "The Fog Resort",
+        "city": "Munnar",
+        "roomType": "Deluxe Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 4500,
+        "sellingCost": 6000,
+        "remarks": "Mountain View"
+      }
+    ],
+    "5 Star": [
+      {
+        "hotelName": "Le Meridien Kochi",
+        "city": "Cochin",
+        "roomType": "Superior Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 7500,
+        "sellingCost": 9500,
+        "remarks": "Luxury"
+      }
+    ]
+  },
+
+  "Goa": {
+    "3 Star": [
+      {
+        "hotelName": "Resort De Coracao",
+        "city": "Calangute",
+        "roomType": "Deluxe Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 2800,
+        "sellingCost": 4000,
+        "remarks": "Near Beach"
+      }
+    ],
+    "4 Star": [
+      {
+        "hotelName": "Lemon Tree Candolim",
+        "city": "Candolim",
+        "roomType": "Superior Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 5200,
+        "sellingCost": 6900,
+        "remarks": "Family Resort"
+      }
+    ],
+    "5 Star": [
+      {
+        "hotelName": "Taj Holiday Village",
+        "city": "Candolim",
+        "roomType": "Superior Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 11000,
+        "sellingCost": 14000,
+        "remarks": "Beach Resort"
+      }
+    ]
+  },
+
+  "Rajasthan": {
+    "3 Star": [
+      {
+        "hotelName": "Hotel Kalyan",
+        "city": "Jaipur",
+        "roomType": "Deluxe Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 2500,
+        "sellingCost": 3500,
+        "remarks": "Budget Stay"
+      }
+    ],
+    "4 Star": [
+      {
+        "hotelName": "Alsisar Haveli",
+        "city": "Jaipur",
+        "roomType": "Heritage Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 4800,
+        "sellingCost": 6500,
+        "remarks": "Heritage Property"
+      }
+    ],
+    "5 Star": [
+      {
+        "hotelName": "Fairmont Jaipur",
+        "city": "Jaipur",
+        "roomType": "Fairmont Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 9500,
+        "sellingCost": 12500,
+        "remarks": "Palace Luxury"
+      }
+    ]
+  },
+  
+  "Madhya Pradesh": {
+
+  "5 Star": [
+    {
+      "hotelName": "Sayaji Indore",
+      "city": "Indore",
+      "starCategory": "5 Star",
+      "roomType": "Grand Room",
+      "mealPlan": "Breakfast",
+      "supplierCost": 7000,
+      "sellingCost": 9500,
+      "remarks": "City Center"
+    },
+    {
+      "hotelName": "Anjushree Ujjain",
+      "city": "Ujjain",
+      "starCategory": "5 Star",
+      "roomType": "Deluxe Room",
+      "mealPlan": "Breakfast",
+      "supplierCost": 6500,
+      "sellingCost": 9000,
+      "remarks": "Near Mahakal Corridor"
+    }
+  ],
+
+  "4 Star": [
+    {
+      "hotelName": "Lemon Tree Indore",
+      "city": "Indore",
+      "starCategory": "4 Star",
+      "roomType": "Superior Room",
+      "mealPlan": "Breakfast",
+      "supplierCost": 4500,
+      "sellingCost": 6500,
+      "remarks": ""
+    },
+    {
+      "hotelName": "Hotel Imperial",
+      "city": "Ujjain",
+      "starCategory": "4 Star",
+      "roomType": "Deluxe Room",
+      "mealPlan": "Breakfast",
+      "supplierCost": 4000,
+      "sellingCost": 6000,
+      "remarks": ""
+    },
+    {
+      "hotelName": "Shipra Residency",
+      "city": "Ujjain",
+      "starCategory": "4 Star",
+      "roomType": "Premium Room",
+      "mealPlan": "Breakfast",
+      "supplierCost": 5000,
+      "sellingCost": 7000,
+      "remarks": "Near Mahakal Lok"
+    }
+  ],
+
+  "3 Star": [
+    {
+      "hotelName": "MPT Malwa Resort",
+      "city": "Mandu",
+      "starCategory": "3 Star",
+      "roomType": "Standard Room",
+      "mealPlan": "Breakfast",
+      "supplierCost": 3000,
+      "sellingCost": 4500,
+      "remarks": ""
+    },
+    {
+      "hotelName": "Narmada Retreat",
+      "city": "Maheshwar",
+      "starCategory": "3 Star",
+      "roomType": "Standard Room",
+      "mealPlan": "Breakfast",
+      "supplierCost": 3000,
+      "sellingCost": 4500,
+      "remarks": ""
+    },
+    {
+      "hotelName": "MPT Temple View",
+      "city": "Omkareshwar",
+      "starCategory": "3 Star",
+      "roomType": "Standard Room",
+      "mealPlan": "Breakfast",
+      "supplierCost": 2500,
+      "sellingCost": 4000,
+      "remarks": ""
+    }
+  ]
+},
+
+  "Sikkim": {
+    "3 Star": [
+      {
+        "hotelName": "Summit Namnang",
+        "city": "Gangtok",
+        "roomType": "Deluxe Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 2600,
+        "sellingCost": 3800,
+        "remarks": "Hill View"
+      }
+    ],
+    "4 Star": [
+      {
+        "hotelName": "The Elgin Nor-Khill",
+        "city": "Gangtok",
+        "roomType": "Premium Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 5500,
+        "sellingCost": 7200,
+        "remarks": "Heritage Hotel"
+      }
+    ],
+    "5 Star": [
+      {
+        "hotelName": "Mayfair Spa Resort",
+        "city": "Gangtok",
+        "roomType": "Luxury Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 9000,
+        "sellingCost": 12000,
+        "remarks": "Luxury Resort"
+      }
+    ]
+  },
+
+  "Andaman": {
+    "3 Star": [
+      {
+        "hotelName": "TSG Emerald View",
+        "city": "Port Blair",
+        "roomType": "Deluxe Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 3200,
+        "sellingCost": 4500,
+        "remarks": "City Hotel"
+      }
+    ],
+    "4 Star": [
+      {
+        "hotelName": "SeaShell Port Blair",
+        "city": "Port Blair",
+        "roomType": "Premium Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 6500,
+        "sellingCost": 8500,
+        "remarks": "Sea View"
+      }
+    ],
+    "5 Star": [
+      {
+        "hotelName": "Taj Exotica",
+        "city": "Havelock",
+        "roomType": "Villa",
+        "mealPlan": "Breakfast",
+        "supplierCost": 18000,
+        "sellingCost": 23000,
+        "remarks": "Beachfront Luxury"
+      }
+    ]
+  },
+
+  "Ladakh": {
+    "3 Star": [
+      {
+        "hotelName": "Hotel Kidar",
+        "city": "Leh",
+        "roomType": "Deluxe Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 3000,
+        "sellingCost": 4200,
+        "remarks": "Town Center"
+      }
+    ],
+    "4 Star": [
+      {
+        "hotelName": "The Grand Dragon",
+        "city": "Leh",
+        "roomType": "Premium Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 6500,
+        "sellingCost": 8500,
+        "remarks": "Luxury Stay"
+      }
+    ],
+    "5 Star": [
+      {
+        "hotelName": "Ladakh Sarai",
+        "city": "Leh",
+        "roomType": "Luxury Cottage",
+        "mealPlan": "Breakfast",
+        "supplierCost": 9500,
+        "sellingCost": 12500,
+        "remarks": "Mountain View"
+      }
+    ]
+  },
+
+  "Sri Lanka": {
+    "3 Star": [
+      {
+        "hotelName": "Oak Ray Regency",
+        "city": "Kandy",
+        "roomType": "Standard Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 2800,
+        "sellingCost": 3800,
+        "remarks": "City Hotel"
+      }
+    ],
+    "4 Star": [
+      {
+        "hotelName": "Cinnamon Lakeside",
+        "city": "Colombo",
+        "roomType": "Deluxe Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 6500,
+        "sellingCost": 8500,
+        "remarks": "Lake View"
+      }
+    ],
+    "5 Star": [
+      {
+        "hotelName": "Shangri-La Colombo",
+        "city": "Colombo",
+        "roomType": "Ocean View",
+        "mealPlan": "Breakfast",
+        "supplierCost": 12500,
+        "sellingCost": 15500,
+        "remarks": "Luxury"
+      }
+    ]
+  },
+
+  "Thailand": {
+    "3 Star": [
+      {
+        "hotelName": "Ibis Pattaya",
+        "city": "Pattaya",
+        "roomType": "Standard Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 2800,
+        "sellingCost": 3800,
+        "remarks": "Budget Hotel"
+      }
+    ],
+    "4 Star": [
+      {
+        "hotelName": "Centara Pattaya",
+        "city": "Pattaya",
+        "roomType": "Deluxe Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 5200,
+        "sellingCost": 6900,
+        "remarks": "Popular Resort"
+      }
+    ],
+    "5 Star": [
+      {
+        "hotelName": "Amari Phuket",
+        "city": "Phuket",
+        "roomType": "Superior Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 8500,
+        "sellingCost": 11000,
+        "remarks": "Beachfront"
+      }
+    ]
+  },
+
+  "Dubai": {
+    "3 Star": [
+      {
+        "hotelName": "Citymax Hotel",
+        "city": "Dubai",
+        "roomType": "Standard Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 3500,
+        "sellingCost": 5000,
+        "remarks": "City Hotel"
+      }
+    ],
+    "4 Star": [
+      {
+        "hotelName": "Millennium Place",
+        "city": "Dubai",
+        "roomType": "Superior Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 6500,
+        "sellingCost": 8500,
+        "remarks": "Business Hotel"
+      }
+    ],
+    "5 Star": [
+      {
+        "hotelName": "Atlantis The Palm",
+        "city": "Dubai",
+        "roomType": "Palm Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 18000,
+        "sellingCost": 23000,
+        "remarks": "Luxury Resort"
+      }
+    ]
+  },
+
+ "Singapore": {
+  "3 Star": [
+    {
+      "hotelName": "Hotel Boss",
+      "city": "Singapore",
+      "roomType": "Superior Room",
+      "mealPlan": "Breakfast",
+      "supplierCost": 6500,
+      "sellingCost": 8500,
+      "remarks": "Near MRT"
+    }
+  ],
+  "4 Star": [
+    {
+      "hotelName": "V Hotel Lavender",
+      "city": "Singapore",
+      "roomType": "Superior Room",
+      "mealPlan": "Breakfast",
+      "supplierCost": 9500,
+      "sellingCost": 12000,
+      "remarks": "Central Location"
+    }
+  ],
+  "5 Star": [
+    {
+      "hotelName": "Marina Bay Sands",
+      "city": "Singapore",
+      "roomType": "Deluxe Room",
+      "mealPlan": "Breakfast",
+      "supplierCost": 28000,
+      "sellingCost": 34000,
+      "remarks": "Iconic Property"
+    }
+  ]
+},
+  "Malaysia": {
+    "3 Star": [],
+    "4 Star": [],
+    "5 Star": [
+      {
+        "hotelName": "Traders Hotel",
+        "city": "Kuala Lumpur",
+        "roomType": "Club Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 8500,
+        "sellingCost": 11000,
+        "remarks": "Petronas View"
+      }
+    ]
+  },
+
+  "Bali": {
+    "3 Star": [],
+    "4 Star": [],
+    "5 Star": [
+      {
+        "hotelName": "Ayodya Resort",
+        "city": "Nusa Dua",
+        "roomType": "Classic Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 9000,
+        "sellingCost": 12000,
+        "remarks": "Beach Resort"
+      }
+    ]
+  },
+
+  "Vietnam": {
+    "3 Star": [],
+    "4 Star": [],
+    "5 Star": [
+      {
+        "hotelName": "InterContinental Hanoi",
+        "city": "Hanoi",
+        "roomType": "Luxury Room",
+        "mealPlan": "Breakfast",
+        "supplierCost": 9500,
+        "sellingCost": 12500,
+        "remarks": "Lake View"
+      }
+    ]
+  },
+
+  "Maldives": {
+    "3 Star": [],
+    "4 Star": [],
+    "5 Star": [
+      {
+        "hotelName": "Hard Rock Maldives",
+        "city": "Male",
+        "roomType": "Silver Sky Studio",
+        "mealPlan": "Breakfast",
+        "supplierCost": 22000,
+        "sellingCost": 28000,
+        "remarks": "Luxury Resort"
+      }
+    ]
+  }
+}

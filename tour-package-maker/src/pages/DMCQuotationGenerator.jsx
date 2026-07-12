@@ -1,0 +1,137 @@
+
+import { useState } from "react";
+
+import QuoteForm from "../components/quotation/QuoteForm";
+import QuotePreview from "../components/quotation/QuotePreview";
+
+export default function DMCQuotationGenerator() {
+
+    const [commonData, setCommonData] = useState({
+   quoteMode: "package",
+   showInclusionExclusion: false,
+    quotationNo: `QTN-${Date.now()}`,
+
+    clientName: "",
+    mobile: "",
+    email: "",
+
+    destination: "",
+    city: "",
+    travelFrom: "",
+    travelTo: "",
+
+
+    totalDays: "",
+    totalNights: "",
+
+    adults: 2,
+    children: 0,
+
+    specialNotes: "",
+
+useVehicleCosting: false,
+
+vehicleCosts: [
+  {
+    id: Date.now(),
+    vehicle: "",
+    cost: ""
+  }
+],
+
+perAdultCost: 0,
+perChildCost: 0,
+markupPercent: 15,
+gstPercent: 5,
+
+    terms: [
+      "Rates subject to availability.",
+      "Hotels may change without notice.",
+      "Booking confirmation against payment.",
+      "Cancellation charges apply."
+    ]
+  });
+
+  const [packageData, setPackageData] = useState({
+
+    hotelCategory: "3 Star",
+
+    selectedHotels: [],
+    customHotels: [],
+
+    sightseeing: [],
+    customSightseeing: [],
+
+    transfers: [],
+    customTransfers: [],
+
+    meals: [],
+    customMeals: [],
+
+    visaRequired: false,
+    visaServices: [],
+    customVisaServices: [],
+
+    inclusions: [],
+    exclusions: []
+  });
+
+  const [itineraryData, setItineraryData] = useState({
+
+    itinerary: [
+  {
+    day: 1,
+    title: "",
+    description: "",
+
+    hotelSource: "database",
+
+    hotel: "",
+    customHotel: "",
+
+    hotelCategory: "",
+    roomType: "",
+    mealPlan: "",
+
+    sightseeing: [],
+    meals: [],
+    transfers: []
+  }
+]
+  });
+
+  console.log("DMCQuotationGenerator");
+  console.log("commonData =", commonData);
+
+return (
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "450px 1fr",
+      gap: "24px",
+      minHeight: "100vh",
+      background: "#f3f4f6",
+      padding: "20px"
+    }}
+  >
+
+    <QuoteForm
+      commonData={commonData}
+      setCommonData={setCommonData}
+
+      packageData={packageData}
+      setPackageData={setPackageData}
+
+      itineraryData={itineraryData}
+      setItineraryData={setItineraryData}
+    />
+
+    <QuotePreview
+      commonData={commonData}
+      packageData={packageData}
+      itineraryData={itineraryData}
+    />
+
+  </div>
+);
+}
