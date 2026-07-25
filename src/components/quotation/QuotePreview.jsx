@@ -1,3 +1,6 @@
+
+import { generateQuotationPdf } from "../../pdf/generateQuotationPdf";
+
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useRef } from "react";
@@ -19,7 +22,8 @@ import {
   TableRow,
   TableCell,
   WidthType,
-  BorderStyle
+  BorderStyle,
+  TableLayoutType
 } from "docx";
 
 
@@ -48,7 +52,8 @@ export default function QuotePreview(props) {
   const quoteRef = useRef();
   
 
-  const downloadPDF = async () => {
+ const downloadPDF_old = async () => {
+ 
     
     const canvas = await html2canvas(
   quoteRef.current,
@@ -112,6 +117,27 @@ pdf.save("quotation.pdf");
  
 };
 
+ const downloadPDF = async () => {
+
+  await generateQuotationPdf({
+
+    ...quoteData,
+
+    applyGst: commonData.applyGst,
+
+    gstPercent: commonData.gstPercent,
+
+    subtotal,
+
+    gstAmount,
+
+    grandTotal,
+
+    grandTotalUsd,
+
+  });
+
+};
  
 const downloadWord = async () => {
 
@@ -138,11 +164,19 @@ const noBorder = {
   right: { style: BorderStyle.NONE },
 };
 
+const WORD_LAYOUT = {
+  ribbonLeftPadding: 6,   // space before ribbon title
+  bodyIndent: 6,          // common left indent for body content
+};
+
 const cell = (
   text,
   width,
   bold = false,
-  align = AlignmentType.LEFT
+  align = AlignmentType.LEFT,
+  leftMargin = 0,
+  fontSize = 20,
+  fontName = "Times New Roman"
 ) =>
   new TableCell({
     width: {
@@ -150,20 +184,31 @@ const cell = (
       type: WidthType.PERCENTAGE,
     },
     borders: noBorder,
+
+    margins: {
+  top: 70,
+  bottom: 70,
+  left: leftMargin,
+  right: 20,
+},
+
     children: [
       new Paragraph({
   alignment: align,
   wordWrap: false,
   children: [
           new TextRun({
-            text: String(text ?? ""),
-            bold,
-          }),
+  text: String(text ?? ""),
+  bold,
+  font: fontName,
+  size: fontSize,
+}),
         ],
       }),
     ],
   });
 
+  
   const wordSummaryRow = (
   l1, v1,
   l2, v2,
@@ -172,17 +217,67 @@ const cell = (
   new TableRow({
     children: [
 
-      cell(l1, 12, true),
-cell(":", 2),
-cell(v1, 19),
+      cell(
+  l1,
+  12,
+  true,
+  AlignmentType.LEFT,
+  100,
+  21,                 // font size
+  "Times New Roman"   // font
+),
 
-cell(l2, 12, true),
 cell(":", 2),
-cell(v2, 19),
+cell(
+  v1,
+  19,
+  false,
+  AlignmentType.LEFT,
+  0,
+  21,                 // slightly smaller
+  "Times New Roman"
+),
 
-cell(l3, 12, true),
+cell(
+  l2,
+  12,
+  true,
+  AlignmentType.LEFT,
+  100,
+   21,                 // font size
+  "Times New Roman"   // font
+),
+
+cell(":", 2),
+cell(
+  v2,
+  19,
+  false,
+  AlignmentType.LEFT,
+  0,
+  21,                 // slightly smaller
+  "Times New Roman"
+),
+
+cell(
+  l3,
+  14,
+  true,
+  AlignmentType.LEFT,
+  100,
+  21,                 // font size
+  "Times New Roman"   // font
+),
 cell(l3 ? ":" : "", 2),
-cell(v3, 20),
+cell(
+  v3,
+  18,
+  false,
+  AlignmentType.LEFT,
+  0,
+  21,                 // slightly smaller
+  "Times New Roman"
+),
     ],
   });
 
@@ -205,9 +300,19 @@ new TableRow({
       bottom:120,
       left:180,
     },
-    children:[
-      new Paragraph(label)
-    ]
+    children: [
+  new Paragraph({
+    children: [
+      new TextRun({
+        text: label,
+        bold: true,
+        color: "000000",
+        font: "Times New Roman",
+        size: 21,
+      }),
+    ],
+  }),
+]
   }),
 
   // Colon
@@ -244,9 +349,12 @@ new TableRow({
       new Paragraph({
         children:[
           new TextRun({
-            text:value,
-            bold:true,
-          })
+  text: value,
+  bold: true,
+  color: "000000",
+  font: "Times New Roman",
+  size: 21,
+})
         ]
       })
     ]
@@ -336,51 +444,114 @@ new TableCell({
 ]
 });
   
+  
+  const sectionHeaderTable = (title) =>
 
-const sectionHeader = (title) =>
-  new Paragraph({
-    shading: {
-      fill: "C7CBD1",
+  new Table({
+
+    width: {
+      size: 100,
+      type: WidthType.PERCENTAGE,
     },
 
-    spacing: {
-      before: 220,
-      after: 180,
-    },
+    layout: TableLayoutType.FIXED,
 
-    indent: {
-      left: 120,
-    },
+    borders: noBorder,
 
-    children: [
-      new TextRun({
-        text: title,
-        bold: true,
-        size: 24, // 12 pt
-        color: "111827",
+    rows: [
+
+      new TableRow({
+
+        children: [
+
+          new TableCell({
+
+            borders: noBorder,
+
+            shading: {
+              fill: "E1DAF0",
+            },
+
+            margins: {
+              top: 50,
+              bottom: 50,
+              left: 140,
+              right: 40,
+            },
+
+            children: [
+
+              new Paragraph({
+
+                children: [
+
+                  new TextRun({
+
+                    text: title,
+
+                    bold: true,
+
+                    font: "Times New Roman",
+
+                    size: 22,
+
+                    color: "000000",
+
+                  }),
+
+                ],
+
+              }),
+
+            ],
+
+          }),
+
+        ],
+
       }),
+
     ],
+
   });
 
+  
 const bulletListInline = (items) =>
   new Paragraph({
-    spacing: {
-      after: 180,
+
+    indent: {
+      left: 170,          // aligns with ribbon/body
     },
+
+    spacing: {
+      before: 0,
+      after: 120,
+    },
+
     children: items.flatMap((item, index) => [
+
       new TextRun({
-        text: item,
-      }),
+  text: item,
+  font: "Times New Roman",
+  size: 21,
+  bold: false,
+  color: "000000",
+}),
 
       ...(index < items.length - 1
         ? [
             new TextRun({
-              text: "  •  ",
-              bold: true,
-            }),
+  text: "   •   ",
+  bold: true,
+  font: "Times New Roman",
+  size: 21,
+  color: "000000",
+}),
           ]
         : []),
+
     ]),
+
   });
 
 const costRows = [];
@@ -572,8 +743,8 @@ const itineraryRow = (label, value) =>
 
         ],
        });
-    
 
+       
 const inlineRibbon = (text, dark = false) =>
   new TextRun({
     text: ` ${text} `,
@@ -604,102 +775,230 @@ const doc = new Document({
       },
 
       children: [
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-         children: [
-    new ImageRun({
-      data: imageBuffer,
-      type: "png",
-      transformation: {
-        width: 300,
-        height: 85,
-      },
-    }),
-  ],
-}),
-
-new Paragraph({
-  alignment: AlignmentType.CENTER,
-  spacing: {
-    before: 40,
-    after: 120,
+          new Table({
+  width: {
+    size: 100,
+    type: WidthType.PERCENTAGE,
   },
+  borders: {
+  top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+  bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+  left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+  right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+  insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+  insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+},
+
+  rows: [
+
+    new TableRow({
+
+      children: [
+
+        // ---------- LEFT CELL ----------
+new TableCell({
+
+  width: {
+  size: 56,
+  type: WidthType.PERCENTAGE,
+},
+  borders: {
+    top: { style: BorderStyle.NONE },
+    bottom: { style: BorderStyle.NONE },
+    left: { style: BorderStyle.NONE },
+    right: { style: BorderStyle.NONE },
+  },
+
   children: [
-    new TextRun({
-      text: "Anywhere, Anytime, Around the World",
-      italics: true,
-      bold: false,
-      size: 22,          // 11 pt
-      color: "4B5563",   // Elegant grey
-      font: "Monotype Corsiva",  // Try "Monotype Corsiva" or "Segoe Script" if installed
+
+    // Logo
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+
+      children: [
+        new ImageRun({
+          data: imageBuffer,
+          type: "png",
+          transformation: {
+            width: 250,
+            height: 70,
+          },
+        }),
+      ],
     }),
+
+    // Slogan
+    new Paragraph({
+
+      alignment: AlignmentType.CENTER,
+
+      spacing: {
+        before: 5,
+      },
+
+      children: [
+        new TextRun({
+          text: "Anywhere, Anytime, Around the World",
+          italics: true,
+          size: 22,
+          color: "000000",
+          font: "Monotype Corsiva",
+        }),
+      ],
+    }),
+
+    // Services
+    new Paragraph({
+
+      alignment: AlignmentType.CENTER,
+
+      spacing: {
+        before: 16,
+      },
+
+      children: [
+        new TextRun({
+          text:
+            "Domestic & International Tours | Visa Assistance | Holidays",
+          bold: true,
+          size: 20,
+        }),
+      ],
+    }),
+
   ],
-}),
-        
-    
-new Paragraph({
-  alignment: AlignmentType.CENTER,
-  children: [
-    new TextRun({
-      text:
-        "Domestic & International Tours | Visa Assistance | Holidays",
-      bold: true
-    })
-  ]
+
 }),
 
-new Paragraph({
-  alignment: AlignmentType.CENTER,
+        // ---------- RIGHT CELL ----------
+        new TableCell({
+
+          width: {
+  size: 44,
+  type: WidthType.PERCENTAGE,
+},
+          
+
+          borders: {
+            top: { style: BorderStyle.NONE },
+            bottom: { style: BorderStyle.NONE },
+            left: { style: BorderStyle.NONE },
+            right: { style: BorderStyle.NONE },
+          },
+
+          children: [
+            new Paragraph({
+    children: [
+      new TextRun({
+        text: "",
+      }),
+    ],
+
+    spacing: {
+      after: 140,
+    },
+  }),
+
+            new Paragraph({
+ 
+              alignment: AlignmentType.LEFT,
+
+              children: [
+
+                new ImageRun({
+                  data: webBuffer,
+                  type: "png",
+                  transformation: {
+                    width: 16,
+                    height: 16,
+                  },
+                }),
+
+                new TextRun({
+                  text: "  www.orbitzholidays.com",
+                  color: "000000",
+                }),
+                new TextRun({
+    text: "",
+    break: 1,
+}),
+                new Paragraph({
+
+  spacing: {
+    before: 60,
+  },
+
+  alignment: AlignmentType.LEFT,
+
   children: [
-
-    new ImageRun({
-      data: webBuffer,
-      type: "png",
-      transformation: {
-        width: 18,
-        height: 18
-      }
-    }),
-
-    new TextRun({
-      text: " www.orbitzholidays.com    "
-    }),
 
     new ImageRun({
       data: phoneBuffer,
       type: "png",
       transformation: {
-        width: 18,
-        height: 18
-      }
+        width: 16,
+        height: 16,
+      },
     }),
 
     new TextRun({
-      text:
-        " +91 9330844031 | +91 9830489892"
-    })
-  ]
-}),
+      text: "  +91 9330844031 | +91 9830489892",
+      color: "000000",
+    }),
 
+  ],
+
+}),
 new Paragraph({
-  alignment: AlignmentType.CENTER,
+
+  spacing: {
+    before: 60,
+  },
+
+  alignment: AlignmentType.LEFT,
+
   children: [
 
     new ImageRun({
       data: locationBuffer,
       type: "png",
       transformation: {
-        width: 18,
-        height: 18
-      }
+        width: 16,
+        height: 16,
+      },
     }),
 
     new TextRun({
       text:
-        " B-7/37(s), Central Park, Kalyani, West Bengal - 741235"
-    })
-  ]
+        "  B-7/37(s), Central Park, Kalyani,\n  West Bengal-741235",
+        color: "000000",
+    }),
+
+  ],
+
 }),
+
+],
+
+            }),
+
+          ],
+
+        }),
+
+      ],
+
+    }),
+
+  ],
+
+}),
+
+
+        
+    
+
+
 
   
 new Paragraph({
@@ -717,7 +1016,14 @@ new Paragraph({
 
   new Paragraph(""),
 
- sectionHeader("TOUR SUMMARY"),
+ sectionHeaderTable("TOUR SUMMARY"),
+
+new Paragraph({
+  spacing: {
+    before: 0,
+    after: 0,
+  },
+}),
 
 new Table({
 
@@ -725,6 +1031,8 @@ new Table({
     size: 100,
     type: WidthType.PERCENTAGE,
   },
+
+layout: TableLayoutType.FIXED,
 
   borders: {
     top: { style: BorderStyle.NONE },
@@ -764,7 +1072,7 @@ new Table({
       quoteData.adults || 0,
       "Children",
       quoteData.children || 0,
-      "Accommodation",
+      "Accomm.",
       quoteData.accommodation || "-"
     ),
 
@@ -783,30 +1091,62 @@ new Table({
           
   new Paragraph(" "),
 
-sectionHeader("INCLUSIONS"),
+sectionHeaderTable("INCLUSIONS"),
+
+new Paragraph({
+  spacing: {
+    before: 0,
+    after: 0,
+  },
+}),
+
 bulletListInline([
   ...(quoteData.inclusions || []),
   ...(quoteData.customInclusions || [])
 ]),
 
-sectionHeader("EXCLUSIONS"),
+sectionHeaderTable("EXCLUSIONS"),
+new Paragraph({
+  spacing: {
+    before: 0,
+    after: 0,
+  },
+}),
 bulletListInline([
   ...(quoteData.exclusions || []),
   ...(quoteData.customExclusions || [])
 ]),
-sectionHeader("SIGHTSEEING INCLUDED"),
+sectionHeaderTable("SIGHTSEEING INCLUDED"),
+new Paragraph({
+  spacing: {
+    before: 0,
+    after: 0,
+  },
+}),
 bulletListInline([
   ...(quoteData.sightseeing || []),
   ...(quoteData.customSightseeing || [])
 ]),
 
-sectionHeader("TRANSFERS INCLUDED"),
+sectionHeaderTable("TRANSFERS INCLUDED"),
+new Paragraph({
+  spacing: {
+    before: 0,
+    after: 0,
+  },
+}),
 bulletListInline([
   ...(quoteData.transfers || []),
   ...(quoteData.customTransfers || [])
 ]),
 
-sectionHeader("MEALS INCLUDED"),
+sectionHeaderTable("MEALS INCLUDED"),
+new Paragraph({
+  spacing: {
+    before: 0,
+    after: 0,
+  },
+}),
 bulletListInline([
   ...(quoteData.meals|| []),
   ...(quoteData.customMeals|| [])
@@ -817,7 +1157,13 @@ bulletListInline([
 
 ...(quoteData.quoteMode === "itinerary"
   ? [
-      sectionHeader("DAY WISE ITINERARY"),
+      sectionHeaderTable("DAY WISE ITINERARY"),
+      new Paragraph({
+  spacing: {
+    before: 0,
+    after: 0,
+  },
+}),
 
       ...(quoteData.itinerary || []).flatMap((day, index) => {
           const cityName =
@@ -826,22 +1172,38 @@ bulletListInline([
       : day.city;
 
  const itineraryDate = new Date(travelStart);
+ 
 
           itineraryDate.setDate(
   travelStart.getDate() + index
 );
+const estimatedLines =
+  (day.sightseeing?.length || 0) +
+  (day.customSightseeing?.length || 0) +
 
+  (day.transfers?.length || 0) +
+  (day.customTransfers?.length || 0) +
+  
+  (
+  (day.meals?.length || 0) +
+  (day.customMeals?.length || 0)
+) > 0
+  Math.ceil((day.description?.length || 0) / 120);
       return [
 
           new Paragraph({
+  keepNext: true,
+  keepLines: true,
+
   spacing: {
     before: 180,
     after: 140,
   },
+
   children: [
-     inlineRibbon(
-                  `DAY ${day.day}  —  ${formatDate(itineraryDate)}`
-                ),
+    inlineRibbon(
+      `DAY ${day.day}  —  ${formatDate(itineraryDate)}`
+    ),
 
     new TextRun({
       text: "   ",
@@ -851,10 +1213,47 @@ bulletListInline([
   ],
 }),
 
-
-
-...(cityName || day.hotel || day.customHotel || day.meals?.length
+...(day.description?.trim()
   ? [
+      new Paragraph({
+         keepNext: true,
+         keepLines: true,
+        spacing: {
+          before: 140,
+          after: 220,
+          line: 320, // slightly more comfortable line spacing
+        },
+
+        alignment: AlignmentType.JUSTIFIED,
+
+        indent: {
+          left: 180,
+          right: 120,
+        },
+
+        children: [
+          new TextRun({
+            text: day.description,
+            italics: true,
+            color: "000000",
+            size: 22,
+          }),
+        ],
+      }),
+    ]
+  : []),
+
+
+
+...(cityName || day.hotel || day.customHotel || (
+  (day.meals?.length || 0) +
+  (day.customMeals?.length || 0)
+)
+  ? [
+    new Paragraph({
+  keepNext: true,
+  keepLines: true,
+}),
       itineraryRow("City:", [
 
         new TextRun({
@@ -903,72 +1302,66 @@ bulletListInline([
         }),
 
         new TextRun({
-          text:
-            day.meals?.length
-              ? day.meals.join(", ")
-              : "-",
-          size: 22,
-        }),
+  text:
+    [
+      ...(day.meals || []),
+      ...(day.customMeals || [])
+    ].length
+      ? [
+          ...(day.meals || []),
+          ...(day.customMeals || [])
+        ].join(" • ")
+      : "-",
+  size: 22,
+}),
 
       ]),
     ]
   : []),
 
-          ...(day.sightseeing?.length || day.customSightseeing?.trim()
+          ...(day.sightseeing?.length || (day.customSightseeing || [])
   ? [
+    new Paragraph({
+        keepNext: true,
+        keepLines: true,
+      }),
+
       itineraryRow("Sightseeing:", [
         new TextRun({
           text: [
-            ...(day.sightseeing || []),
-            ...(day.customSightseeing?.trim()
-              ? [day.customSightseeing.trim()]
-              : []),
-          ].join(" • "),
+  ...(day.sightseeing || []),
+  ...(day.customSightseeing || [])
+].join(" • "),
           size: 22,
         }),
       ]),
     ]
   : []),
 
-         ...(day.transfers?.length
+        ...(
+  (
+    (day.transfers?.length || 0) +
+    (day.customTransfers?.length || 0)
+  )
   ? [
+    new Paragraph({
+        keepNext: true,
+        keepLines: true,
+      }),
+
       itineraryRow("Transfers:", [
         new TextRun({
-          text: day.transfers.join(" • "),
+          text: [
+  ...(day.transfers || []),
+  ...(day.customTransfers || [])
+].join(" • "),
           size: 22,
         }),
       ]),
     ]
   : []),
 
-          ...(day.description?.trim()
-  ? [
-      new Paragraph({
-        spacing: {
-          before: 140,
-          after: 220,
-          line: 320, // slightly more comfortable line spacing
-        },
-
-        alignment: AlignmentType.JUSTIFIED,
-
-        indent: {
-          left: 180,
-          right: 120,
-        },
-
-        children: [
-          new TextRun({
-            text: day.description,
-            italics: true,
-            color: "000000",
-            size: 22,
-          }),
-        ],
-      }),
-    ]
-  : []),
-
+          
           new Paragraph(" ")
             ];
 }),
@@ -980,9 +1373,15 @@ bulletListInline([
 
       ...(quoteData.visaRequired
   ? [
-      sectionHeader(
+      sectionHeaderTable(
         "VISA INFORMATION (Visa Assistance Included)"
       ),
+      new Paragraph({
+  spacing: {
+    before: 0,
+    after: 0,
+  },
+}),
 
       bulletListInline([
         ...(quoteData.visaServices || []),
@@ -991,8 +1390,14 @@ bulletListInline([
     ]
   : []),
 
-sectionHeader("COST SUMMARY"),
+sectionHeaderTable("COST SUMMARY"),
 
+new Paragraph({
+  spacing: {
+    before: 0,
+    after: 0,
+  },
+}),
 new Table({
   width: {
     size: 65,
@@ -1016,37 +1421,81 @@ new Table({
 
       new Paragraph(" "),
 
-      sectionHeader("IMPORTANT NOTES & TERMS"),
+      
+
+      sectionHeaderTable("IMPORTANT NOTES & TERMS"),
+      new Paragraph({
+  spacing: {
+    before: 0,
+    after: 0,
+  },
+}),
 
       ...(quoteData.specialNotes?.trim()
         ? [
             new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Special Notes: ",
-                  bold: true,
-                }),
-                new TextRun({
-                  text:
-                    quoteData.specialNotes
-                      .split(",")
-                      .map(note => note.trim())
-                      .filter(Boolean)
-                      .join(" • "),
-                }),
-              ],
-            }),
+
+  indent: {
+    left: 180,
+  },
+
+  spacing: {
+    before: 0,
+    after: 100,
+  },
+
+  children: [
+
+    new TextRun({
+      text: "Special Notes : ",
+      bold: true,
+      font: "Times New Roman",
+      size: 21,
+color: "000000",
+    }),
+
+    new TextRun({
+      text:
+        quoteData.specialNotes
+          .split(",")
+          .map(note => note.trim())
+          .filter(Boolean)
+          .join("   •   "),
+      font: "Times New Roman",
+      size: 21,
+color: "000000",
+    }),
+
+  ],
+
+}),
           ]
         : []),
 
       new Paragraph({
-        children: [
-          new TextRun({
-            text:
-              (quoteData.terms || []).join(" • "),
-          }),
-        ],
-      }),
+
+  indent: {
+    left: 180,
+  },
+
+  spacing: {
+    before: 0,
+    after: 100,
+  },
+
+  children: [
+
+    new TextRun({
+      text:
+        (quoteData.terms || []).join(" • "),
+      font: "Times New Roman",
+      size: 20,
+color: "000000",
+    }),
+
+  ],
+
+}),
 
     ]
   : []),
@@ -1093,7 +1542,7 @@ new Paragraph({
     new TextRun({
       text: "Anywhere, Anytime, Around the World",
       italics: true,
-      color: "6B7280",
+      color: "000000",
       size: 22, // 11 pt
       font: "Georgia",
     }),
@@ -1112,6 +1561,40 @@ new Paragraph({
   );
 
 };
+
+const previewItineraryRow = (label, value) => (
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "90px 1fr",
+      alignItems: "start",
+      columnGap: "8px",
+      marginBottom: "6px",
+      fontSize: "15px",
+      lineHeight: "1.7",
+    }}
+  >
+    <div
+      style={{
+        fontWeight: "700",
+        color: "#111827",
+        textAlign: "left",
+      }}
+    >
+      {label}
+    </div>
+
+    <div
+      style={{
+        color: "#111827",
+        textAlign: "left",
+      }}
+    >
+      {value}
+    </div>
+  </div>
+);
+
    const packageCost =
 commonData?.useVehicleCosting
   ? Number(commonData?.vehiclePackageCost || 0)
@@ -1147,6 +1630,12 @@ const gstAmount =
 
 const grandTotal =
   subtotal + gstAmount;
+
+  const usdRate =
+  Number(quoteData?.usdRate || 86);
+
+const grandTotalUsd =
+  grandTotal / usdRate;
   
   const travelFrom = quoteData?.travelFrom
   ? new Date(quoteData.travelFrom)
@@ -1169,11 +1658,7 @@ const calculatedNights =
     ? calculatedDays - 1
     : 0;
 
-  const usdRate =
-  Number(quoteData?.usdRate || 86);
-
-const grandTotalUsd =
-  grandTotal / usdRate;
+  
 
   const hotelNightMap = {};
 
@@ -1954,141 +2439,201 @@ return (
     marginBottom: "25px"
   }}
 >
-  <h3
-  style={{
-    color: "#2563eb",
-    borderBottom: "2px solid #dbeafe",
-    paddingBottom: "8px",
-    marginBottom: "15px"
-  }}
->
-
-  🗓 Day Wise Itinerary
-</h3>
+  {sectionHeading("🗓 DAY WISE ITINERARY")}
 
   {(quoteData.itinerary || []).map(
     (day) => (
       <div
-        key={day.day}
-        style={{
-          marginBottom: "15px",
-          padding: "15px",
-          border: "1px solid #dbeafe",
-          background: "#f8fbff",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-          borderRadius: "8px"
-        }}
-      >
-        <h4
+  key={day.day}
   style={{
-    color: "#2563eb",
-    marginTop: 0
+    marginBottom: "18px",
+    paddingBottom: "12px",
+    borderBottom: "1px solid #E5E7EB",
+    pageBreakInside: "avoid",
+    breakInside: "avoid",
+    WebkitColumnBreakInside: "avoid",
   }}
 >
-  Day {day.day} — {day.title}
-</h4>
-{(day.customCity || day.city) && (
-  <p>
-    <strong>City:</strong>
-    {" "}
-    {day.customCity || day.city}
-  </p>
-)}
-{(day.hotel || day.customHotel) && (
-  <div>
+       <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    marginBottom: "14px",
+  }}
+>
+  {/* DAY + DATE Ribbon */}
 
-    <p>
-  <strong>
-  Hotel:
-</strong>
-{" "}
-{day.customHotel || day.hotel}
+  <div
+    style={{
+      background: "#C7CBD1",
+      padding: "0px 5px",
+      fontWeight: "700",
+      fontSize: "16px",
+      color: "#111827",
+      display: "inline-block",
+      whiteSpace: "nowrap",
+    }}
+  >
+    DAY {day.day} —{" "}
+    {(() => {
+      const travelStart = new Date(quoteData.travelFrom);
 
-{day.hotelCategoryLabel && (
-  <>
-    <br />
-    <strong>Category:</strong>
-    {" "}
-    {day.hotelCategoryLabel}
-  </>
-)}
-  </p>
+      const itineraryDate = new Date(travelStart);
 
- </div>
+      itineraryDate.setDate(
+        travelStart.getDate() + (day.day - 1)
+      );
+
+      return formatDate(itineraryDate);
+    })()}
+  </div>
+
+  {/* TITLE Ribbon */}
+
+  <div
+    style={{
+      background: "#C7CBD1",
+      padding: "0px 5px",
+      fontWeight: "700",
+      fontSize: "16px",
+      color: "#111827",
+      display: "inline-block",
+      whiteSpace: "nowrap",
+    }}
+  >
+    {day.title}
+  </div>
+</div>
+
+{day.description?.trim() && (
+  <div
+    style={{
+      marginTop: "6px",
+      
+      fontStyle: "italic",
+      lineHeight: "1.8",
+      textAlign: "justify",
+      fontSize: "15px",
+      color: "#111827",
+    }}
+  >
+    {day.description}
+  </div>
 )}
+
+
 
 {(
-  day.sightseeing?.length > 0 ||
-  day.customSightseeing
-) && (
-  <>
-    <p>
-      <strong>Sightseeing:</strong>
-    </p>
+  day.customCity ||
+  day.city ||
+  day.hotel ||
+  day.customHotel ||
 
-    <ul>
+  ((day.mealMode || "chips") === "chips"
+    ? (
+        (day.meals?.length || 0) +
+        (day.customMeals?.length || 0)
+      ) > 0
+    : day.mealText?.trim()
+  ) ||
 
-      {(day.sightseeing || []).map(
-        (spot) => (
-          <li key={spot}>
-            {spot}
-          </li>
+  ((day.transferMode || "chips") === "chips"
+    ? (
+        (day.transfers?.length || 0) +
+        (day.customTransfers?.length || 0)
+      ) > 0
+    : day.transferText?.trim()
+  ) ||
+
+  ((day.sightseeingMode || "chips") === "chips"
+    ? (day.selectedSightseeing?.length || 0) > 0
+    : day.sightseeingText?.trim()
+  )
+
+) &&
+
+  previewItineraryRow(
+    "City:",
+    <>
+      {day.customCity || day.city || "-"}
+
+      {"   ◆   "}
+
+      <strong>Hotel:</strong>{" "}
+      {day.customHotel || day.hotel || "-"}
+
+      {day.hotelCategoryLabel &&
+        ` (${day.hotelCategoryLabel})`}
+
+      {"   ◆   "}
+
+      
+
+      <strong>Meals:</strong>{" "}
+
+{(day.mealMode || "chips") === "chips"
+  ? [
+      ...(day.meals || []),
+      ...(day.customMeals || [])
+    ].join(" • ")
+  : (day.mealText || "")
+}
+    </>
+  )}
+
+{(day.sightseeingMode || "chips") === "chips" ? (
+
+  (
+    day.selectedSightseeing?.length > 0
+  ) &&
+    previewItineraryRow(
+      "Sightseeing:",
+      day.selectedSightseeing
+        .map(item =>
+          item.description?.trim()
+            ? `${item.name}\n${item.description}`
+            : item.name
         )
-      )}
+        .join(" • ")
+    )
 
-      {day.customSightseeing && (
-        <li>
-          {day.customSightseeing}
-        </li>
-      )}
+) : (
 
-    </ul>
-  </>
+  day.sightseeingText?.trim() &&
+    previewItineraryRow(
+      "Sightseeing:",
+      day.sightseeingText
+    )
+
 )}
 
-{day.meals?.length > 0 && (
-  <>
-    <p>
-      <strong>
-        Meals:
-      </strong>
-    </p>
+{(day.transferMode || "chips") === "chips" ? (
 
-    <ul>
-      {day.meals.map(
-        (meal) => (
-          <li key={meal}>
-            {meal}
-          </li>
-        )
-      )}
-    </ul>
-  </>
+  (
+    (day.transfers?.length || 0) +
+    (day.customTransfers?.length || 0)
+  ) > 0 &&
+
+  previewItineraryRow(
+    "Transfers:",
+    [
+      ...(day.transfers || []),
+      ...(day.customTransfers || [])
+    ].join(" • ")
+  )
+
+) : (
+
+  day.transferText?.trim() &&
+
+  previewItineraryRow(
+    "Transfers:",
+    day.transferText
+  )
+
 )}
 
-{day.transfers?.length > 0 && (
-  <>
-    <p>
-      <strong>
-        Transfers:
-      </strong>
-    </p>
-
-    <ul>
-      {day.transfers.map(
-        (transfer) => (
-          <li key={transfer}>
-            {transfer}
-          </li>
-        )
-      )}
-    </ul>
-  </>
-)}
-
-<p>
-  {day.description}
-</p>
       </div>
     )
   )}

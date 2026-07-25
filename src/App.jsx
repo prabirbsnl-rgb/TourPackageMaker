@@ -9,6 +9,8 @@ export default function App() {
   const [user, setUser] = useState(null);
 const [loading, setLoading] = useState(true);
 
+const LOGIN_ENABLED = false;
+
 useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
     setUser(currentUser);
@@ -24,9 +26,10 @@ if (loading) {
   return <div>Loading...</div>;
 }
 
-if (!user) {
+if (LOGIN_ENABLED && !user) {
   return <Login onLogin={() => {}} />;
 }
+
   return (
     <div>
       <div

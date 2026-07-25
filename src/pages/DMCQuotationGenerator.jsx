@@ -80,23 +80,41 @@ gstPercent: 5,
 
     itinerary: [
   {
-    day: 1,
-    title: "",
-    description: "",
+  day: 1,
+  title: "",
+  description: "",
 
-    hotelSource: "database",
+  hotelSource: "database",
 
-    hotel: "",
-    customHotel: "",
+  hotel: "",
+  customHotel: "",
 
-    hotelCategory: "",
-    roomType: "",
-    mealPlan: "",
+  hotelCategory: "",
+  roomType: "",
+  mealPlan: "",
 
-    sightseeing: [],
-    meals: [],
-    transfers: []
-  }
+  // ---------- Sightseeing ----------
+  sightseeing: [],
+  customSightseeing: [],
+  customSightseeingInput: "",
+  sightseeingMode: "chips",
+  sightseeingText: "",
+  selectedSightseeing: [],
+
+  // ---------- Meals ----------
+  meals: [],
+  customMeals: [],
+  customMealsInput: "",
+  mealMode: "chips",
+  mealText: "",
+
+  // ---------- Transfers ----------
+  transfers: [],
+  customTransfers: [],
+  customTransfersInput: "",
+  transferMode: "chips",
+  transferText: ""
+}
 ]
   });
 

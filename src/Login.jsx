@@ -3,20 +3,36 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "./firebase";
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+
+const [username, setUsername] = useState("");
+const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
 
-  const handleLogin = async () => {
-    setError("");
+  const handleLogin = async (e) => {
+  e.preventDefault();
 
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      onLogin();
-    } catch (err) {
-      setError("Invalid email or password.");
+  try {
+
+    let loginEmail = username;
+
+    if (username === "admin") {
+      loginEmail = "admin@gmail.com";
     }
-  };
+
+    await signInWithEmailAndPassword(
+      auth,
+      loginEmail,
+      password
+    );
+
+    console.log("Login successful");
+
+  } catch (error) {
+    console.log(error.message);
+    alert("Invalid username or password");
+  }
+};
 
   return (
     <div
@@ -58,10 +74,10 @@ export default function Login({ onLogin }) {
         </p>
 
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          placeholder="Username"
+           value={username}
+         onChange={(e)=>setUsername(e.target.value)}
           style={{
             width: "100%",
             padding: 12,

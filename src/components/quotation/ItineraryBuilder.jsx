@@ -37,6 +37,8 @@ const [openTransferSelector, setOpenTransferSelector] =
       {
   day: nextDay,
   title: "",
+   city: "", 
+   customCity: "", 
   description: "",
 
   hotelSource: "database",
@@ -48,11 +50,33 @@ const [openTransferSelector, setOpenTransferSelector] =
   roomType: "",
   mealPlan: "",
 
-  sightseeing: [],
-  customSightseeing: "",
 
+  sightseeing: [],
+  customSightseeing: [],
+  customSightseeingInput: "",
+
+  sightseeingMode: "chips",
+  sightseeingText: "",
+
+  selectedSightseeing: [],
+
+  
   meals: [],
-  transfers: []
+customMeals: [],
+customMealsInput: "",
+
+mealMode: "chips",
+mealText: "",
+
+  
+transfers: [],
+  customTransfers: [],
+  customTransfersInput: "",
+
+  transferMode: "chips",
+  transferText: "",
+
+  
 }
     ]
   });
@@ -191,6 +215,8 @@ const sightseeingOptions =
     Day {day.day}
   </h4>
 
+ 
+
   <div>
 
     <button
@@ -230,6 +256,7 @@ const sightseeingOptions =
   </div>
 
 </div>
+
  
 
             <input
@@ -256,6 +283,42 @@ const sightseeingOptions =
     marginBottom: "10px"
   }}
 />
+
+<div
+  style={{
+    fontWeight: 700,
+    marginTop: 10,
+    marginBottom: 6,
+    color: "#374151"
+  }}
+>
+📝 Day Description
+</div>
+
+  <textarea
+  placeholder="Day Description"
+              value={day.description}
+              onChange={(e) => {
+
+                const updated =
+                  [...(itineraryData.itinerary || [])];
+
+                updated[index].description =
+                  e.target.value;
+
+                setItineraryData({
+                    ...itineraryData,
+                  itinerary: updated
+                });
+
+              }}
+              rows={4}
+              style={{
+                width: "100%",
+                padding: "10px"
+              }}
+            />
+ 
 
 {/* DAY CITY */}
 
@@ -513,6 +576,71 @@ updated[index].mealPlan =
 
 )}
 
+<h4
+  style={{
+    margin: "18px 0 8px 0",
+    color: "#1f2937",
+    fontWeight: 700
+  }}
+>
+🎯 Sightseeing
+</h4>
+
+<div
+  style={{
+    display: "flex",
+    gap: 15,
+    marginBottom: 8
+  }}
+>
+  <label>
+    <input
+      type="radio"
+      checked={(day.sightseeingMode || "chips") === "chips"
+      }
+      onChange={() => {
+
+        const updated = [
+          ...(itineraryData.itinerary || [])
+        ];
+
+        updated[index].sightseeingMode = "chips";
+
+        setItineraryData({
+          ...itineraryData,
+          itinerary: updated
+        });
+
+      }}
+    />
+    Chips
+  </label>
+
+  <label>
+    <input
+      type="radio"
+      checked={(day.sightseeingMode || "chips") === "text"}
+      onChange={() => {
+
+        const updated = [
+          ...(itineraryData.itinerary || [])
+        ];
+
+        updated[index].sightseeingMode = "text";
+
+        setItineraryData({
+          ...itineraryData,
+          itinerary: updated
+        });
+
+      }}
+    />
+    Custom Text
+  </label>
+</div>
+
+{(day.sightseeingMode || "chips") === "chips" && (
+
 <div
   style={{
     width: "100%",
@@ -541,10 +669,10 @@ updated[index].mealPlan =
     }}
   >
     <span>
-      🎯 Sightseeing Selected (
-      {(day.sightseeing || []).length}
-      )
-    </span>
+  {(day.sightseeing || []).length > 0
+    ? `Sightseeing Selected (${day.sightseeing.length})`
+    : "Select Sightseeing"}
+</span>
 
     <span
       style={{
@@ -586,12 +714,56 @@ updated[index].mealPlan =
         const current =
           updated[index].sightseeing || [];
 
+          const selected =
+    updated[index].selectedSightseeing || [];
+
         updated[index].sightseeing =
           e.target.checked
             ? [...current, spot]
             : current.filter(
                 (s) => s !== spot
               );
+
+               // ---------- NEW OBJECT ARRAY ----------
+
+    if (e.target.checked) {
+
+        const exists =
+            selected.some(
+                (item) =>
+                    item.name === spot
+            );
+
+        if (!exists) {
+
+            updated[index].selectedSightseeing = [
+
+    ...selected,
+
+    {
+        id: Date.now() + Math.random(),
+        name: spot,
+        source: "chip",
+        description: "",
+        expanded: false
+    }
+
+];
+
+        }
+
+    } else {
+
+        updated[index].selectedSightseeing =
+            selected.filter(
+                (item) =>
+                    item.name !== spot
+            );
+
+    }
+
+    // --------------------------------------
+
 
         setItineraryData({
           ...itineraryData,
@@ -607,21 +779,25 @@ updated[index].mealPlan =
   </label>
 
 ))}
-     
+ </div>
+
+)}
      
 
 {/* CUSTOM SIGHTSEEING */}
 
+<div style={{ marginTop: "10px" }}>
+
 <input
   type="text"
-  placeholder="Add Custom Sightseeing"
-  value={day.customSightseeing || ""}
+  placeholder="Custom Sightseeing"
+  value={day.customSightseeingInput || ""}
   onChange={(e) => {
 
     const updated =
       [...(itineraryData.itinerary || [])];
 
-    updated[index].customSightseeing =
+    updated[index].customSightseeingInput =
       e.target.value;
 
     setItineraryData({
@@ -631,17 +807,412 @@ updated[index].mealPlan =
 
   }}
   style={{
-    width: "100%",
-    padding: "10px",
-    marginTop: "10px"
+    width: "75%",
+    padding: "8px"
   }}
 />
 
+<button
+  type="button"
+  style={{
+    marginLeft: "8px"
+  }}
+  onClick={() => {
+
+    if (!day.customSightseeingInput?.trim())
+      return;
+
+    const updated =
+      [...(itineraryData.itinerary || [])];
+
+    updated[index].customSightseeing = [
+
+      ...(updated[index].customSightseeing || []),
+
+      updated[index].customSightseeingInput.trim()
+
+    ];
+
+    // ---------- NEW CODE ----------
+
+const value =
+  updated[index].customSightseeingInput.trim();
+
+if (value !== "") {
+
+  const selected =
+    updated[index].selectedSightseeing || [];
+
+  const exists =
+    selected.some(
+      item => item.name === value
+    );
+
+  if (!exists) {
+
+    updated[index].selectedSightseeing = [
+
+    ...selected,
+
+    {
+        id: Date.now() + Math.random(),
+        name: value,
+        source: "manual",
+        description: "",
+        expanded: false
+    }
+
+];
+
+  }
+
+}
+
+// ---------- END NEW CODE ----------
+
+    updated[index].customSightseeingInput = "";
+
+    setItineraryData({
+      ...itineraryData,
+      itinerary: updated
+    });
+
+  }}
+>
+➕ Add
+</button>
+
 </div>
 
+{(day.selectedSightseeing || []).length > 0 && (
+
+<div
+  style={{
+    marginTop: 15,
+    border: "1px solid #ddd",
+    padding: 10,
+    borderRadius: 6
+  }}
+>
+
+  <div
+    style={{
+      fontWeight: "bold",
+      marginBottom: 8
+    }}
+  >
+    Selected Sightseeing
+  </div>
+
+  {(day.selectedSightseeing || []).map(
+    (item) => (
+
+      <div
+        key={item.id}
+        style={{
+    border: "1px solid #ddd",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+    background: "#fafafa"
+}}
+      >
+
+        <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  }}
+>
+
+  <div
+    style={{
+      fontWeight: 600
+    }}
+  >
+    • {item.name}
+
+    {item.source === "chip" && (
+      <span
+        style={{
+          color: "#999",
+          marginLeft: 8,
+          fontSize: 12
+        }}
+      >
+        (chip)
+      </span>
+    )}
+
+    {item.source === "manual" && (
+      <span
+        style={{
+          color: "#999",
+          marginLeft: 8,
+          fontSize: 12
+        }}
+      >
+        (manual)
+      </span>
+    )}
+  </div>
+
+  <button
+    type="button"
+    onClick={() => {
+
+      const updated = [...(itineraryData.itinerary || [])];
+
+      updated[index].selectedSightseeing =
+        updated[index].selectedSightseeing.map(s =>
+          s.id === item.id
+            ? {
+                ...s,
+                expanded: !s.expanded
+              }
+            : s
+        );
+
+      setItineraryData({
+        ...itineraryData,
+        itinerary: updated
+      });
+
+    }}
+  >
+    {item.description?.trim()
+      ? "✏ Edit"
+      : "✏ Add"}
+  </button>
+
+</div>
+          
+{item.expanded && (
+
+<div
+    style={{
+        marginTop: 10,
+       
+    }}
+>
+
+    <textarea
+
+        rows={4}
+
+        value={item.description || ""}
+
+        placeholder="Enter description for this sightseeing..."
+
+        onChange={(e) => {
+
+            const updated = [
+                ...(itineraryData.itinerary || [])
+            ];
+
+            updated[index].selectedSightseeing =
+                updated[index].selectedSightseeing.map(
+                    s =>
+                        s.id === item.id
+                            ? {
+                                  ...s,
+                                  description:
+                                      e.target.value
+                              }
+                            : s
+                );
+
+            setItineraryData({
+                ...itineraryData,
+                itinerary: updated
+            });
+
+        }}
+
+        style={{
+            width: "100%",
+            padding: "8px",
+            boxSizing: "border-box",
+            resize: "vertical"
+        }}
+
+    />
+
+</div>
+
+)}
+        </div>
+
+        
+      
+
+    )
   )}
+
 </div>
 
+)}
+
+{(day.customSightseeing || []).length > 0 && (
+
+<div
+  style={{
+    marginTop: "8px"
+  }}
+>
+
+{day.customSightseeing.map((item, i) => (
+
+<div
+  key={i}
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: "4px"
+  }}
+>
+
+<span>
+• {item}
+</span>
+
+<button
+type="button"
+onClick={() => {
+
+const updated =
+[...(itineraryData.itinerary || [])];
+
+updated[index].customSightseeing =
+updated[index].customSightseeing.filter(
+(_, idx) => idx !== i
+);
+
+setItineraryData({
+...itineraryData,
+itinerary: updated
+});
+
+}}
+>
+❌
+</button>
+
+</div>
+
+))}
+
+</div>
+
+)}
+
+</div>
+)}
+
+{(day.sightseeingMode || "chips") === "text" && (
+
+<textarea
+    value={day.sightseeingText || ""}
+
+    onChange={(e) => {
+
+        const updated = [
+            ...(itineraryData.itinerary || [])
+        ];
+
+        updated[index].sightseeingText =
+            e.target.value;
+
+        setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+        });
+
+    }}
+
+    rows={5}
+
+    placeholder="Enter custom sightseeing details..."
+
+    style={{
+        width: "100%",
+        padding: "10px",
+        resize: "vertical",
+        boxSizing: "border-box",
+        border: "1px solid #a3a3a3"
+    }}
+
+/>
+
+)}
+
+<h4
+  style={{
+    margin: "18px 0 8px 0",
+    color: "#1f2937",
+    fontWeight: 700
+  }}
+>
+🍽 Meals
+</h4>
+
+<div
+  style={{
+    display: "flex",
+    gap: 10,
+    marginBottom: 8
+  }}
+>
+  <label>
+  <input
+    type="radio"
+   checked={(day.mealMode || "chips") === "chips"}
+    onChange={() => {
+
+      const updated = [
+        ...(itineraryData.itinerary || [])
+      ];
+
+      updated[index].mealMode = "chips";
+
+      setItineraryData({
+        ...itineraryData,
+        itinerary: updated
+      });
+
+    }}
+  />
+  Chips
+</label>
+
+  <label>
+  <input
+    type="radio"
+    checked={day.mealMode === "text"}
+    onChange={() => {
+
+      const updated = [
+        ...(itineraryData.itinerary || [])
+      ];
+
+      updated[index].mealMode = "text";
+
+      setItineraryData({
+        ...itineraryData,
+        itinerary: updated
+      });
+
+    }}
+  />
+  Custom Text
+</label>
+
+</div>
+
+
+  
+{day.mealMode === "chips" && (
 <div
   style={{
     width: "100%",
@@ -669,10 +1240,10 @@ updated[index].mealPlan =
     }}
   >
     <span>
-      🍽 Meals Selected (
-      {(day.meals || []).length}
-      )
-    </span>
+  {(day.meals || []).length > 0
+    ? `Meals Selected (${day.meals.length})`
+    : "Select Meals"}
+</span>
 
     <span style={{ fontSize: "16px" }}>
       ▼
@@ -752,8 +1323,215 @@ updated[index].mealPlan =
 
   )}
 </div>
+)}
+
+{day.mealMode === "text" && (
+
+<textarea
+    value={day.mealText || ""}
+    onChange={(e) => {
+
+        const updated = [
+            ...(itineraryData.itinerary || [])
+        ];
+
+        updated[index].mealText =
+            e.target.value;
+
+        setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+        });
+
+    }}
+
+    rows={4}
+
+    placeholder="Enter custom meal details..."
+
+    style={{
+        width: "100%",
+        padding: "10px",
+        resize: "vertical",
+        boxSizing: "border-box",
+        border: "1px solid #a3a3a3"
+    }}
+
+/>
+
+)}
+
+<div style={{ marginTop: "10px" }}>
+
+<input
+  type="text"
+  placeholder="Custom Meal"
+  value={day.customMealsInput || ""}
+  onChange={(e) => {
+
+    const updated =
+      [...(itineraryData.itinerary || [])];
+
+    updated[index].customMealsInput =
+      e.target.value;
+
+    setItineraryData({
+      ...itineraryData,
+      itinerary: updated
+    });
+
+  }}
+  style={{
+    width: "75%",
+    padding: "8px"
+  }}
+/>
+
+<button
+  type="button"
+  style={{ marginLeft: "8px" }}
+  onClick={() => {
+
+    if (!day.customMealsInput?.trim())
+      return;
+
+    const updated =
+      [...(itineraryData.itinerary || [])];
+
+    updated[index].customMeals = [
+
+      ...(updated[index].customMeals || []),
+
+      updated[index].customMealsInput.trim()
+
+    ];
+
+    updated[index].customMealsInput = "";
+
+    setItineraryData({
+      ...itineraryData,
+      itinerary: updated
+    });
+
+  }}
+>
+➕ Add
+</button>
+
+</div>
+{(day.customMeals || []).length > 0 && (
+
+<div style={{ marginTop: "8px" }}>
+
+{day.customMeals.map((meal, i) => (
+
+<div
+key={i}
+style={{
+display: "flex",
+justifyContent: "space-between",
+marginBottom: "4px"
+}}
+>
+
+<span>
+• {meal}
+</span>
+
+<button
+type="button"
+onClick={() => {
+
+const updated =
+[...(itineraryData.itinerary || [])];
+
+updated[index].customMeals =
+updated[index].customMeals.filter(
+(_, idx) => idx !== i
+);
+
+setItineraryData({
+...itineraryData,
+itinerary: updated
+});
+
+}}
+>
+❌
+</button>
+
+</div>
+
+))}
+
+</div>
+
+)}
+
+<h4
+  style={{
+    margin: "18px 0 8px 0",
+    color: "#1f2937",
+    fontWeight: 700
+  }}
+>
+🚐 Transfers
+</h4>
+
+<div
+  style={{
+    display: "flex",
+    gap: 15,
+    marginBottom: 8
+  }}
+>
+  <label>
+    <input
+      type="radio"
+      checked={(day.transferMode || "chips") === "chips"}
+      onChange={() => {
+
+        const updated = [
+          ...(itineraryData.itinerary || [])
+        ];
+
+        updated[index].transferMode = "chips";
+
+        setItineraryData({
+          ...itineraryData,
+          itinerary: updated
+        });
+
+      }}
+    />
+    Chips
+  </label>
+
+  <label>
+    <input
+      type="radio"
+      checked={(day.transferMode || "chips") === "text"}
+      onChange={() => {
+
+        const updated = [
+          ...(itineraryData.itinerary || [])
+        ];
+
+        updated[index].transferMode = "text";
+
+        setItineraryData({
+          ...itineraryData,
+          itinerary: updated
+        });
+
+      }}
+    />
+    Custom Text
+  </label>
+</div>
 
 
+{(day.transferMode || "chips") === "chips" && (
 
 <div
   style={{
@@ -782,11 +1560,10 @@ updated[index].mealPlan =
     }}
   >
     <span>
-      🚐 Transfers Selected (
-      {(day.transfers || []).length}
-      )
-    </span>
-
+  {(day.transfers || []).length > 0
+    ? `Transfers Selected (${day.transfers.length})`
+    : "Select Transfers"}
+</span>
     <span style={{ fontSize: "16px" }}>
       ▼
     </span>
@@ -870,30 +1647,151 @@ updated[index].mealPlan =
 
   )}
 </div>
+)}
+
+{(day.transferMode || "chips") === "text" && (
 
 <textarea
-  placeholder="Day Description"
-              value={day.description}
-              onChange={(e) => {
+    value={day.transferText || ""}
 
-                const updated =
-                  [...(itineraryData.itinerary || [])];
+    onChange={(e) => {
 
-                updated[index].description =
-                  e.target.value;
+        const updated = [
+            ...(itineraryData.itinerary || [])
+        ];
 
-                setItineraryData({
-                    ...itineraryData,
-                  itinerary: updated
-                });
+        updated[index].transferText =
+            e.target.value;
 
-              }}
-              rows={4}
-              style={{
-                width: "100%",
-                padding: "10px"
-              }}
-            />
+        setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+        });
+
+    }}
+
+    rows={5}
+
+    placeholder="Enter custom transfer details..."
+
+    style={{
+        width: "100%",
+        padding: "10px",
+        resize: "vertical",
+        boxSizing: "border-box",
+        border: "1px solid #a3a3a3"
+    }}
+
+/>
+
+)}
+
+<div style={{ marginTop: "10px" }}>
+
+  <input
+    type="text"
+    placeholder="Custom Transfer"
+    value={day.customTransfersInput || ""}
+    onChange={(e) => {
+
+      const updated = [...(itineraryData.itinerary || [])];
+
+      updated[index].customTransfersInput =
+        e.target.value;
+
+      setItineraryData({
+        ...itineraryData,
+        itinerary: updated
+      });
+
+    }}
+    style={{
+      width: "75%",
+      padding: "8px"
+    }}
+  />
+
+  <button
+    type="button"
+    style={{ marginLeft: "8px" }}
+    onClick={() => {
+
+      if (!day.customTransfersInput?.trim())
+        return;
+
+      const updated = [...(itineraryData.itinerary || [])];
+
+      updated[index].customTransfers = [
+
+        ...(updated[index].customTransfers || []),
+
+        updated[index].customTransfersInput.trim()
+
+      ];
+
+      updated[index].customTransfersInput = "";
+
+      setItineraryData({
+        ...itineraryData,
+        itinerary: updated
+      });
+
+    }}
+  >
+    ➕ Add
+  </button>
+
+</div>
+{(day.customTransfers || []).length > 0 && (
+
+<div style={{ marginTop: "8px" }}>
+
+  {day.customTransfers.map((item, i) => (
+
+    <div
+      key={i}
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        marginBottom: "4px"
+      }}
+    >
+
+      <span>
+        • {item}
+      </span>
+
+      <button
+        type="button"
+        onClick={() => {
+
+          const updated =
+            [...(itineraryData.itinerary || [])];
+
+          updated[index].customTransfers =
+            updated[index].customTransfers.filter(
+              (_, idx) => idx !== i
+            );
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+      >
+        ❌
+      </button>
+
+    </div>
+
+  ))}
+
+</div>
+
+)}
+
+
 
                     </div>
 
