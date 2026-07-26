@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 
+
+
 import { PAGE, SPACING, LAYOUT } from "./pdfTheme";
 
 import orbitzLogo from "../assets/orbitz-logo.png";
@@ -101,6 +103,8 @@ export async function generateQuotationPdf(quoteData) {
     unit: "mm",
     format: "a4",
   });
+
+   
 
   let currentPage = 1;
 
@@ -1275,109 +1279,178 @@ pdf.text(
     ensureSpace
 ) {
 
-    
-
     const left = 15;
 
-    const cityName = String(
-  day.customCity?.trim()
-    ? day.customCity
-    : (day.city || "-")
-);
+    const cityName =
+        day.customCity?.trim()
+            ? day.customCity
+            : (day.city || "-");
 
-const hotelName = String(
-  day.customHotel?.trim()
-    ? day.customHotel
-    : (day.hotel || "-")
-);
+    const hotelName =
+        day.customHotel?.trim()
+            ? day.customHotel
+            : (day.hotel || "-");
 
-const meals =
-  day.mealMode === "text"
-    ? (day.mealText?.trim() || "-")
-    : (
-        [
-          ...(day.meals || []),
-          ...(day.customMeals || [])
-        ].length
-          ? [
-              ...(day.meals || []),
-              ...(day.customMeals || [])
-            ].join(" • ")
-          : "-"
-      );
+    // -----------------------------
+    // CITY + HOTEL (ALWAYS INLINE)
+    // -----------------------------
 
-    pdf.setFont("times", "bold");
+    pdf.setFont("times","bold");
     pdf.setFontSize(10);
 
     pdf.text("City:", left, cursorY);
 
-    pdf.setFont("times", "normal");
-    pdf.text(
-        cityName || "-",
-        left + 28,
-        cursorY
-    );
+    pdf.setFont("times","normal");
 
-    pdf.setFont("times", "bold");
+    const VALUE_X = 43;
+
+pdf.text(
+    cityName,
+    VALUE_X,
+    cursorY
+);
+
+    pdf.setFont("times","bold");
     pdf.text(
         "Hotel:",
         left + 60,
         cursorY
     );
 
-    pdf.setFont("times", "normal");
+    pdf.setFont("times","normal");
     pdf.text(
-        hotelName || "-",
+        hotelName,
         left + 78,
         cursorY
     );
 
-    pdf.setFont("times", "bold");
+    // =====================================
+    // CHIP MODE
+    // =====================================
+
+    if (day.mealMode !== "text") {
+
+        const mealText =
+            [
+                ...(day.meals || []),
+                ...(day.customMeals || [])
+            ].length
+                ? [
+                    ...(day.meals || []),
+                    ...(day.customMeals || [])
+                  ].join(" • ")
+                : "-";
+
+        pdf.setFont("times","bold");
+        pdf.text(
+            "Meals:",
+            left + 126,
+            cursorY
+        );
+
+        pdf.setFont("times","normal");
+        pdf.text(
+            mealText,
+            left + 144,
+            cursorY
+        );
+
+        return cursorY + 7;
+    }
+
+    // =====================================
+    // CUSTOM TEXT MODE
+    // =====================================
+
+
+    const startX =
+    left +
+    pdf.getTextWidth("Meal Plan: ") +
+    2;
+
+    
+    const wrapped = pdf.splitTextToSize(
+    day.mealText || "-",
+    PAGE.width -
+    PAGE.marginRight -
+    startX
+);
+
+const FIRST_MEAL_HEIGHT =
+    7 + 5;
+
+cursorY = ensureSpace(
+    cursorY,
+    FIRST_MEAL_HEIGHT
+);
+
+
+    cursorY += 7;
+
+pdf.setFont("times", "bold");
+
 pdf.text(
     "Meal Plan:",
     left,
     cursorY
 );
 
-const titleWidth =
-    pdf.getTextWidth(
-        "Meal Plan: "
-    );
-
 pdf.setFont("times", "normal");
 
-const wrapped =
-    pdf.splitTextToSize(
-        day.mealText,
-        PAGE.width -
-            PAGE.marginRight -
-            (left + titleWidth)
-    );
 
-// first line starts beside the colon
+
+
+// Height required
+const requiredHeight =
+    wrapped.length * 5 + 2;
+
+// Pagination
+cursorY = ensureSpace(
+    cursorY,
+    requiredHeight
+);
+
+// Reprint heading if page changed
+pdf.setFont("times","bold");
 pdf.text(
-    wrapped[0],
-    left + titleWidth,
+    "Meal Plan:",
+    left,
     cursorY
 );
 
-// remaining lines align below the M of Meal Plan
-if (wrapped.length > 1) {
+pdf.setFont("times","normal");
 
-    pdf.text(
-        wrapped.slice(1),
-        left,
-        cursorY + 5
+// first line
+pdf.text(
+    wrapped[0],
+    startX,
+    cursorY
+);
+
+cursorY += 5;
+
+// remaining lines
+for (let i = 1; i < wrapped.length; i++) {
+
+    cursorY = ensureSpace(
+        cursorY,
+        5
     );
 
+    pdf.text(
+        wrapped[i],
+        left,
+        cursorY
+    );
+
+    cursorY += 5;
+
 }
 
-cursorY +=
-    wrapped.length * 5 +
-    2;
+return cursorY + 2;
 
-return cursorY;
 }
+
 
  function drawSightseeing(
     pdf,
@@ -1404,12 +1477,16 @@ return cursorY;
 
     pdf.setFont("times", "normal");
 
-    const startX =
-        left +
-        pdf.getTextWidth(
-            "Sightseeing: "
-        );
+    const text =
+    sightseeing.length
+        ? sightseeing
+              .map(s => s?.name || "")
+              .filter(Boolean)
+              .join(" • ")
+        : "-";
 
+    const startX = 43
+       
     const wrapped =
         pdf.splitTextToSize(
             day.sightseeingText,
@@ -1419,7 +1496,7 @@ return cursorY;
         );
 
     pdf.text(
-        wrapped[0],
+        wrapped,
         startX,
         cursorY
     );
@@ -1477,11 +1554,7 @@ return cursorY;
               .join(" • ")
         : "-";
 
-        const startX =
-            left +
-            pdf.getTextWidth(
-                "Sightseeing: "
-            );
+        const startX = 43;
 
         const wrapped =
             pdf.splitTextToSize(
@@ -1522,7 +1595,7 @@ return cursorY;
     sightseeing.forEach(item => {
 
         const bullet =
-            "• ";
+            " • ";
 
         if (item.description?.trim()) {
 
@@ -1532,12 +1605,10 @@ return cursorY;
             );
 
             pdf.text(
-                bullet +
-                    item.name +
-                    ":",
-                left + 5,
-                cursorY
-            );
+    bullet + item.name + ":",
+    left,
+    cursorY
+);
 
             const titleWidth =
                 pdf.getTextWidth(
@@ -1557,53 +1628,51 @@ return cursorY;
                     PAGE.width -
                         PAGE.marginRight -
                         (left +
-                            5 +
+                            2 +
                             titleWidth)
                 );
 
             // first line
-            pdf.text(
-                wrapped[0],
-                left +
-                    5 +
-                    titleWidth,
-                cursorY
-            );
+           pdf.text(
+    wrapped[0],
+    left +
+        titleWidth +
+        2,
+    cursorY
+);
 
             // remaining lines align below item name
-            if (
-                wrapped.length > 1
-            ) {
 
-                pdf.text(
-                    wrapped.slice(1),
-                    left + 7,
-                    cursorY + 5
-                );
+            if (wrapped.length > 1) {
 
-            }
+    pdf.text(
+        wrapped.slice(1),
+        left,
+        cursorY + 5
+    );
+
+}
 
             cursorY +=
                 wrapped.length * 5;
 
-        } else {
+       } else {
 
-            pdf.setFont(
-                "times",
-                "normal"
-            );
+    pdf.setFont(
+        "times",
+        "bold"
+    );
 
-            pdf.text(
-                bullet +
-                    item.name,
-                left + 5,
-                cursorY
-            );
+    pdf.text(
+        bullet +
+            item.name,
+        left,
+        cursorY
+    );
 
-            cursorY += 5;
+    cursorY += 5;
 
-        }
-
+}
         cursorY += 2;
 
     });
@@ -1639,10 +1708,9 @@ return cursorY;
         pdf.setFont("times", "normal");
 
         const startX =
-            left +
-            pdf.getTextWidth(
-                "Transfers: "
-            );
+    left +
+    pdf.getTextWidth("Transfers: ") +
+    2;
 
         const wrapped =
             pdf.splitTextToSize(
@@ -1687,12 +1755,14 @@ return cursorY;
             maxWidth
         );
 
+        const VALUE_X = 43;
+
     return drawLabeledWrappedParagraph(
         pdf,
         "Transfers:",
         lines,
         left,
-        left + 28,
+        VALUE_X,
         cursorY
     );
 
@@ -1997,7 +2067,8 @@ if (preview.lines.length > 2) {
 
 const CITY_BLOCK_HEIGHT = 10;
 
-await ensureSpace(
+cursorY = ensureSpace(
+    cursorY,
     CITY_BLOCK_HEIGHT
 );
 
@@ -2042,7 +2113,7 @@ cursorY =
         pdf,
         transferResult.remainingLines,
         0,
-        transferResult.textX,
+        15,
         transferResult.cursorY
     );
 
