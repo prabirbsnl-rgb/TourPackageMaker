@@ -4,20 +4,33 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "./firebase";
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
-    setError("");
+  setError("");
 
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      onLogin();
-    } catch (err) {
-      setError("Invalid email or password.");
+  try {
+    const usernameMap = {
+      admin: "admin@gmail.com",
+      staff: "staff@gmail.com",
+    };
+
+    const loginEmail = usernameMap[username.trim().toLowerCase()];
+
+    if (!loginEmail) {
+      setError("Invalid username.");
+      return;
     }
-  };
+
+    await signInWithEmailAndPassword(auth, loginEmail, password);
+
+    onLogin();
+  } catch (err) {
+    setError("Invalid username or password.");
+  }
+};
 
   return (
     <div
@@ -59,18 +72,18 @@ export default function Login({ onLogin }) {
         </p>
 
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 12,
-            marginBottom: 15,
-            borderRadius: 8,
-            border: "1px solid #ccc",
-          }}
-        />
+  type="text"
+  placeholder="Username"
+  value={username}
+  onChange={(e) => setUsername(e.target.value)}
+  style={{
+    width: "100%",
+    padding: 12,
+    marginBottom: 15,
+    borderRadius: 8,
+    border: "1px solid #ccc",
+  }}
+/>
 
         <input
           type="password"
