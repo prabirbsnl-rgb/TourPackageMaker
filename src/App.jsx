@@ -26,6 +26,9 @@ if (loading) {
   return <div>Loading...</div>;
 }
 
+
+
+
 if (LOGIN_ENABLED && !user) {
   return <Login onLogin={() => {}} />;
 }
