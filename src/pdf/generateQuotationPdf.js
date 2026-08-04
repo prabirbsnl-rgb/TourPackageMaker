@@ -1,11 +1,6 @@
 import jsPDF from "jspdf";
-
-
-
 import { PAGE, SPACING, LAYOUT } from "./pdfTheme";
-
 import orbitzLogo from "../assets/orbitz-logo.png";
-
 import webIcon from "../assets/web.png";
 import phoneIcon from "../assets/phone.png";
 import locationIcon from "../assets/location.png";
@@ -16,6 +11,9 @@ import {
   drawLabelValue,
   drawDescription,
   drawWrappedLines,
+  buildHangingLines,
+  drawHangingLines,
+  drawHangingParagraph,
   drawLabeledWrappedParagraph,
   buildWrappedDescriptionLines,
   drawSummaryRow2,
@@ -25,6 +23,11 @@ import {
   drawGreyCostRowCompact,
   drawBlueCostRowCompact,
   measureDescriptionPreview,
+  DESCRIPTION_INSET,
+  drawCalloutBox,
+  sanitizePdfText,
+  drawBillingCard,
+  buildWrappedPolicyLines,
 } from "./pdfHelpers";
 
 function formatPdfDate(dateInput) {
@@ -66,19 +69,15 @@ function getDuration(from, to) {
     );
 
   return `${diff} N / ${diff + 1} D`;
-
 }
-
 function shortQuotationNo(qtn) {
 
   if (!qtn) return "-";
 
   const digits = qtn.replace(/\D/g, "");
 
-  return `QTN-${digits.slice(-6)}`;
-
+  return `ORB-${digits.slice(-6)}`;
 }
-
 async function loadImage(url) {
   return new Promise((resolve, reject) => {
 
@@ -95,8 +94,14 @@ async function loadImage(url) {
   });
 }
 
+const MIN_POLICY_SECTION_START_SPACE =
+    PAGE.height * 0.28;
+
+    const FOOTER_REQUIRED_HEIGHT = 28; // tune later (40–50 mm)
+
 export async function generateQuotationPdf(quoteData) {
 
+  
   const pdf = new jsPDF({
     
     orientation: "portrait",
@@ -104,9 +109,7 @@ export async function generateQuotationPdf(quoteData) {
     format: "a4",
   });
 
-   
-
-  let currentPage = 1;
+   let currentPage = 1;
 
   const logoImage = await loadImage(orbitzLogo);
   const webImage = await loadImage(webIcon);
@@ -117,16 +120,12 @@ const locationImage = await loadImage(locationIcon);
 
   let cursorY = PAGE.marginTop;
 
-
-  const ensureSpace = (
+const ensureSpace = (
   currentCursorY,
   requiredHeight
 ) => {
 
-    console.log(
-    "NEW ensureSpace",
-    currentCursorY
-);
+   
 
   if (
     currentCursorY + requiredHeight >
@@ -156,31 +155,31 @@ const locationImage = await loadImage(locationIcon);
 );
 
   // ---------- DIFFERENT CONTENT ----------
-  if (quoteData.quoteMode === "itinerary") {
+if (quoteData.quoteMode === "itinerary") {
 
     cursorY = await drawItineraryContent(
-  pdf,
-  quoteData,
-  cursorY,
-  ensureSpace
-);
+        pdf,
+        quoteData,
+        cursorY,
+        ensureSpace
+    );
 
-  } else {
+} else {
 
-  cursorY = drawGeneralContentCompact(
-      pdf,
-      quoteData,
-      cursorY,
-      ensureSpace
-  );
+    cursorY = drawGeneralContentCompact(
+        pdf,
+        quoteData,
+        cursorY,
+        ensureSpace
+    );
 
 }
 
-  // ---------- COMMON FOOTER ----------
-  if (quoteData.quoteMode === "itinerary") {
+// ---------- START POLICY ON A FRESH PAGE IF TOO LITTLE SPACE ----------
+const remainingSpace =
+    PAGE.height - PAGE.marginBottom - cursorY;
 
-  // Need about 25–30 mm for the thank-you footer
-if (cursorY > PAGE.height - 55) {
+if (remainingSpace < MIN_POLICY_SECTION_START_SPACE) {
 
     pdf.addPage();
 
@@ -188,27 +187,22 @@ if (cursorY > PAGE.height - 55) {
 
 }
 
-cursorY = drawCommonFooter(
+// ---------- COMMON CANCELLATION POLICY ----------
+cursorY = drawCancellationRefundPolicy(
     pdf,
     quoteData,
     cursorY,
     ensureSpace,
-    true
+    (y) =>
+        drawCommonFooter(
+            pdf,
+            quoteData,
+            y,
+            ensureSpace
+        )
 );
 
-} else {
-
-  cursorY = drawCommonFooter(
-      pdf,
-      quoteData,
-      cursorY,
-      ensureSpace,
-      false
-  );
-
-}
-
-  pdf.save("Quotation.pdf");
+pdf.save("Quotation.pdf");
 }
 
 import { COMPANY } from "./headerData";
@@ -425,7 +419,9 @@ cursorY = drawSummaryRow2(
     pdf,
 
     "Destination",
-    quoteData.destination || "-",
+   quoteData.customDestination?.trim()
+    ? quoteData.customDestination
+    : (quoteData.destination || "-"),
 
     "Travel Dates",
     `${formatPdfDate(quoteData.travelFrom)} - ${formatPdfDate(quoteData.travelTo)}`,
@@ -460,11 +456,9 @@ cursorY = drawSummaryRow3(
     ),
 
     "Date",
-    formatPdfDate(
-      quoteData.travelFrom
-    ),
+    formatPdfDate(new Date()),
 
-    "Accommodation",
+    "Accomm",
     quoteData.accommodation,
 
     cursorY
@@ -501,8 +495,10 @@ pdf.setFontSize(10);
 ];
 
   // ---------- INLINE LIST ----------
-  const inclusionText =
-    inclusions.join("  •  ");
+ const inclusionText =
+    sanitizePdfText(
+        inclusions.join("  •  ")
+    );
 
   ensureSpace(12);
 
@@ -557,7 +553,9 @@ pdf.setFontSize(10);
 
 ];
   const exclusionText =
-  exclusions.join("  •  ");
+    sanitizePdfText(
+        exclusions.join("  •  ")
+    );
 
 ensureSpace(12);
 
@@ -596,12 +594,14 @@ function drawDayWiseHeader(
 
   cursorY = drawSectionHeading(
     pdf,
-    "DAY WISE ITINERARY",
+    "DETAILED TOUR ITINERARY",
     cursorY
   );
 
   return cursorY;
 }
+
+
 
  function drawDayHeader(
     pdf,
@@ -689,9 +689,13 @@ function drawSightseeingIncluded(
 ];
 
   const text =
-  sightseeing.length
-    ? sightseeing.join("   •   ")
-    : "-";
+  sanitizePdfText(
+
+    sightseeing.length
+      ? sightseeing.join("   •   ")
+      : "-"
+
+  );
 
   const wrapped = pdf.splitTextToSize(
     text,
@@ -796,9 +800,13 @@ function drawMealsIncluded(
   ];
 
   const text =
-    meals.length
-      ? meals.join("   •   ")
-      : "-";
+    sanitizePdfText(
+
+        meals.length
+            ? meals.join("   •   ")
+            : "-"
+
+    );
 
   const wrapped = pdf.splitTextToSize(
     text,
@@ -890,7 +898,7 @@ function drawCostSummary(
 
   cursorY = drawSectionHeading(
     pdf,
-    "COST SUMMARY",
+    " BILLING DETAILS",
     cursorY
   );
 
@@ -1009,6 +1017,78 @@ if (quoteData.showUsd) {
 
 }
 
+function measureCostSummaryHeight(quoteData) {
+
+  const HEADING_HEIGHT = 12;
+  const ROW_HEIGHT = 7;
+  const VEHICLE_GAP = 3;
+  const BOTTOM_PADDING = 4;
+
+  let height =
+      HEADING_HEIGHT + BOTTOM_PADDING;
+
+  // -----------------------------
+  // Vehicle costing
+  // -----------------------------
+  if (
+      quoteData.useVehicleCosting &&
+      quoteData.vehicleCosts?.length > 0
+  ) {
+
+    console.log("vehicleCosts =", quoteData.vehicleCosts);
+
+      quoteData.vehicleCosts.forEach(() => {
+
+          // Package Cost
+          height += ROW_HEIGHT;
+
+          // GST
+          if (quoteData.applyGst) {
+              height += ROW_HEIGHT;
+          }
+
+          // Grand Total
+          height += ROW_HEIGHT;
+
+          // Gap after each vehicle block
+          height += VEHICLE_GAP;
+
+      });
+
+  }
+
+  // -----------------------------
+  // General Package
+  // -----------------------------
+  else {
+
+      // Package Cost
+      height += ROW_HEIGHT;
+
+      // GST
+      if (quoteData.applyGst) {
+          height += ROW_HEIGHT;
+      }
+
+      // Grand Total
+      height += ROW_HEIGHT;
+
+      // USD
+      if (quoteData.showUsd) {
+          height += ROW_HEIGHT;
+      }
+
+  }
+console.log({
+    finalHeight: height,
+    useVehicleCosting: quoteData.useVehicleCosting,
+    applyGst: quoteData.applyGst,
+    showUsd: quoteData.showUsd
+});
+  return height;
+
+}
+
 function drawCostSummaryCompact(
   pdf,
   quoteData,
@@ -1016,13 +1096,71 @@ function drawCostSummaryCompact(
   ensureSpace
 ) {
 
-  ensureSpace(70);
+  // Save starting position
+  const startY = cursorY;
 
-  cursorY = drawSectionHeading(
+  // Measure only
+  const measuredY =
+    drawCostSummaryCompactInternal(
+      pdf,
+      quoteData,
+      cursorY,
+      ensureSpace,
+      true
+    );
+
+  // Calculate required height
+  const CARD_PADDING = 4;
+
+const cardHeight =
+    (measuredY - startY) +
+    (CARD_PADDING * 2);
+
+  
+
+  // Restore original position
+  cursorY = startY;
+
+  // Page break if required
+ cursorY = ensureSpace(
+    cursorY,
+    cardHeight
+);
+
+drawBillingCard(
     pdf,
-    "COST SUMMARY",
-    cursorY
+    "BILLING DETAILS",
+    PAGE.marginLeft,
+    cursorY,
+    PAGE.width -
+        PAGE.marginLeft -
+        PAGE.marginRight,
+    cardHeight
+);
+
+  // Draw for real
+  return drawCostSummaryCompactInternal(
+    pdf,
+    quoteData,
+    cursorY,
+    ensureSpace,
+    false
   );
+
+}
+
+function drawCostSummaryCompactInternal(
+  pdf,
+  quoteData,
+  cursorY,
+  ensureSpace,
+  measureOnly = false
+) {
+
+ 
+
+  // Header already drawn by drawBillingCard()
+cursorY += SPACING.ribbonGap;
 
   pdf.setFont("times","normal");
   pdf.setFontSize(10);
@@ -1049,31 +1187,47 @@ function drawCostSummaryCompact(
 
       const total = cost + gst;
 
+      if (measureOnly) {
+
+    cursorY += 7;
+
+} else {
+
       cursorY = drawGreyCostRowCompact(
         pdf,
         `Package Cost With (${vehicle.vehicle})`,
         `${rs} ${cost.toLocaleString()}`,
         cursorY
       );
+      }
 
       if (quoteData.applyGst) {
 
+        if (measureOnly) {
+
+    cursorY += 7;
+
+} else {
         cursorY = drawGreyCostRowCompact(
           pdf,
           `GST (${quoteData.gstPercent}%)`,
           `${rs} ${gst.toLocaleString()}`,
           cursorY
         );
-
+}
       }
+if (measureOnly) {
 
+    cursorY += 7;
+
+} else {
       cursorY = drawBlueCostRowCompact(
         pdf,
         "GRAND TOTAL",
         `${rs} ${total.toLocaleString()}`,
         cursorY
       );
-
+}
       cursorY += 3;
 
     });
@@ -1093,14 +1247,26 @@ const gstAmount =
 
 const grandTotal = subtotal + gstAmount;
 
+if (measureOnly) {
+
+    cursorY += 7;
+
+} else {
 cursorY = drawGreyCostRowCompact(
   pdf,
   "Package Cost",
   `${rs} ${subtotal.toLocaleString()}`,
   cursorY
 );
+}
 
 if (quoteData.applyGst) {
+
+  if (measureOnly) {
+
+    cursorY += 7;
+
+} else {
 
   cursorY = drawGreyCostRowCompact(
     pdf,
@@ -1108,21 +1274,31 @@ if (quoteData.applyGst) {
     `${rs} ${gstAmount.toLocaleString()}`,
     cursorY
   );
-
 }
+}
+if (measureOnly) {
 
+    cursorY += 7;
+
+} else {
 cursorY = drawBlueCostRowCompact(
   pdf,
   "GRAND TOTAL",
  `${rs} ${grandTotal.toLocaleString()}`,
   cursorY
 );
-
+}
 // ---------- USD ----------
 if (quoteData.showUsd) {
 
   const usd =
     Number(quoteData.grandTotalUsd || 0);
+
+    if (measureOnly) {
+
+    cursorY += 7;
+
+} else {
 
   cursorY = drawGreyCostRowCompact(
     pdf,
@@ -1131,6 +1307,7 @@ if (quoteData.showUsd) {
     cursorY
 );
 }
+}
    
   }
 
@@ -1138,82 +1315,148 @@ if (quoteData.showUsd) {
 
 }
 
-function drawImportantNotes(
-  pdf,
-  quoteData,
-  cursorY,
-  ensureSpace
+function drawSinglePolicy(
+    pdf,
+    policy,
+    cursorY,
+    ensureSpace,
+    measureOnly = false
+) {
+    if (!policy.text?.trim()) return cursorY;
+
+    const title = sanitizePdfText(policy.title || "");
+
+    const wrapped = buildWrappedPolicyLines(
+        pdf,
+        policy.text || ""
+    );
+
+    const visibleLineCount =
+    wrapped.lines.filter(line => line !== null).length;
+
+const estimatedHeight =
+    12 +
+    visibleLineCount * wrapped.lineHeight +
+    6;
+
+if (measureOnly) {
+    return estimatedHeight;
+}
+
+    cursorY = ensureSpace(
+        cursorY,
+        estimatedHeight
+    );
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
+
+    pdf.text(
+        `• ${title}`,
+        PAGE.marginLeft,
+        cursorY
+    );
+
+    cursorY += 5;
+
+    cursorY = drawWrappedLines(
+        pdf,
+        wrapped.lines,
+        0,
+        PAGE.marginLeft + DESCRIPTION_INSET,
+        cursorY
+    );
+
+    
+console.log("After policy:", title, cursorY);
+    cursorY += 6;
+
+    return cursorY;
+}
+
+
+function drawCancellationRefundPolicy(
+    pdf,
+    quoteData,
+    cursorY,
+    ensureSpace,
+     drawClosing
 ) {
 
-  ensureSpace(40);
+    const policies =
+        quoteData.cancellationRefundPolicy || [];
 
- 
-cursorY = drawSectionHeading(
-    pdf,
-    "IMPORTANT NOTES & TERMS",
-    cursorY
-);
+    if (!policies.length) return cursorY;
 
-pdf.setFont("times","normal");
-pdf.setFontSize(10);
-pdf.setTextColor(0,0,0);
-if (quoteData.specialNotes?.trim()) {
-
-    pdf.setFont("times","bold");
-
-    pdf.text(
-        "Special Notes :",
-        LAYOUT.bodyX,
-        cursorY
+    const visiblePolicies = policies.filter(
+        p => p.title?.trim() || p.text?.trim()
     );
 
-    pdf.setFont("times","normal");
+    if (!visiblePolicies.length) return cursorY;
 
-    const specialNotes = quoteData.specialNotes
-        .split(",")
-        .map(note => note.trim())
-        .filter(Boolean)
-        .join(" • ");
+    cursorY += 20;
 
-    const wrapped = pdf.splitTextToSize(
-        specialNotes,
-        PAGE.width -
-        PAGE.marginLeft -
-        PAGE.marginRight -
-        40
+    cursorY = ensureSpace(cursorY, 20);
+
+    cursorY = drawSectionHeading(
+        pdf,
+        "CANCELLATION & REFUND POLICY",
+        cursorY,
+        ensureSpace
     );
 
-    pdf.text(
-        wrapped,
-        LAYOUT.bodyX + 32,
-        cursorY
+    cursorY += 5;
+
+    // Draw every policy normally
+    for (let i = 0; i < visiblePolicies.length; i++) {
+
+    const policy = visiblePolicies[i];
+
+    const isLast =
+        i === visiblePolicies.length - 1;
+
+if (isLast) {
+
+    const footerHeight = 24;
+
+    const policyHeight = drawSinglePolicy(
+        pdf,
+        policy,
+        cursorY,
+        ensureSpace,
+        true
     );
 
-    cursorY += wrapped.length * SPACING.lineGap + 4;
+    const remaining =
+        PAGE.height -
+        PAGE.marginBottom -
+        cursorY;
+
+    if (remaining < policyHeight + footerHeight) {
+
+        pdf.addPage();
+
+        cursorY = PAGE.marginTop;
+
+    }
 
 }
-const terms = (quoteData.terms || []).join(" • ");
+    
 
-if (terms) {
+ cursorY = drawSinglePolicy(
+        pdf,
+        policy,
+        cursorY,
+        ensureSpace
+         
+      );
 
-    const wrapped = pdf.splitTextToSize(
-        terms,
-        PAGE.width -
-        PAGE.marginLeft -
-        PAGE.marginRight -
-        8
-    );
-
-    pdf.text(
-        wrapped,
-        LAYOUT.bodyX,
-        cursorY
-    );
-
-   cursorY += wrapped.length * SPACING.lineGap + 4;
 }
-  return cursorY;
 
+
+    cursorY = drawClosing(cursorY);
+
+return cursorY;
 }
 
 function drawCommonFooter(
@@ -1221,12 +1464,15 @@ function drawCommonFooter(
   quoteData,
   cursorY,
   ensureSpace,
-  fixedBottom = true
+  
 ) {
 
- const footerY = fixedBottom
-    ? PAGE.height - 30
-    : cursorY + 8;
+  console.log("Footer starts at:", cursorY);
+
+ cursorY += 10;
+
+const footerY = cursorY;
+
 
   pdf.setDrawColor(37, 99, 235);
 
@@ -1276,119 +1522,159 @@ pdf.text(
     pdf,
     day,
     cursorY,
-    ensureSpace
-) {
+    ensureSpace,
+    isLastDay = false,
+    skipEnsure = false
+)
+{
+  console.log("drawCityHotelMeals START", {
+    day: day.dayNumber,
+    cursorY,
+    mealMode: day.mealMode,
+    preview: (day.mealText || "").substring(0, 25)
+});
 
-    const left = 15;
+   const left = LAYOUT.col1LabelX;
 
     const cityName =
-        day.customCity?.trim()
-            ? day.customCity
-            : (day.city || "-");
+    day.customCity?.trim()
+        ? day.customCity.trim()
+        : (day.city || "").trim();
 
-    const hotelName =
-        day.customHotel?.trim()
-            ? day.customHotel
-            : (day.hotel || "-");
+const hotelName =
+    day.customHotel?.trim()
+        ? day.customHotel.trim()
+        : (day.hotel || "").trim();
 
+const hasCity =
+    cityName !== "";
+
+const hasHotel =
+    hotelName !== "";
+
+const isCheckoutDay = isLastDay;
     // -----------------------------
     // CITY + HOTEL (ALWAYS INLINE)
     // -----------------------------
-
-    pdf.setFont("times","bold");
+if (!isLastDay) {
+    
     pdf.setFontSize(10);
 
-    pdf.text("City:", left, cursorY);
+   pdf.setFont("times", "bold");
+pdf.text("City:", left, cursorY);
 
-    pdf.setFont("times","normal");
+   
+    const VALUE_X = LAYOUT.col1ValueX;
 
-    const VALUE_X = 43;
-
+    pdf.setFont("times", "normal");
+    console.log("City Y =", cursorY);
 pdf.text(
-    cityName,
-    VALUE_X,
+    cityName || "-",
+   left + 15,   // instead of VALUE_X
     cursorY
 );
 
-    pdf.setFont("times","bold");
+ }
+
+ if (!isLastDay) {
+
+   pdf.setFont("times", "bold");
+
+pdf.text(
+    "Hotel:",
+    left + 60,
+    cursorY
+);
+
+pdf.setFont("times", "normal");
+
+const hotelDisplay =
+    hotelName
+        ? `${hotelName}${
+            day.hotelCategoryLabel?.trim()
+                ? ` (${day.hotelCategoryLabel})`
+                : ""
+          }`
+        : "-";
+
+pdf.text(
+    hotelDisplay,
+    left + 73,      // ← keep unchanged
+    cursorY
+);
+
+}
+
+
+
+   // =====================================
+// CHIP MODE
+// =====================================
+
+if (day.mealMode !== "text") {
+
+    const mealItems = [
+    ...(day.meals || []),
+    ...(day.customMeals || [])
+];
+
+const mealText =
+    sanitizePdfText(
+
+        mealItems.length
+            ? mealItems.join(" • ")
+            : "-"
+
+    );
+
+    pdf.setFont("times", "bold");
+
+    const mealLabelX = isLastDay
+        ? LAYOUT.col1LabelX
+        : LAYOUT.col3LabelX;
+
+    const mealValueX = isLastDay
+        ?  left + 19
+        :  left + 140;
+
     pdf.text(
-        "Hotel:",
-        left + 60,
+        isLastDay ? "Meal Plan:" : "Meals:",
+        mealLabelX,
         cursorY
     );
 
-    pdf.setFont("times","normal");
+    pdf.setFont("times", "normal");
+
     pdf.text(
-        hotelName,
-        left + 78,
+        mealText,
+        mealValueX,
         cursorY
     );
 
-    // =====================================
-    // CHIP MODE
-    // =====================================
-
-    if (day.mealMode !== "text") {
-
-        const mealText =
-            [
-                ...(day.meals || []),
-                ...(day.customMeals || [])
-            ].length
-                ? [
-                    ...(day.meals || []),
-                    ...(day.customMeals || [])
-                  ].join(" • ")
-                : "-";
-
-        pdf.setFont("times","bold");
-        pdf.text(
-            "Meals:",
-            left + 126,
-            cursorY
-        );
-
-        pdf.setFont("times","normal");
-        pdf.text(
-            mealText,
-            left + 144,
-            cursorY
-        );
-
-        return cursorY + 7;
-    }
-
-    // =====================================
-    // CUSTOM TEXT MODE
-    // =====================================
-
-
-    const startX =
-    left +
-    pdf.getTextWidth("Meal Plan: ") +
-    2;
-
-    
-    const wrapped = pdf.splitTextToSize(
-    day.mealText || "-",
-    PAGE.width -
-    PAGE.marginRight -
-    startX
-);
-
-const FIRST_MEAL_HEIGHT =
-    7 + 5;
-
-cursorY = ensureSpace(
-    cursorY,
-    FIRST_MEAL_HEIGHT
-);
-
-
+    // IMPORTANT: keep the original cursor movement
     cursorY += 7;
 
-pdf.setFont("times", "bold");
+    return cursorY;
+}
 
+    // =====================================
+// CUSTOM TEXT MODE
+// =====================================
+
+
+
+if (isCheckoutDay) {
+
+    cursorY += 2;
+
+} else {
+
+    cursorY += 8;
+
+}
+
+pdf.setFont("times", "bold");
+console.log("Meal Label Y =", cursorY);
 pdf.text(
     "Meal Plan:",
     left,
@@ -1398,56 +1684,19 @@ pdf.text(
 pdf.setFont("times", "normal");
 
 
+const VALUE_X = left + 19;
 
 
-// Height required
-const requiredHeight =
-    wrapped.length * 5 + 2;
 
-// Pagination
-cursorY = ensureSpace(
-    cursorY,
-    requiredHeight
-);
-
-// Reprint heading if page changed
-pdf.setFont("times","bold");
-pdf.text(
-    "Meal Plan:",
+return drawHangingParagraph(
+    pdf,
+    sanitizePdfText(
+        day.mealText || "-"
+    ),
+    VALUE_X,
     left,
     cursorY
 );
-
-pdf.setFont("times","normal");
-
-// first line
-pdf.text(
-    wrapped[0],
-    startX,
-    cursorY
-);
-
-cursorY += 5;
-
-// remaining lines
-for (let i = 1; i < wrapped.length; i++) {
-
-    cursorY = ensureSpace(
-        cursorY,
-        5
-    );
-
-    pdf.text(
-        wrapped[i],
-        left,
-        cursorY
-    );
-
-    cursorY += 5;
-
-}
-
-return cursorY + 2;
 
 }
 
@@ -1459,11 +1708,11 @@ return cursorY + 2;
     ensureSpace
 ) {
 
-    const left = 15;
+    const left = LAYOUT.col1LabelX;
 
     if (
     day.sightseeingMode === "text" &&
-    day.sightseeingText?.trim()
+   sanitizePdfText(day.sightseeingText)
 ) {
 
     pdf.setFont("times", "bold");
@@ -1477,52 +1726,65 @@ return cursorY + 2;
 
     pdf.setFont("times", "normal");
 
-    const text =
-    sightseeing.length
-        ? sightseeing
-              .map(s => s?.name || "")
-              .filter(Boolean)
-              .join(" • ")
-        : "-";
-
-    const startX = 43
+    
+    const startX = LAYOUT.col1ValueX;
        
+    const sightseeingText =
+    sanitizePdfText(
+        day.sightseeingText
+    );
     const wrapped =
         pdf.splitTextToSize(
-            day.sightseeingText,
+             sightseeingText,
             PAGE.width -
                 PAGE.marginRight -
                 startX
         );
 
     pdf.text(
+    wrapped[0],
+    startX,
+    cursorY
+);
+
+cursorY += 5;
+
+if (wrapped.length > 1) {
+
+    cursorY = drawWrappedLines(
+        pdf,
         wrapped,
-        startX,
+        1,
+        left,
         cursorY
     );
 
-    if (wrapped.length > 1) {
+}
 
-        pdf.text(
-            wrapped.slice(1),
-            left,
-            cursorY + 5
-        );
-
-    }
-
-    return (
-        cursorY +
-        wrapped.length * 5 +
-        2
-    );
-
+return cursorY + 2;
+    
 }
 
     const sightseeing =
     (day.selectedSightseeing || []).filter(Boolean);
 
-    const hasDescription =
+const sightseeingText =
+    sanitizePdfText(
+        day.sightseeingText
+    );
+
+const hasSightseeing =
+    day.sightseeingMode === "text"
+        ? !!sightseeingText
+        : sightseeing.length > 0;
+
+if (!hasSightseeing) {
+
+    return cursorY;
+
+}
+
+const hasDescription =
     sightseeing.some(
         item =>
             item &&
@@ -1547,12 +1809,16 @@ return cursorY + 2;
         pdf.setFont("times", "normal");
 
         const text =
-    sightseeing.length
-        ? sightseeing
-              .map(s => s?.name || "")
-              .filter(Boolean)
-              .join(" • ")
-        : "-";
+    sanitizePdfText(
+
+        sightseeing.length
+            ? sightseeing
+                  .map(s => s?.name || "")
+                  .filter(Boolean)
+                  .join(" • ")
+            : "-"
+
+    );
 
         const startX = 43;
 
@@ -1567,16 +1833,26 @@ return cursorY + 2;
             
 
         pdf.text(
-            wrapped,
-            startX,
-            cursorY
-        );
+    wrapped[0],
+    startX,
+    cursorY
+);
 
-        return (
-            cursorY +
-            wrapped.length * 5 +
-            2
-        );
+cursorY += 5;
+
+if (wrapped.length > 1) {
+
+    cursorY = drawWrappedLines(
+        pdf,
+        wrapped,
+        1,
+        left,
+        cursorY
+    );
+
+}
+
+return cursorY + 2;
 
     }
 
@@ -1622,15 +1898,20 @@ return cursorY + 2;
                 "normal"
             );
 
-            const wrapped =
-                pdf.splitTextToSize(
-                    item.description,
-                    PAGE.width -
-                        PAGE.marginRight -
-                        (left +
-                            2 +
-                            titleWidth)
-                );
+            const description =
+    sanitizePdfText(
+        item.description
+    );
+
+const wrapped =
+    pdf.splitTextToSize(
+        description,
+        PAGE.width -
+            PAGE.marginRight -
+            (left +
+                2 +
+                titleWidth)
+    );
 
             // first line
            pdf.text(
@@ -1643,19 +1924,21 @@ return cursorY + 2;
 
             // remaining lines align below item name
 
-            if (wrapped.length > 1) {
+           
 
-    pdf.text(
-        wrapped.slice(1),
+cursorY += 5;
+
+if (wrapped.length > 1) {
+
+    cursorY = drawWrappedLines(
+        pdf,
+        wrapped,
+        1,
         left,
-        cursorY + 5
+        cursorY
     );
 
 }
-
-            cursorY +=
-                wrapped.length * 5;
-
        } else {
 
     pdf.setFont(
@@ -1688,13 +1971,35 @@ return cursorY + 2;
     ensureSpace
 ) {
 
-    const left = 15;
+    const left = LAYOUT.col1LabelX;
+
+    const transferItems = [
+    ...(day.transfers || []),
+    ...(day.customTransfers || [])
+];
+
+const transferText =
+    sanitizePdfText(day.transferText);
+
+const hasTransfers =
+    day.transferMode === "text"
+        ? !!transferText
+        : transferItems.length > 0;
+
+if (!hasTransfers) {
+    return {
+        cursorY,
+        remainingLines: [],
+        textX: 15
+    };
+}
 
     // ---------- CUSTOM TEXT ----------
     if (
-        day.transferMode === "text" &&
-        day.transferText?.trim()
-    ) {
+    day.transferMode === "text" &&
+    transferText
+)
+     {
 
         pdf.setFont("times", "bold");
         pdf.setFontSize(10);
@@ -1707,64 +2012,56 @@ return cursorY + 2;
 
         pdf.setFont("times", "normal");
 
-        const startX =
-    left +
-    pdf.getTextWidth("Transfers: ") +
-    2;
+        const VALUE_X = left + 19;
 
-        const wrapped =
-            pdf.splitTextToSize(
-                day.transferText,
-                PAGE.width -
-                    PAGE.marginRight -
-                    startX
-            );
+const lines =
+    buildHangingLines(
+        pdf,
+        transferText,
+        VALUE_X,
+        left
+    );
 
-        return drawLabeledWrappedParagraph(
-            pdf,
-            "Transfers:",
-            wrapped,
-            left,
-            startX,
-            cursorY
-        );
-
-    }
-
-    // ---------- CHIP MODE ----------
-
-    const transferText =
-        [
-            ...(day.transfers || []),
-            ...(day.customTransfers || [])
-        ].length
-            ? [
-                ...(day.transfers || []),
-                ...(day.customTransfers || [])
-              ].join(" • ")
-            : "-";
-
-    const maxWidth =
-        PAGE.width -
-        PAGE.marginRight -
-        (left + 36);
-
-    const lines =
-        pdf.splitTextToSize(
-            transferText,
-            maxWidth
-        );
-
-        const VALUE_X = 43;
-
-    return drawLabeledWrappedParagraph(
+return {
+    cursorY: drawHangingLines(
         pdf,
         "Transfers:",
         lines,
         left,
         VALUE_X,
         cursorY
+    ),
+    remainingLines: [],
+    textX: left
+};
+    }
+
+    // ---------- CHIP MODE ----------
+
+    const VALUE_X = left + 19;
+
+const lines =
+    buildHangingLines(
+        pdf,
+        sanitizePdfText(
+            transferItems.join(" • ")
+        ),
+        VALUE_X,
+        left
     );
+
+return {
+    cursorY: drawHangingLines(
+        pdf,
+        "Transfers:",
+        lines,
+        left,
+        VALUE_X,
+        cursorY
+    ),
+    remainingLines: [],
+    textX: left
+};
 
 }
 
@@ -1897,12 +2194,7 @@ cursorY = drawCostSummaryCompact(
     cursorY,
     ensureSpace
 );
-cursorY = drawImportantNotes(
-    pdf,
-    quoteData,
-    cursorY,
-    ensureSpace
-);
+
 
 
 return cursorY;
@@ -1942,29 +2234,43 @@ cursorY = drawExclusions(
     ensureSpace
   );
 
-  
-
+ 
 
 const itinerary = quoteData.itinerary || [];
 
 for (const [index, day] of itinerary.entries()) {
 
-  console.log("DESCRIPTION =", day.description);
-  console.log(day);
+  const baseDate = new Date(quoteData.travelFrom);
+
+baseDate.setDate(
+    baseDate.getDate() + index
+);
+
+const dayDate =
+    formatPdfDate(baseDate);
+
   
-const preview =
-    measureDescriptionPreview(
-        pdf,
+  
+const description =
+    sanitizePdfText(
         day.description
     );
 
-    const sightseeingItems = [
+const preview =
+    measureDescriptionPreview(
+        pdf,
+        description
+    );
+
+   const sightseeingItems = [
     ...(day.sightseeing || []),
     ...(day.customSightseeing || [])
 ];
 
 const sightseeingText =
-    sightseeingItems.join(" • ");
+    sanitizePdfText(
+        sightseeingItems.join(" • ")
+    );
 
 const sightseeingPreview =
     buildWrappedDescriptionLines(
@@ -1978,34 +2284,42 @@ const FIRST_SIGHTSEEING_BLOCK =
         : 0;
 
 // Day ribbon (~10 mm) + first 2 description lines
-const DAY_START_SPACE =
-    10 + preview.firstTwoHeight;
 
-    console.log(
-  "DAY START CHECK",
-  {
-    currentCursor: cursorY,
-    required: DAY_START_SPACE,
-    pageBottom: PAGE.height - PAGE.marginBottom
-  }
-);
+
+const hasDescription =
+    !!sanitizePdfText(day.description)?.trim();
+
+const DAY_HEADER_HEIGHT = 14;
+const CITY_HOTEL_MEAL_HEIGHT = 7;
+
+const DAY_START_SPACE =
+    hasDescription
+        ? (
+            10 +
+            preview.firstTwoHeight
+          )
+        : (
+            DAY_HEADER_HEIGHT +
+            CITY_HOTEL_MEAL_HEIGHT
+          );
+    
 
 cursorY = ensureSpace(
     cursorY,
     DAY_START_SPACE
 );
 
+
 cursorY = await drawDayHeader(
     pdf,
     day,
-    formatPdfDate(quoteData.travelFrom),
+    dayDate,
     cursorY,
     ensureSpace
 );
-
     
 
-    console.log("cursorY before description =", cursorY);
+    
     
     
 
@@ -2022,7 +2336,7 @@ if (firstTwo.length > 0) {
     firstTwo.forEach((line) => {
 
         pdf.text(
-            PAGE.marginLeft,
+           PAGE.marginLeft + DESCRIPTION_INSET,
             cursorY,
             line
         );
@@ -2033,51 +2347,82 @@ if (firstTwo.length > 0) {
 
     pdf.setFont("times", "normal");
 
-    cursorY += 2;
-
-}
+    }
 
 
 // ---------- remaining description ----------
-console.log({
-    totalLines: preview.totalLines,
-    lineArrayLength: preview.lines.length,
-    preview
-});
+
 
 if (preview.lines.length > 2) {
 
-  console.log({
-    totalLines: preview.lines.length,
-    startIndex: 2,
-    cursorBefore: cursorY
-});
+  
 
     cursorY = drawWrappedLines(
     pdf,
     preview.lines,
     2,
-    PAGE.marginLeft,
+   PAGE.marginLeft + DESCRIPTION_INSET,
     cursorY
 );
+}
+
+
+// ---------- optional note ----------
+
+
+if (
+    day.noteEnabled &&
+    day.noteText?.trim()
+) {
+
+  cursorY -= 2;
+
+    // Estimate required height
+    const noteLines = pdf.splitTextToSize(
+        day.noteText,
+        PAGE.width -
+        PAGE.marginLeft -
+        PAGE.marginRight -
+        21
+    );
+
+    const noteHeight =
+        6 +
+        noteLines.length * 4.3 +
+        6;
+
+    cursorY = ensureSpace(
+        cursorY,
+        noteHeight
+    );
+
+    cursorY = drawCalloutBox(
+        pdf,
+        "Note",
+        day.noteText,
+        cursorY
+    );
 
 }
 
-// ---------- City row ----------
 
-const CITY_BLOCK_HEIGHT = 10;
 
-cursorY = ensureSpace(
-    cursorY,
-    CITY_BLOCK_HEIGHT
-);
+// ---------- Reserve City + Meal block ----------
+
+
+
+// ---------- City / Hotel / Meal ----------
 
 cursorY = drawCityHotelMeals(
     pdf,
     day,
     cursorY,
-    ensureSpace
+    ensureSpace,
+    index === itinerary.length - 1,   // isLastDay
+    !hasDescription                    // skipEnsure
 );
+
+
     // ---------- Sightseeing start ----------
 
 if (FIRST_SIGHTSEEING_BLOCK > 0) {
@@ -2085,9 +2430,10 @@ if (FIRST_SIGHTSEEING_BLOCK > 0) {
     const SIGHTSEEING_START_SPACE =
         5 + FIRST_SIGHTSEEING_BLOCK;
 
-    await ensureSpace(
-        SIGHTSEEING_START_SPACE
-    );
+   cursorY = await ensureSpace(
+    cursorY,
+    SIGHTSEEING_START_SPACE
+);
 
 }
    // ---------- Sightseeing ----------
@@ -2098,6 +2444,9 @@ cursorY = drawSightseeing(
     cursorY,
     ensureSpace
 );
+
+
+
    // ---------- Transfers ----------
 
 const transferResult =
@@ -2113,15 +2462,28 @@ cursorY =
         pdf,
         transferResult.remainingLines,
         0,
-        15,
+        transferResult.textX,   // use returned indent
         transferResult.cursorY
     );
-
+    
 }
+
+
 
 cursorY += 4;
 
+
+cursorY = drawCostSummaryCompact(
+    pdf,
+    quoteData,
+    cursorY,
+    ensureSpace
+);
+
+
+
 return cursorY;
+
 }
 
 

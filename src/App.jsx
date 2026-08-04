@@ -1,3 +1,5 @@
+
+
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebase";
@@ -9,7 +11,7 @@ export default function App() {
   const [user, setUser] = useState(null);
 const [loading, setLoading] = useState(true);
 
-const LOGIN_ENABLED = true;
+
 
 useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, (currentUser) => {

@@ -1,3 +1,4 @@
+
 import {
   PAGE,
   COLORS,
@@ -208,10 +209,13 @@ export function buildWrappedDescriptionLines(pdf, text) {
   pdf.setFont("times", "italic");
   pdf.setFontSize(FONT.body);
 
+  const DESCRIPTION_INSET = 4;
+
   const maxWidth =
     PAGE.width -
     PAGE.marginLeft -
-    PAGE.marginRight;
+    PAGE.marginRight -
+    (DESCRIPTION_INSET * 2);
 
   const words = String(text || "").split(/\s+/);
 
@@ -254,6 +258,81 @@ export function buildWrappedDescriptionLines(pdf, text) {
 
 }
 
+export function buildWrappedPolicyLines(pdf, text) {
+
+    pdf.setFont("times", "italic");
+    pdf.setFontSize(FONT.body);
+
+    const DESCRIPTION_INSET = 4;
+
+    const maxWidth =
+        PAGE.width -
+        PAGE.marginLeft -
+        PAGE.marginRight -
+        (DESCRIPTION_INSET * 2);
+
+    const paragraphs =
+        String(text || "").split(/\r?\n/);
+
+    const allLines = [];
+
+    paragraphs.forEach((paragraph, paragraphIndex) => {
+
+    const words = paragraph.split(/\s+/);
+
+    let line = "";
+
+    words.forEach((word) => {
+
+        const test =
+            line === ""
+                ? word
+                : line + " " + word;
+
+        if (pdf.getTextWidth(test) <= maxWidth) {
+
+            line = test;
+
+        } else {
+
+            if (line !== "") {
+
+                allLines.push(line);
+
+            }
+
+            line = word;
+
+        }
+
+    });
+
+    if (line !== "") {
+
+        allLines.push(line);
+
+    }
+
+    // Preserve Enter ONLY between paragraphs
+    if (paragraphIndex < paragraphs.length - 1) {
+
+        allLines.push(null);
+
+    }
+
+});
+
+    return {
+
+        lines: allLines,
+
+        lineHeight: 4.3
+
+    };
+
+}
+
+export const DESCRIPTION_INSET = 4;
 
 export function measureDescriptionPreview(pdf, text) {
 
@@ -355,7 +434,8 @@ export function drawWrappedLines(
   startIndex,
    startX,
   cursorY
-) {
+) 
+{
 
    lines =
     Array.isArray(lines)
@@ -410,21 +490,40 @@ if (lines.length === 0) {
     // Draw exactly the lines that fit
     for (let j = 0; j < fitCount; j++) {
 
-      pdf.text(
-    lines[index],
-    startX,
-    cursorY
-);
+    // Blank line marker
+    if (lines[index] === null) {
 
-      cursorY += lineHeight;
+    cursorY += 1;   // was: lineHeight (4.3)
 
-      index++;
+    index++;
 
-    }
+    continue;
+
+}
+
+    pdf.text(
+        lines[index],
+        startX,
+        cursorY
+    );
+
+    cursorY += lineHeight;
+
+    index++;
+
+}
 
     // More lines remain?
     if (index < lines.length) {
 
+      console.log(
+    "drawWrappedLines page break",
+    {
+        index,
+        total: lines.length,
+        cursorY
+    }
+);
       pdf.addPage();
 
       cursorY = PAGE.marginTop;
@@ -436,6 +535,225 @@ if (lines.length === 0) {
   pdf.setFont("times", "normal");
 
   return cursorY + 2;
+
+}
+
+export function buildHangingLines(
+    pdf,
+    text,
+    valueX,
+    continuationX
+) {
+
+    text = (text || "").trim();
+
+    if (!text) {
+        return [];
+    }
+
+    pdf.setFont("times", "normal");
+    pdf.setFontSize(FONT.body);
+
+    const words = text.split(/\s+/);
+
+    const firstWords = [];
+    let firstLine = "";
+
+    const firstWidth =
+        PAGE.width -
+        PAGE.marginRight -
+        valueX;
+
+    for (const word of words) {
+
+        const candidate =
+            firstWords.length
+                ? firstWords.join(" ") + " " + word
+                : word;
+
+        if (
+            pdf.getTextWidth(candidate) <= firstWidth
+        ) {
+
+            firstWords.push(word);
+            firstLine = candidate;
+
+        } else {
+
+            break;
+
+        }
+
+    }
+
+    const remainingWords =
+        words.slice(firstWords.length);
+
+    if (!remainingWords.length) {
+        return [firstLine];
+    }
+
+    const remaining =
+        pdf.splitTextToSize(
+            remainingWords.join(" "),
+            PAGE.width -
+                PAGE.marginRight -
+                continuationX
+        );
+
+    return [
+        firstLine,
+        ...remaining
+    ];
+
+}
+
+export function drawHangingLines(
+    pdf,
+    label,
+    lines,
+    labelX,
+    valueX,
+    cursorY
+) {
+
+    const wrapped =
+        Array.isArray(lines)
+            ? lines
+            : [String(lines || "-")];
+
+    pdf.setFont("times", "bold");
+    pdf.setFontSize(10);
+
+    pdf.text(
+        label,
+        labelX,
+        cursorY
+    );
+
+    pdf.setFont("times", "normal");
+
+    if (wrapped.length === 0) {
+        return cursorY + 2;
+    }
+
+    // First line beside label
+    pdf.text(
+        wrapped[0],
+        valueX,
+        cursorY
+    );
+
+    cursorY += 5;
+
+    // Remaining lines start from label column
+    if (wrapped.length > 1) {
+
+        cursorY = drawWrappedLines(
+            pdf,
+            wrapped.slice(1),
+            0,
+            labelX,
+            cursorY
+        );
+
+    }
+
+    return cursorY + 2;
+
+}
+
+export function drawHangingParagraph(
+    pdf,
+    text,
+    valueX,
+    continuationX,
+    cursorY
+)
+{
+
+    text = (text || "").trim();
+
+    console.log("drawHangingParagraph START", {
+    cursorY,
+    preview: text.substring(0, 25)
+});
+
+    if (!text) {
+        return cursorY;
+    }
+
+    const words = text.split(/\s+/);
+
+    const firstWords = [];
+    let firstLine = "";
+
+    // Maximum width available beside the label
+    const firstWidth =
+        PAGE.width -
+        PAGE.marginRight -
+        valueX;
+
+    // Find the largest first line that fits
+    for (const word of words) {
+
+        const candidate =
+            firstWords.length
+                ? firstWords.join(" ") + " " + word
+                : word;
+
+        if (
+            pdf.getTextWidth(candidate) <= firstWidth
+        ) {
+
+            firstWords.push(word);
+            firstLine = candidate;
+
+        } else {
+
+            break;
+
+        }
+
+    }
+
+    // Remaining words
+    const remainingWords =
+        words.slice(firstWords.length);
+
+    // Draw first line
+    pdf.text(
+        firstLine,
+        valueX,
+        cursorY
+    );
+
+    cursorY += 5;
+
+    if (remainingWords.length) {
+
+        const remainingText =
+            remainingWords.join(" ");
+
+        const wrapped =
+            pdf.splitTextToSize(
+                remainingText,
+                PAGE.width -
+                PAGE.marginRight -
+                continuationX
+            );
+
+        cursorY = drawWrappedLines(
+            pdf,
+            wrapped,
+            0,
+            continuationX,
+            cursorY
+        );
+
+    }
+
+    return cursorY + 2;
 
 }
 
@@ -560,6 +878,8 @@ pdf.text(
   return y + 10;
 }
 
+const ROW_TEXT_Y_OFFSET = 0.8;
+
 export function drawGreyCostRowCompact(pdf, label, value, y) {
 
   pdf.setFillColor(238,241,244);
@@ -573,20 +893,36 @@ export function drawGreyCostRowCompact(pdf, label, value, y) {
   );
 
   pdf.setFont("times","bold");
-  pdf.setFontSize(9);
+  pdf.setFontSize(10);
 
   const colonX = PAGE.marginLeft + 94;
   const valueX = PAGE.marginLeft + 99;
 
-  pdf.text(label, PAGE.marginLeft + 3, y);
+  const LABEL_X =
+    PAGE.marginLeft + RIBBON.leftPadding;
 
-  pdf.text(":", colonX, y);
+pdf.text(
+    label,
+    LABEL_X,
+    y + ROW_TEXT_Y_OFFSET
+);
 
-  pdf.text(value, valueX, y);
+  pdf.text(
+    ":",
+    colonX,
+    y + ROW_TEXT_Y_OFFSET
+);
+  pdf.text(
+    value,
+    valueX,
+    y + ROW_TEXT_Y_OFFSET
+);
 
   return y + 7;
 
 }
+
+
 export function drawBlueCostRowCompact(pdf, label, value, y) {
 
   pdf.setFillColor(220,238,255);
@@ -600,17 +936,241 @@ export function drawBlueCostRowCompact(pdf, label, value, y) {
   );
 
   pdf.setFont("times","bold");
-  pdf.setFontSize(9);
+  pdf.setFontSize(11);
 
   const colonX = PAGE.marginLeft + 94;
   const valueX = PAGE.marginLeft + 99;
 
-  pdf.text(label, PAGE.marginLeft + 3, y);
+  const LABEL_X =
+    PAGE.marginLeft + RIBBON.leftPadding;
 
-  pdf.text(":", colonX, y);
+pdf.text(
+    label,
+    LABEL_X,
+    y + ROW_TEXT_Y_OFFSET
+);
 
-  pdf.text(value, valueX, y);
+  pdf.text(
+    ":",
+    colonX,
+    y + ROW_TEXT_Y_OFFSET
+);
+
+  pdf.text(
+    value,
+    valueX,
+    y + ROW_TEXT_Y_OFFSET
+);
 
   return y + 7;
+
+}
+
+export function sanitizePdfText(text) {
+
+  return String(text || "")
+
+    // Replace non-breaking spaces
+    .replace(/\u00A0/g, " ")
+
+    // Remove zero-width Unicode characters
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+
+    // Convert line breaks to spaces
+    .replace(/\r?\n/g, " ")
+
+    // Replace Rupee symbol
+    .replace(/₹/g, "Rs. ")
+
+    // Collapse multiple spaces
+    .replace(/\s+/g, " ")
+
+    .trim();
+
+}
+
+export function drawCalloutBox(
+    pdf,
+    label,
+    text,
+    cursorY
+) {
+
+    text = sanitizePdfText(text);
+   
+
+    const left = PAGE.marginLeft;
+
+    const width =
+        PAGE.width -
+        PAGE.marginLeft -
+        PAGE.marginRight;
+
+    
+const lineHeight = 4.3;
+
+// Horizontal padding
+
+// Vertical padding
+
+
+
+
+    // ---------- wrap text ----------
+
+   
+
+    const LABEL_GAP = 3;
+
+     pdf.setFont("times", "bold");
+     pdf.setFontSize(10);
+
+const labelWidth =
+    pdf.getTextWidth(label + ":");
+
+const textWidth =
+    width -
+    labelWidth -
+    LABEL_GAP;
+
+pdf.setFont("times", "normal");
+pdf.setFontSize(10);
+
+    const wrapped =
+        pdf.splitTextToSize(
+            text,
+            textWidth
+        );
+
+   const contentHeight =
+    wrapped.length * lineHeight;
+
+    // ---------- label & text ----------
+
+// Draw label first to measure its width
+
+pdf.setFont("times", "bold");
+pdf.setFontSize(10);
+
+const labelText = label + ":";
+
+const NOTE_INDENT = 4;   // mm
+
+const labelX =
+    left + NOTE_INDENT;
+
+const textX =
+    labelX +
+    labelWidth +
+    LABEL_GAP;
+
+// -------- Vertical positioning --------
+
+const baselineY =
+    cursorY + 4.5;
+
+
+// -------- Draw label --------
+
+pdf.setFont("times","bold");
+pdf.setTextColor(190,0,0);
+
+pdf.text(
+    labelText,
+    labelX,
+    baselineY
+);
+
+// -------- Draw note text --------
+
+pdf.setFont("times","normal");
+pdf.setTextColor(0,0,0);
+
+pdf.text(
+    wrapped,
+    textX,
+    baselineY
+);
+
+    return cursorY +
+    contentHeight +
+    6;
+
+}
+
+export function drawBillingCard(
+    pdf,
+    title,
+    x,
+    y,
+    width,
+    height
+) {
+
+    const radius = 3;
+
+    // ==========================
+    // BODY BACKGROUND (no border)
+    // ==========================
+
+    pdf.setFillColor(248,250,252);
+
+    pdf.roundedRect(
+        x,
+        y,
+        width,
+        height,
+        radius,
+        radius,
+        "F"
+    );
+
+    // ==========================
+    // HEADER BACKGROUND
+    // ==========================
+
+    pdf.setFillColor(...COLORS.ribbon);
+
+    pdf.roundedRect(
+    x,
+    y,
+    width,
+    RIBBON.height + radius,
+    radius,
+    radius,
+    "F"
+);
+
+    // ==========================
+    // BORDER LAST
+    // ==========================
+
+    pdf.setDrawColor(220,226,235);
+
+    pdf.roundedRect(
+        x,
+        y,
+        width,
+        height,
+        radius,
+        radius,
+        "S"
+    );
+
+    // ==========================
+    // TITLE
+    // ==========================
+
+    pdf.setFont("times","bold");
+    pdf.setFontSize(RIBBON.titleFont);
+    pdf.setTextColor(0,0,0);
+
+    const TITLE_Y_OFFSET = 1.5;
+
+    pdf.text(
+    title,
+    x + RIBBON.leftPadding,
+    y + RIBBON.topPadding + TITLE_Y_OFFSET
+);
 
 }

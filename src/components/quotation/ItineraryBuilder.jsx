@@ -41,6 +41,9 @@ const [openTransferSelector, setOpenTransferSelector] =
    customCity: "", 
   description: "",
 
+  noteEnabled: false,
+  noteText: "",
+
   hotelSource: "database",
 
   hotel: "",
@@ -319,6 +322,70 @@ const sightseeingOptions =
               }}
             />
  
+ <label
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "12px"
+  }}
+>
+  <input
+    type="checkbox"
+    checked={day.noteEnabled}
+    onChange={(e) => {
+
+      const updated = [
+        ...(itineraryData.itinerary || [])
+      ];
+
+      updated[index].noteEnabled =
+        e.target.checked;
+
+      setItineraryData({
+        ...itineraryData,
+        itinerary: updated
+      });
+
+    }}
+  />
+
+  <span>Show Note</span>
+</label>
+
+{day.noteEnabled && (
+
+  <textarea
+    placeholder="Enter note for this day..."
+
+    value={day.noteText}
+
+    onChange={(e) => {
+
+      const updated = [
+        ...(itineraryData.itinerary || [])
+      ];
+
+      updated[index].noteText =
+        e.target.value;
+
+      setItineraryData({
+        ...itineraryData,
+        itinerary: updated
+      });
+
+    }}
+
+    rows={4}
+
+    style={{
+      width: "100%",
+      padding: "10px",
+      marginTop: "8px"
+    }}
+  />
+
+)}
 
 {/* DAY CITY */}
 

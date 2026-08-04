@@ -1,3 +1,5 @@
+
+
 import { useState } from "react";
 import hotels from "../../data/hotels.json";
 import HotelSelector from "./HotelSelector";
@@ -9,6 +11,8 @@ import ItineraryBuilder from "./ItineraryBuilder";
 import InclusionSelector from "./InclusionSelector";
 import ExclusionSelector from "./ExclusionSelector";
 import CostCalculator from "./CostCalculator";
+import CancellationPolicyEditor from "./CancellationPolicyEditor";
+
 
 export default function QuoteForm(props) {
   console.log("QuoteForm props =", props);
@@ -29,7 +33,147 @@ const quoteData = {
     ...(itineraryData || {})
   };
 
+// ===================================
+// Cancellation Policy Accordion
+// ===================================
+
+const [expandedPolicyId, setExpandedPolicyId] =
+  useState(1);
+
+  const [deletePolicyId, setDeletePolicyId] =
+    useState(null);
+
+  function handleAddPolicy() {
+
+  const newPolicy = {
+
+    id: Date.now(),
+
+    title: "",
+
+    text: "",
+
+    isCustom: true
+
+  };
+
+  const updatedPolicies = [
+
+    ...(commonData.cancellationRefundPolicy || []),
+
+    newPolicy
+
+  ];
+
+  setCommonData({
+
+    ...commonData,
+
+    cancellationRefundPolicy: updatedPolicies
+
+  });
+
+  // Automatically open the newly added policy
+  setExpandedPolicyId(newPolicy.id);
+
+}
+
+function handleDeletePolicy(policyId) {
+
+  const updatedPolicies =
+    commonData.cancellationRefundPolicy.filter(
+      policy => policy.id !== policyId
+    );
+
+  setCommonData({
+
+    ...commonData,
+
+    cancellationRefundPolicy:
+      updatedPolicies
+
+  });
+
+  // If the deleted policy was open,
+  // collapse the accordion.
+
+  if (expandedPolicyId === policyId) {
+
+    setExpandedPolicyId(null);
+
+  }
+
+}
+
+function movePolicyUp(policyId) {
+
+  const policies = [
+    ...(commonData.cancellationRefundPolicy || [])
+  ];
+
+  const index =
+    policies.findIndex(
+      p => p.id === policyId
+    );
+
+  // Already first?
+  if (index <= 0) return;
+
+  // Swap with previous
+  [
+    policies[index - 1],
+    policies[index]
+  ] = [
+    policies[index],
+    policies[index - 1]
+  ];
+
+  setCommonData({
+
+    ...commonData,
+
+    cancellationRefundPolicy:
+      policies
+
+  });
+
+}
+
+function movePolicyDown(policyId) {
+
+  const policies = [
+    ...(commonData.cancellationRefundPolicy || [])
+  ];
+
+  const index =
+    policies.findIndex(
+      p => p.id === policyId
+    );
+
+  // Already last?
+  if (index === policies.length - 1) return;
+
+  // Swap with next
+  [
+    policies[index],
+    policies[index + 1]
+  ] = [
+    policies[index + 1],
+    policies[index]
+  ];
+
+  setCommonData({
+
+    ...commonData,
+
+    cancellationRefundPolicy:
+      policies
+
+  });
+
+}
   
+
   const destinationHotels =
   hotels?.[commonData?.destination] || {};
 
@@ -446,9 +590,13 @@ onChange={(e) =>
      </div>
 
 </div>
-      {/* HOTEL CATEGORY */}
-     {commonData?.quoteMode === "package" && (
-      <>
+      
+
+      {(
+    commonData?.quoteMode === "package" ||
+    commonData?.quoteMode === "itinerary"
+) && (
+  <>
     <input
   type="text"
   placeholder="Accommodation"
@@ -462,7 +610,9 @@ onChange={(e) =>
   style={inputStyle}
 />
 
-<SightseeingSelector
+{commonData?.quoteMode === "package" && (
+  <>    
+    <SightseeingSelector
   commonData={commonData}
 
   packageData={packageData}
@@ -492,6 +642,9 @@ onChange={(e) =>
 />
 </>
 )}
+  </>
+)}
+
 {(
   commonData?.quoteMode === "package" ||
   commonData?.showInclusionExclusion
@@ -518,6 +671,22 @@ onChange={(e) =>
     setItineraryData={setItineraryData}
   />
 )}
+
+<h3
+  style={{
+    marginTop: "20px",
+    marginBottom: "12px"
+  }}
+>
+  Cancellation & Refund Policy
+</h3>
+
+<CancellationPolicyEditor
+    commonData={commonData}
+    setCommonData={setCommonData}
+/>
+
+
 
 <hr style={{ margin: "20px 0" }} />
 

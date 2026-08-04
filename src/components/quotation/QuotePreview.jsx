@@ -119,6 +119,12 @@ pdf.save("quotation.pdf");
 
  const downloadPDF = async () => {
 
+console.log({
+    subtotal,
+    gstAmount,
+    grandTotal
+});
+
   await generateQuotationPdf({
 
     ...quoteData,
@@ -610,8 +616,6 @@ if (
 });
 
 }
-
-// ---------- General Package ----------
 
 else {
 
@@ -1617,8 +1621,7 @@ const markupAmount =
     Number(commonData?.markupPercent || 0)
   ) / 100;
 
-const subtotal =
-  packageCost + markupAmount;
+const subtotal = packageCost;
 
 const gstAmount =
   commonData?.applyGst
@@ -2522,7 +2525,32 @@ return (
   </div>
 )}
 
+{day.noteEnabled && day.noteText?.trim() && (
+    <div
+        style={{
+            marginTop: "8px",
+            marginBottom: "10px",
+            lineHeight: "1.6",
+        }}
+    >
+        <span
+            style={{
+                color: "#DC2626",
+                fontWeight: 700,
+            }}
+        >
+            Note:
+        </span>{" "}
 
+        <span
+            style={{
+                color: "#374151",
+            }}
+        >
+            {day.noteText}
+        </span>
+    </div>
+)}
 
 {(
   day.customCity ||
@@ -2810,6 +2838,49 @@ quoteData.vehicleCosts?.length > 0 ? (
   </tbody>
 </table>
 </div>
+
+{commonData?.cancellationRefundPolicy?.length > 0 && (
+  <div style={{ marginTop: 20 }}>
+    <h3
+      style={{
+        fontSize: "16px",
+        fontWeight: 700,
+        marginBottom: "10px",
+      }}
+    >
+      Cancellation & Refund Policy
+    </h3>
+
+    {commonData.cancellationRefundPolicy.map((policy) => (
+      <div
+        key={policy.id}
+        style={{
+          marginBottom: "12px",
+          padding: "12px",
+          border: "1px solid #E5E7EB",
+          borderRadius: "8px",
+          background: "#F8FAFC",
+        }}
+      >
+        <div style={{ fontWeight: 600 }}>
+          {policy.title}
+        </div>
+
+        {policy.text && (
+          <div
+            style={{
+              marginTop: "6px",
+              whiteSpace: "pre-wrap",
+              lineHeight: 1.6,
+            }}
+          >
+            {policy.text}
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+)}
 
       {/* IMPORTANT NOTES & TERMS */}
 

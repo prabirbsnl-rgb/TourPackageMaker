@@ -49,7 +49,40 @@ gstPercent: 5,
       "Hotels may change without notice.",
       "Booking confirmation against payment.",
       "Cancellation charges apply."
-    ]
+    ],
+
+    cancellationRefundPolicy: [
+  {
+    id: 1,
+    title: "Booking Confirmation",
+    text: ""
+  },
+  {
+    id: 2,
+    title: "Cancellation Request",
+    text: ""
+  },
+  {
+    id: 3,
+    title: "Standard Cancellation Charges",
+    text: ""
+  },
+  {
+    id: 4,
+    title: "Refunds",
+    text: ""
+  },
+  {
+    id: 5,
+    title: "Force Majeure",
+    text: ""
+  },
+  {
+    id: 6,
+    title: "Refund Method",
+    text: ""
+  }
+]
   });
 
   const [packageData, setPackageData] = useState({
