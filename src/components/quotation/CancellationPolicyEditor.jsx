@@ -7,10 +7,11 @@ import PolicyCard from "./PolicyCard";
 export default function CancellationPolicyEditor({
 
     commonData,
+
     setCommonData
 
 }) {
-
+    
     const [expandedPolicyId, setExpandedPolicyId] =
         useState(1);
 
@@ -261,62 +262,48 @@ function deletePolicy(policyId) {
 
 ))}
         <div
-            style={{
-                marginTop: "18px",
-                textAlign: "right"
-            }}
-        >
-
-            <button
-
-    type="button"
-
-    onClick={addCustomPolicy}
-
     style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-
-        gap: "8px",
-
-        width: "100%",
-
-        padding: "12px",
-
-        border: "1px dashed #94A3B8",
-
-        borderRadius: "10px",
-
-        background: "#F8FAFC",
-
-        color: "#2563EB",
-
-        fontWeight: 600,
-
-        fontSize: "14px",
-
-        cursor: "pointer",
-
-        transition: "all .2s ease"
+        marginTop: "18px"
     }}
 >
 
-    <span
+    <button
+        type="button"
+        onClick={addCustomPolicy}
         style={{
-            fontSize: "18px",
-            lineHeight: 1
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            width: "100%",
+            padding: "12px",
+            border: "1px dashed #94A3B8",
+            borderRadius: "10px",
+            background: "#F8FAFC",
+            color: "#2563EB",
+            fontWeight: 600,
+            fontSize: "14px",
+            cursor: "pointer"
         }}
     >
-        ＋
-    </span>
+        <span
+            style={{
+                fontSize: "18px",
+                lineHeight: 1
+            }}
+        >
+            ＋
+        </span>
 
-    Add Custom Policy
+        Add Custom Policy
 
-</button>
-        </div>
+    </button>
+
+    
+</div>
 
     </> 
 )}
 </div>
 )};
+

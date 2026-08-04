@@ -4,12 +4,14 @@ import { useState } from "react";
 import QuoteForm from "../components/quotation/QuoteForm";
 import QuotePreview from "../components/quotation/QuotePreview";
 
+import { defaultCancellationPolicies } from "../data/defaultCancellationPolicies";
+
 export default function DMCQuotationGenerator() {
 
     const [commonData, setCommonData] = useState({
    quoteMode: "package",
    showInclusionExclusion: false,
-    quotationNo: `QTN-${Date.now()}`,
+    quotationNo: `ORB-${Date.now()}`,
 
     clientName: "",
     mobile: "",
@@ -51,38 +53,10 @@ gstPercent: 5,
       "Cancellation charges apply."
     ],
 
-    cancellationRefundPolicy: [
-  {
-    id: 1,
-    title: "Booking Confirmation",
-    text: ""
-  },
-  {
-    id: 2,
-    title: "Cancellation Request",
-    text: ""
-  },
-  {
-    id: 3,
-    title: "Standard Cancellation Charges",
-    text: ""
-  },
-  {
-    id: 4,
-    title: "Refunds",
-    text: ""
-  },
-  {
-    id: 5,
-    title: "Force Majeure",
-    text: ""
-  },
-  {
-    id: 6,
-    title: "Refund Method",
-    text: ""
-  }
-]
+    cancellationRefundPolicy: defaultCancellationPolicies.map(policy => ({
+    ...policy
+})),
+
   });
 
   const [packageData, setPackageData] = useState({

@@ -1349,10 +1349,10 @@ if (measureOnly) {
     );
 
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(10);
+    pdf.setFontSize(9);
 
     pdf.text(
-        `• ${title}`,
+        `${title}:`,
         PAGE.marginLeft,
         cursorY
     );
@@ -1367,9 +1367,7 @@ if (measureOnly) {
         cursorY
     );
 
-    
-console.log("After policy:", title, cursorY);
-    cursorY += 6;
+    cursorY += 4;
 
     return cursorY;
 }
@@ -2330,7 +2328,7 @@ const firstTwo =
 
 if (firstTwo.length > 0) {
 
-    pdf.setFont("times", "italic");
+    pdf.setFont("times", "normal");
     pdf.setFontSize(10);
 
     firstTwo.forEach((line) => {

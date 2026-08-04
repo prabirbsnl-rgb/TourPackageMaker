@@ -1729,7 +1729,7 @@ const shortQuotationNo = (qtn) => {
 
   const digits = qtn.replace(/\D/g, "");
 
-  return `QTN-${digits.slice(-6)}`;
+  return `ORB-${digits.slice(-6)}`;
 };
 
 
@@ -2882,47 +2882,14 @@ quoteData.vehicleCosts?.length > 0 ? (
   </div>
 )}
 
-      {/* IMPORTANT NOTES & TERMS */}
+     
 
 <div
   style={{
     marginTop: "10px",
   }}
 >
-  {sectionHeading("📌 IMPORTANT NOTES & TERMS")}
-
-  {quoteData.specialNotes?.trim() && (
-  <p
-    style={{
-      lineHeight: "1.7",
-      marginBottom: "10px",
-       fontSize: "16px",
-      textAlign: "left"
-          }}
-  >
-    <strong>Special Notes:</strong>{" "}
-    {quoteData.specialNotes
-      .split(",")
-      .map(note => note.trim())
-      .filter(Boolean)
-      .join(" • ")}
-  </p>
-)}
-
-  <p
-  style={{
-    lineHeight: "1.7",
-    marginTop: "6px",
-    marginBottom: 0,
-    marginLeft: 0,
-    textAlign: "left",
-    fontSize: "15px",
-    whiteSpace: "nowrap",
-  }}
->
-  {(quoteData.terms || []).join(" • ")}
-</p>
-</div>
+  </div>
 
 {/* FOOTER */}
 

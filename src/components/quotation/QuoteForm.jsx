@@ -43,6 +43,8 @@ const [expandedPolicyId, setExpandedPolicyId] =
   const [deletePolicyId, setDeletePolicyId] =
     useState(null);
 
+    
+
   function handleAddPolicy() {
 
   const newPolicy = {
@@ -690,25 +692,6 @@ onChange={(e) =>
 
 <hr style={{ margin: "20px 0" }} />
 
-<h3>📄 Special Notes (Optional)</h3>
-
-<textarea
-  placeholder="Enter notes separated by commas. Example: Honeymoon Cake Included, Early Check-in Requested, Rooms on Higher Floor"
-  value={commonData?.specialNotes || ""}
-  onChange={(e) =>
-    setCommonData({
-      ...commonData,
-      specialNotes: e.target.value,
-    })
-  }
-  rows={3}
-  style={{
-    width: "100%",
-    padding: "10px",
-    borderRadius: "8px",
-    resize: "vertical",
-  }}
-/>
 
       {/* COSTING */}
 <h3>💰Costing</h3>

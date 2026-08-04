@@ -206,7 +206,7 @@ export function drawSummaryRow2(
 
 export function buildWrappedDescriptionLines(pdf, text) {
 
-  pdf.setFont("times", "italic");
+  pdf.setFont("times", "normal");
   pdf.setFontSize(FONT.body);
 
   const DESCRIPTION_INSET = 4;
@@ -260,7 +260,7 @@ export function buildWrappedDescriptionLines(pdf, text) {
 
 export function buildWrappedPolicyLines(pdf, text) {
 
-    pdf.setFont("times", "italic");
+    pdf.setFont("times", "normal");
     pdf.setFontSize(FONT.body);
 
     const DESCRIPTION_INSET = 4;
@@ -447,7 +447,7 @@ if (lines.length === 0) {
 }
 
 
-  pdf.setFont("times", "italic");
+  pdf.setFont("times", "normal");
   pdf.setFontSize(FONT.body);
 
   const lineHeight = 4.3;
@@ -534,7 +534,7 @@ if (lines.length === 0) {
 
   pdf.setFont("times", "normal");
 
-  return cursorY + 2;
+  return cursorY;
 
 }
 
