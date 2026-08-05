@@ -11,7 +11,7 @@ export default function App() {
   const [user, setUser] = useState(null);
 const [loading, setLoading] = useState(true);
 
-const LOGIN_ENABLED = false;
+const LOGIN_ENABLED = true;
 
 useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, (currentUser) => {

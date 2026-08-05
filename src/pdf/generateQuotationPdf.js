@@ -112,6 +112,9 @@ export async function generateQuotationPdf(quoteData) {
    let currentPage = 1;
 
   const logoImage = await loadImage(orbitzLogo);
+
+  
+
   const webImage = await loadImage(webIcon);
 
 const phoneImage = await loadImage(phoneIcon);
@@ -119,6 +122,16 @@ const phoneImage = await loadImage(phoneIcon);
 const locationImage = await loadImage(locationIcon);
 
   let cursorY = PAGE.marginTop;
+
+
+  const addBrandedPage = () => {
+
+    pdf.addPage();
+
+
+    return PAGE.marginTop + 12;
+
+};
 
 const ensureSpace = (
   currentCursorY,
@@ -132,15 +145,14 @@ const ensureSpace = (
     PAGE.height - PAGE.marginBottom
   ) {
 
-    pdf.addPage();
-
-    return PAGE.marginTop;
-
+   return addBrandedPage();
   }
 
   return currentCursorY;
 
 };
+
+
 
   // ---------- COMMON HEADER ----------
   cursorY = await drawCommonHeader(
@@ -181,9 +193,7 @@ const remainingSpace =
 
 if (remainingSpace < MIN_POLICY_SECTION_START_SPACE) {
 
-    pdf.addPage();
-
-    cursorY = PAGE.marginTop;
+   cursorY = addBrandedPage();
 
 }
 
@@ -202,10 +212,77 @@ cursorY = drawCancellationRefundPolicy(
         )
 );
 
+function drawInternalPageHeader(
+    pdf,
+    logoImage
+) {
+
+    // Logo
+    pdf.addImage(
+        logoImage,
+        "PNG",
+        PAGE.marginLeft,
+        4,
+        35,
+        11
+    );
+
+    // Divider
+    pdf.setDrawColor(190, 200, 215);
+    pdf.setLineWidth(0.10);
+
+    pdf.line(
+        PAGE.marginLeft,
+        17,
+        PAGE.width - PAGE.marginRight,
+        17
+    );
+
+}
+
+// =====================================
+// PAGE NUMBERING
+// =====================================
+
+const totalPages = pdf.getNumberOfPages();
+
+for (let page = 1; page <= totalPages; page++) {
+
+    pdf.setPage(page);
+
+    
+
+    // Skip the cover page
+if (page > 1) {
+
+    drawInternalPageHeader(
+        pdf,
+        logoImage
+    );
+
+}
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.setTextColor(40, 40, 40);
+    pdf.text(
+        `Page ${page} of ${totalPages}`,
+        PAGE.width - PAGE.marginRight,
+        PAGE.height - 8,
+        {
+            align: "right"
+        }
+    );
+
+}
+
 pdf.save("Quotation.pdf");
+
 }
 
 import { COMPANY } from "./headerData";
+
+
 
 async function drawCommonHeader(
   pdf,
@@ -326,59 +403,8 @@ async function drawCommonHeader(
 
 }
 
-async function drawContinuationHeader(
-  pdf,
-  pageNumber,
-  logoImage
-) {
 
-  let y = PAGE.marginTop;
 
-  // Logo
-  pdf.addImage(
-    logoImage,
-    "PNG",
-    PAGE.marginLeft,
-    y,
-    18,
-    5
-  );
-
-  // Company Name
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(11);
-  pdf.setTextColor(17,24,39);
-
-  pdf.text(
-    "Orbitz Holidays",
-    PAGE.marginLeft + 22,
-    y + 4
-  );
-
-  // Page Number
-  pdf.text(
-    `Page ${pageNumber}`,
-    PAGE.width - PAGE.marginRight,
-    y + 4,
-    { align: "right" }
-  );
-
-  // Blue divider
-  y += 8;
-
-  pdf.setDrawColor(37,99,235);
-  pdf.setLineWidth(0.5);
-
-  pdf.line(
-    PAGE.marginLeft,
-    y,
-    PAGE.width - PAGE.marginRight,
-    y
-  );
-
-  return y + 6;
-
-}
 
 function drawTourSummary(
   pdf,
@@ -1432,11 +1458,10 @@ if (isLast) {
 
     if (remaining < policyHeight + footerHeight) {
 
-        pdf.addPage();
+    pdf.addPage();
 
-        cursorY = PAGE.marginTop;
-
-    }
+cursorY = PAGE.marginTop + 12;
+}
 
 }
     

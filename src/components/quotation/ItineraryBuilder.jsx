@@ -7,6 +7,8 @@ import hotels from "../../data/hotels.json";
 
 import { sightseeing } from "../../data/sightseeing";
 
+import { defaultItineraryDay } from "../../data/defaultItineraryDay";
+
 
 
 export default function ItineraryBuilder({
@@ -27,59 +29,21 @@ const [openTransferSelector, setOpenTransferSelector] =
 
   const addDay = () => {
 
+console.log("====== ADD DAY CLICKED ======");
+
   const nextDay =
   (itineraryData.itinerary?.length || 0) + 1;
+
+console.log("Current Length:", itineraryData.itinerary.length);
+    console.log("Next Day:", nextDay);
 
   setItineraryData({
     ...itineraryData,
     itinerary: [
   ...(itineraryData.itinerary || []),
       {
-  day: nextDay,
-  title: "",
-   city: "", 
-   customCity: "", 
-  description: "",
-
-  noteEnabled: false,
-  noteText: "",
-
-  hotelSource: "database",
-
-  hotel: "",
-  customHotel: "",
-
-  hotelCategory: "",
-  roomType: "",
-  mealPlan: "",
-
-
-  sightseeing: [],
-  customSightseeing: [],
-  customSightseeingInput: "",
-
-  sightseeingMode: "chips",
-  sightseeingText: "",
-
-  selectedSightseeing: [],
-
-  
-  meals: [],
-customMeals: [],
-customMealsInput: "",
-
-mealMode: "chips",
-mealText: "",
-
-  
-transfers: [],
-  customTransfers: [],
-  customTransfersInput: "",
-
-  transferMode: "chips",
-  transferText: "",
-
-  
+    ...defaultItineraryDay,
+    day: nextDay
 }
     ]
   });

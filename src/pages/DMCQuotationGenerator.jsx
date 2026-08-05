@@ -6,6 +6,10 @@ import QuotePreview from "../components/quotation/QuotePreview";
 
 import { defaultCancellationPolicies } from "../data/defaultCancellationPolicies";
 
+import { itineraryTemplates } from "../data/itineraryTemplates";
+
+import { defaultItineraryDay } from "../data/defaultItineraryDay";
+
 export default function DMCQuotationGenerator() {
 
     const [commonData, setCommonData] = useState({
@@ -125,8 +129,86 @@ gstPercent: 5,
 ]
   });
 
-  console.log("DMCQuotationGenerator");
-  console.log("commonData =", commonData);
+  const applyItineraryTemplate = (
+    tripData
+) => {
+
+  const {
+
+    destination,
+
+    totalNights,
+
+    totalDays
+
+} = tripData;
+
+  console.log("========== TEMPLATE ENGINE ==========");
+console.log("Destination:", destination);
+console.log("Nights:", totalNights);
+console.log("Days:", totalDays);
+
+const key = `${totalNights}N${totalDays}D`;
+
+console.log("Generated Key:", key);
+
+console.log(
+    "Template Exists:",
+    itineraryTemplates[destination]?.[key]
+);
+
+    
+
+    const template =
+        itineraryTemplates[destination]?.[key];
+
+    if (!template) return;
+
+// Don't overwrite an existing itinerary
+
+
+
+    setItineraryData(prev => ({
+
+        ...prev,
+
+        itinerary: template.map((templateDay, index) => {
+
+            const existing = {
+
+    ...defaultItineraryDay,
+
+    ...(prev.itinerary[index] || {})
+
+};
+
+            return {
+
+    ...existing,
+
+    day: index + 1,
+
+    title: templateDay.title,
+
+    description: templateDay.description,
+
+    mealMode: "text",
+
+    mealText: templateDay.meals,
+
+    ...(templateDay.showCity && {
+        city: templateDay.city
+    })
+
+};
+
+        })
+
+    }));
+
+};
+  
+
 
 return (
   <div
@@ -149,6 +231,8 @@ return (
 
       itineraryData={itineraryData}
       setItineraryData={setItineraryData}
+
+      applyItineraryTemplate={applyItineraryTemplate}
     />
 
     <QuotePreview

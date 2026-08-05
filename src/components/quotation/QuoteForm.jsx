@@ -14,6 +14,7 @@ import CostCalculator from "./CostCalculator";
 import CancellationPolicyEditor from "./CancellationPolicyEditor";
 
 
+
 export default function QuoteForm(props) {
   console.log("QuoteForm props =", props);
 
@@ -23,8 +24,9 @@ export default function QuoteForm(props) {
     packageData,
     setPackageData,
     itineraryData,
-    setItineraryData
-  } = props;
+    setItineraryData,
+    applyItineraryTemplate
+} = props;
 
 
 const quoteData = {
@@ -492,12 +494,16 @@ onChange={(e) =>
             Math.max(diffDays - 1, 0);
         }
 
-        setCommonData({
-          ...commonData,
-          travelTo,
-          totalDays,
-          totalNights
-        });
+        const updatedCommonData = {
+    ...commonData,
+    travelTo,
+    totalDays,
+    totalNights
+};
+
+setCommonData(updatedCommonData);
+
+applyItineraryTemplate(updatedCommonData);
 
       }}
       style={{
