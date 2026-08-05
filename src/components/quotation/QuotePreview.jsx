@@ -33,11 +33,14 @@ export default function QuotePreview(props) {
 
   console.log("QuotePreview props =", props);
 
-  const {
+ const {
     commonData,
     packageData,
-    itineraryData
-  } = props;
+    itineraryData,
+    handleSaveDraft,
+    handleOpenLastDraft,
+    handleOpenDraftLibrary
+} = props;
 
   if (!commonData) {
     return <div>commonData is undefined</div>;
@@ -2226,61 +2229,102 @@ const renderItinerarySections = () => (
 
 
 return (
-  
-  <div>
 
-    {/* DOWNLOAD BUTTONS */}
+  <div
+    style={{
+      maxWidth: "900px",
+      margin: "0 auto"
+    }}
+  >
+
+    {/* ACTION BUTTONS */}
+
+<div
+  style={{
+    display: "flex",
+    gap: "10px",
+    marginBottom: "20px",
+    flexWrap: "wrap",
+    alignItems: "center"
+  }}
+>
+
+  <button
+    onClick={handleOpenDraftLibrary}
+    style={{
+      background:"#6b7280",
+      color:"#fff",
+      border:"none",
+      padding:"12px 20px",
+      borderRadius:"8px",
+      cursor:"pointer",
+      fontWeight:"600",
+      minWidth:"160px"
+    }}
+  >
+    📂 Draft Library
+  </button>
+
+  <button
+    onClick={handleSaveDraft}
+    style={{
+      background:"#f59e0b",
+      color:"#fff",
+      border:"none",
+      padding:"12px 20px",
+      borderRadius:"8px",
+      cursor:"pointer",
+      fontWeight:"600",
+      minWidth:"160px"
+    }}
+  >
+    💾 Save Draft
+  </button>
+
+  <button
+    onClick={downloadPDF}
+    style={{
+      background:"#2563eb",
+      color:"#fff",
+      border:"none",
+      padding:"12px 20px",
+      borderRadius:"8px",
+      cursor:"pointer",
+      fontWeight:"600",
+      minWidth:"160px"
+    }}
+  >
+    📄 Download PDF
+  </button>
+
+  <button
+    onClick={downloadWord}
+    style={{
+      background:"#16a34a",
+      color:"#fff",
+      border:"none",
+      padding:"12px 20px",
+      borderRadius:"8px",
+      cursor:"pointer",
+      fontWeight:"600",
+      minWidth:"160px"
+    }}
+  >
+    📝 Download Word
+  </button>
+
+</div>
 
     <div
-      style={{
-        display: "flex",
-        gap: "10px",
-        marginBottom: "20px"
-      }}
-    >
-      <button
-        onClick={downloadPDF}
-        style={{
-          background:"#2563eb",
-          color:"#fff",
-          border:"none",
-          padding:"12px 20px",
-          borderRadius:"8px",
-          cursor:"pointer",
-          fontWeight:"600"
-        }}
-      >
-        📄 Download PDF
-      </button>
-
-      <button
-        onClick={downloadWord}
-        style={{
-          background:"#16a34a",
-          color:"#fff",
-          border:"none",
-          padding:"12px 20px",
-          borderRadius:"8px",
-          cursor:"pointer",
-          fontWeight:"600"
-        }}
-      >
-        📝 Download Word
-      </button>
-    </div>
-
-    <div
-      ref={quoteRef}
-      style={{
-        background:"#fff",
-        padding:"32px",
-        borderRadius:"16px",
-        marginTop:"20px",
-        maxWidth:"900px",
-        marginInline:"auto",
-        boxShadow:"0 4px 20px rgba(0,0,0,0.08)"
-      }}
-    >
+  ref={quoteRef}
+  style={{
+    background:"#fff",
+    padding:"32px",
+    borderRadius:"16px",
+    marginTop:"20px",
+    boxShadow:"0 4px 20px rgba(0,0,0,0.08)"
+  }}
+>
 
      {/* HEADER */}
 

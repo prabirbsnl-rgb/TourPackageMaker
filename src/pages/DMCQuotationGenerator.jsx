@@ -10,7 +10,23 @@ import { itineraryTemplates } from "../data/itineraryTemplates";
 
 import { defaultItineraryDay } from "../data/defaultItineraryDay";
 
+
+import {
+    saveDraft,
+    getLatestDraft,
+    getAllDrafts,
+    deleteDraft
+} from "../utils/quotationStorage";
+
+import DraftLibrary
+from "../components/quotation/DraftLibrary";
+
+
+
 export default function DMCQuotationGenerator() {
+
+  const [showDraftLibrary, setShowDraftLibrary] =
+    useState(false);
 
     const [commonData, setCommonData] = useState({
    quoteMode: "package",
@@ -129,6 +145,108 @@ gstPercent: 5,
 ]
   });
 
+  const handleSaveDraft = () => {
+
+    saveDraft({
+
+    quotationNo:
+    commonData.quotationNo,
+
+    displayQuotationNo:
+    `ORB-${commonData.quotationNo.replace("ORB-", "").slice(-6)}`,
+
+    destination:
+        commonData.customDestination?.trim()
+            || commonData.destination,
+
+    clientName:
+        commonData.clientName,
+
+    savedAt:
+        new Date().toISOString(),
+
+    status: "Draft",
+
+    commonData,
+
+    packageData,
+
+    itineraryData
+
+});
+
+    alert("Draft saved successfully.");
+
+};
+
+const handleOpenLastDraft = () => {
+
+    const draft =
+        getLatestDraft();
+
+    if (!draft) {
+
+        alert("No draft found.");
+
+        return;
+
+    }
+
+    setCommonData(
+        draft.commonData
+    );
+
+    setPackageData(
+        draft.packageData
+    );
+
+    setItineraryData(
+        draft.itineraryData
+    );
+
+    alert("Draft loaded successfully.");
+
+};
+
+const handleOpenDraftLibrary =
+    () => {
+
+    setShowDraftLibrary(true);
+
+};
+
+const handleOpenDraft = (draft) => {
+
+    setCommonData(
+        draft.commonData
+    );
+
+    setPackageData(
+        draft.packageData
+    );
+
+    setItineraryData(
+        draft.itineraryData
+    );
+
+    setShowDraftLibrary(false);
+
+};
+
+const handleDeleteDraft = (quotationNo) => {
+
+    deleteDraft(quotationNo);
+
+    setShowDraftLibrary(false);
+
+    setTimeout(() => {
+
+        setShowDraftLibrary(true);
+
+    }, 0);
+
+};
+
   const applyItineraryTemplate = (
     tripData
 ) => {
@@ -143,19 +261,10 @@ gstPercent: 5,
 
 } = tripData;
 
-  console.log("========== TEMPLATE ENGINE ==========");
-console.log("Destination:", destination);
-console.log("Nights:", totalNights);
-console.log("Days:", totalDays);
-
+  
 const key = `${totalNights}N${totalDays}D`;
 
-console.log("Generated Key:", key);
 
-console.log(
-    "Template Exists:",
-    itineraryTemplates[destination]?.[key]
-);
 
     
 
@@ -239,7 +348,20 @@ return (
       commonData={commonData}
       packageData={packageData}
       itineraryData={itineraryData}
+       handleSaveDraft={handleSaveDraft}
+       handleOpenLastDraft={handleOpenLastDraft}
+       handleOpenDraftLibrary={handleOpenDraftLibrary}
     />
+
+  <DraftLibrary
+    open={showDraftLibrary}
+    drafts={getAllDrafts()}
+    onOpen={handleOpenDraft}
+    onDelete={handleDeleteDraft}
+    onClose={() =>
+        setShowDraftLibrary(false)
+    }
+/>
 
   </div>
 );
