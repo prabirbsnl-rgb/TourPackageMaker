@@ -478,10 +478,19 @@ color:
 
 </div>
 
-        {filteredDrafts.map((draft, index) => (
+       {filteredDrafts.map((draft, index) => {
 
+    const status = getStatus(draft.status);
 
-           <div
+    const availableStatuses = quotationStatuses.filter(
+        item =>
+            statusTransitions[draft.status]?.includes(item.value)
+    );
+
+    return (
+
+        <div
+
     key={draft.quotationNo}
 
     onDoubleClick={() => onOpen(draft)}
@@ -554,30 +563,20 @@ color:
 
 <div>
 
-    {(() => {
-
-        const status = getStatus(draft.status);
-
-        return (
-
-            <span
-                style={{
-                    display: "inline-block",
-                    background: `${status.color}22`,
-                    color: status.color,
-                    padding: "5px 12px",
-                    borderRadius: "999px",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    whiteSpace: "nowrap"
-                }}
-            >
-                {status.label}
-            </span>
-
-        );
-
-    })()}
+    <span
+    style={{
+        display: "inline-block",
+        background: `${status.color}22`,
+        color: status.color,
+        padding: "5px 12px",
+        borderRadius: "999px",
+        fontSize: "12px",
+        fontWeight: 700,
+        whiteSpace: "nowrap"
+    }}
+>
+    {status.label}
+</span>
 
 </div>
 
@@ -746,71 +745,68 @@ color:
 
 </div>
 
-   {expandedStatusFor === draft.quotationNo && (
+  {expandedStatusFor === draft.quotationNo && (
 
-    quotationStatuses
-    .filter(item =>
+    availableStatuses.length === 0 ? (
 
-        statusTransitions[
-            draft.status
-        ]?.includes(item.value)
-
-    )
-    .map((item) => (
-        
         <div
-
-            key={item.value}
-
-            onClick={() => {
-
-                onStatusChange(
-
-                    draft.quotationNo,
-
-                    item.value
-
-                );
-
-                setActionMenuFor(null);
-
-            }}
-
             style={{
                 padding: "8px 10px",
-                cursor: "pointer",
-                borderRadius: "6px",
-                fontSize: "14px",
-                fontWeight:
-                    draft.status === item.value
-                        ? 700
-                        : 500,
-                background:
-                    draft.status === item.value
-                        ? "#f3f4f6"
-                        : "#fff"
+                color: "#6b7280",
+                fontSize: "13px",
+                fontStyle: "italic"
             }}
-
-            onMouseEnter={(e)=>
-                e.currentTarget.style.background="#f9fafb"
-            }
-
-            onMouseLeave={(e)=>
-                e.currentTarget.style.background=
-                    draft.status===item.value
-                        ? "#f3f4f6"
-                        : "#fff"
-            }
-
         >
-
-            {item.label}
-
+            ✓ No further status changes
         </div>
 
-    ))
+    ) : (
 
-    )}
+        availableStatuses.map((item) => (
+
+            <div
+
+                key={item.value}
+
+                onClick={() => {
+
+                    onStatusChange(
+                        draft.quotationNo,
+                        item.value
+                    );
+
+                    setActionMenuFor(null);
+                    setExpandedStatusFor(null);
+
+                }}
+
+                style={{
+                    padding: "8px 10px",
+                    cursor: "pointer",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    fontWeight: 600
+                }}
+
+                onMouseEnter={(e) =>
+                    e.currentTarget.style.background = "#f9fafb"
+                }
+
+                onMouseLeave={(e) =>
+                    e.currentTarget.style.background = "#fff"
+                }
+
+            >
+
+                {item.label}
+
+            </div>
+
+        ))
+
+    )
+
+)}
 
 </div>
 
@@ -877,9 +873,11 @@ color:
 
                 </div>
 
-            </div>
+          </div>
 
-               ))}
+);
+
+})}
 
     </>
 

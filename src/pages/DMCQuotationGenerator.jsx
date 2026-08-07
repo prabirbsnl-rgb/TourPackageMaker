@@ -164,6 +164,8 @@ export default function DMCQuotationGenerator() {
 
     const workingCopyLoaded = useRef(false);
 
+    const [drafts, setDrafts] = useState(getAllDrafts());
+
     const [commonData, setCommonData] =
 useState(() => ({
 
@@ -203,28 +205,18 @@ useState(() => ({
     }));
 
     const handleStatusChange = (
-
     quotationNo,
-
     status
-
 ) => {
 
+    console.log("Status change:", quotationNo, status);
+
     updateDraftStatus(
-
         quotationNo,
-
         status
-
     );
 
-    setShowDraftLibrary(false);
-
-    setTimeout(() => {
-
-        setShowDraftLibrary(true);
-
-    }, 0);
+    refreshDrafts();
 
 };
 
@@ -266,6 +258,8 @@ useState(() => ({
 
 });
 
+refreshDrafts();
+
     
 setIsDraftModified(false);
 clearWorkingCopy();
@@ -304,6 +298,12 @@ const handleOpenLastDraft = () => {
     alert("Draft loaded successfully.");
 
 };
+
+function refreshDrafts() {
+
+    setDrafts(getAllDrafts());
+
+}
 
 const handleOpenDraftLibrary =
     () => {
@@ -363,15 +363,11 @@ const handleDeleteDraft = (quotationNo) => {
 
     deleteDraft(quotationNo);
 
-    setShowDraftLibrary(false);
-
-    setTimeout(() => {
-
-        setShowDraftLibrary(true);
-
-    }, 0);
+refreshDrafts();
 
 };
+
+
 
 const handleResumeWorkingCopy = () => {
 
@@ -680,7 +676,7 @@ return (
 
   <DraftLibrary
     open={showDraftLibrary}
-    drafts={getAllDrafts()}
+    drafts={drafts}
     onOpen={handleOpenDraft}
     onDuplicate={handleDuplicateDraft}
     onDelete={handleDeleteDraft}
