@@ -1,6 +1,12 @@
 
 const STORAGE_KEY = "orbitzQuotationDrafts";
 
+const WORKING_COPY_KEY =
+    "orbitzWorkingCopy";
+
+const TEMPLATE_KEY =
+    "orbitzQuotationTemplates";
+
 export function getDrafts() {
 
     const saved =
@@ -53,7 +59,15 @@ export function saveDraft(draft) {
 
 export function getAllDrafts() {
 
-    return getDrafts();
+    const drafts = getDrafts();
+
+    drafts.sort((a, b) => {
+
+        return new Date(b.savedAt) - new Date(a.savedAt);
+
+    });
+
+    return drafts;
 
 }
 
@@ -69,6 +83,123 @@ export function deleteDraft(quotationNo) {
     localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify(updated)
+    );
+
+}
+
+export function getTemplates() {
+
+    const saved =
+        localStorage.getItem(TEMPLATE_KEY);
+
+    return saved
+        ? JSON.parse(saved)
+        : [];
+
+}
+
+export function saveTemplate(template) {
+
+    const templates =
+        getTemplates();
+
+    templates.unshift(template);
+
+    localStorage.setItem(
+        TEMPLATE_KEY,
+        JSON.stringify(templates)
+    );
+
+}
+
+export function deleteTemplate(id) {
+
+    const templates =
+        getTemplates();
+
+    localStorage.setItem(
+
+        TEMPLATE_KEY,
+
+        JSON.stringify(
+
+            templates.filter(
+
+                t => t.id !== id
+
+            )
+
+        )
+
+    );
+
+}
+
+export function saveWorkingCopy(data) {
+
+    
+
+    localStorage.setItem(
+        WORKING_COPY_KEY,
+        JSON.stringify(data)
+    );
+
+}
+
+export function getWorkingCopy() {
+
+    const saved = localStorage.getItem(
+        WORKING_COPY_KEY
+    );
+
+    return saved
+        ? JSON.parse(saved)
+        : null;
+
+}
+
+export function clearWorkingCopy() {
+
+    localStorage.removeItem(
+        WORKING_COPY_KEY
+    );
+
+}
+
+export function updateDraftStatus(
+
+    quotationNo,
+
+    status
+
+) {
+
+    const drafts = getDrafts();
+
+    const index = drafts.findIndex(
+
+        draft =>
+
+            draft.quotationNo === quotationNo
+
+    );
+
+    if (index < 0) return;
+
+    drafts[index] = {
+
+        ...drafts[index],
+
+        status
+
+    };
+
+    localStorage.setItem(
+
+        STORAGE_KEY,
+
+        JSON.stringify(drafts)
+
     );
 
 }

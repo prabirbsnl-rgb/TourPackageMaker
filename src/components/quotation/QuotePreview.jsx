@@ -37,6 +37,7 @@ export default function QuotePreview(props) {
     commonData,
     packageData,
     itineraryData,
+    isDraftModified,
     handleSaveDraft,
     handleOpenLastDraft,
     handleOpenDraftLibrary
@@ -2396,6 +2397,26 @@ return (
   </p>
 </div>
 
+{isDraftModified && (
+
+<div
+    style={{
+    marginTop: "10px",
+    display: "inline-block",
+    background: "#fee2e2",
+    color: "#b91c1c",
+    border: "1px solid #fca5a5",
+    padding: "6px 12px",
+    borderRadius: "20px",
+    fontWeight: 700,
+    fontSize: "13px"
+}}
+>
+   ⚠ Not Saved
+</div>
+
+)}
+
 {sectionHeading("🌍 TOUR SUMMARY")}
 
 <table
@@ -2456,6 +2477,7 @@ return (
       "Accomm.",
       quoteData.accommodation
     )}
+
 
         {/* Row 4 */}
 

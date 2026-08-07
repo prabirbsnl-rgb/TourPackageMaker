@@ -3,10 +3,44 @@ import { useState, useRef, useEffect } from "react";
 import orbitzLogo from "../../assets/orbitz-logo.png";
 
 import {
+
+    quotationStatuses,
+
+    filterStatuses,
+
+    statusTransitions
+
+} from "../../data/quotationStatuses";
+
+
+import {
     displayQuotationNo,
-    formatSavedDate
+    formatRelativeDate
 } from "../../utils/quotationUtils";
 
+function getStatus(status) {
+
+    return quotationStatuses.find(
+
+        item => item.value === status
+
+    ) || quotationStatuses[0];
+
+}
+
+const menuItemStyle = {
+
+    padding: "11px 14px",
+
+    cursor: "pointer",
+
+    fontSize: "14px",
+
+    color: "#374151",
+
+    transition: "background .2s"
+
+};
 
 export default function DraftLibrary({
 
@@ -16,14 +50,30 @@ export default function DraftLibrary({
 
     onOpen,
 
+    onDuplicate,
+
     onDelete,
+
+    onStatusChange,
 
     onClose
 
-}) {
+})
+
+{
 
     
     const [searchText, setSearchText] = useState("");
+
+    const [statusFilter, setStatusFilter] =
+    useState("All");
+
+    
+    const [actionMenuFor, setActionMenuFor] =
+    useState(null);
+
+   const [expandedStatusFor, setExpandedStatusFor] =
+    useState(null);
 
     const searchRef = useRef(null);
 
@@ -37,13 +87,35 @@ export default function DraftLibrary({
 
 }, [open]);
 
+const statusCounts = {
+
+    All: drafts.length
+
+};
+
+quotationStatuses.forEach(status => {
+
+    statusCounts[status.value] = drafts.filter(
+
+        draft =>
+
+            draft.status === status.value
+
+    ).length;
+
+});
+
+
     const filteredDrafts = drafts.filter((draft) => {
-        
-    const search = searchText.toLowerCase();
 
-    return (
+    const search =
+        searchText.toLowerCase();
 
-        displayQuotationNo(draft.quotationNo)
+    const matchesSearch =
+
+        displayQuotationNo(
+            draft.quotationNo
+        )
             .toLowerCase()
             .includes(search)
 
@@ -57,11 +129,32 @@ export default function DraftLibrary({
 
         (draft.destination || "")
             .toLowerCase()
-            .includes(search)
+            .includes(search);
+
+    const matchesStatus =
+
+        statusFilter === "All"
+
+        ||
+
+        draft.status === statusFilter;
+
+    return (
+
+        matchesSearch
+
+        &&
+
+        matchesStatus
 
     );
 
 });
+
+const latestDraft =
+    drafts.length > 0
+        ? drafts[0]
+        : null;
 
 if (!open) return null;
 
@@ -84,7 +177,7 @@ if (!open) return null;
                 style={{
                     width: "900px",
                     maxHeight: "80vh",
-                    
+                    overflowY: "auto",
                     background: "#fff",
                     borderRadius: "12px",
                     padding: "24px",
@@ -177,30 +270,71 @@ if (!open) return null;
     </div>
 
     <div
+    style={{
+        textAlign: "right"
+    }}
+>
+
+    <div
         style={{
-            textAlign: "right",
-            fontSize: "13px",
+            fontSize: "12px",
             color: "#6b7280"
         }}
     >
-
-        <div>
-            Latest Save
-        </div>
-
-        <div
-            style={{
-                fontWeight: 600,
-                color: "#111827",
-                marginTop: "4px"
-            }}
-        >
-            {drafts.length
-                ? formatSavedDate(drafts[0].savedAt)
-                : "-"}
-        </div>
-
+        Latest Quotation
     </div>
+
+    {latestDraft ? (
+
+        <>
+
+            <div
+                style={{
+                    fontWeight: 700,
+                    color: "#111827",
+                    marginTop: "4px"
+                }}
+            >
+                {displayQuotationNo(latestDraft.quotationNo)}
+            </div>
+
+            <div
+                style={{
+                    fontSize: "13px",
+                    color: "#374151"
+                }}
+            >
+                {latestDraft.clientName || "No Client"}
+            </div>
+
+            <div
+                style={{
+                    fontSize: "13px",
+                    color: "#374151"
+                }}
+            >
+                {latestDraft.destination || "-"}
+            </div>
+
+            <div
+                style={{
+                    fontSize: "12px",
+                    color: "#6b7280",
+                    marginTop: "4px"
+                }}
+            >
+                {formatRelativeDate(latestDraft.savedAt)}
+            </div>
+
+        </>
+
+    ) : (
+
+        "-"
+
+    )}
+
+</div>
 
 </div>
 
@@ -233,6 +367,79 @@ if (!open) return null;
 
 </div>
 
+<div
+    style={{
+        display: "flex",
+        gap: "10px",
+        marginBottom: "18px",
+        flexWrap: "wrap"
+    }}
+>
+
+    {filterStatuses.map(filter => (
+
+        <button
+
+            key={filter.value}
+
+            onClick={() =>
+                setStatusFilter(filter.value)
+            }
+
+            style={{
+
+                padding: "8px 14px",
+
+                borderRadius: "999px",
+
+                border:
+
+    statusFilter === filter.value
+
+        ? `2px solid ${filter.color}`
+
+        : "1px solid #d1d5db",
+
+                background:
+
+    statusFilter === filter.value
+
+        ? `${filter.color}18`
+
+        : "#fff",
+
+                cursor: "pointer",
+
+                fontWeight:700,
+
+color:
+
+    statusFilter === filter.value
+
+        ? filter.color
+
+        : "#374151",
+
+            }}
+
+        >
+
+          <>
+    {filter.label}
+
+    {" ("}
+
+    {statusCounts[filter.value]}
+
+    {")"}
+</>
+
+        </button>
+
+    ))}
+
+</div>
+
                 <hr style={{ margin: "20px 0" }} />
 
 {filteredDrafts.length === 0 ? (
@@ -243,26 +450,14 @@ if (!open) return null;
 
     <>
 
-    <div
-        style={{
-            maxHeight: "420px",
-            overflowY: "auto",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px"
-        }}
-    >
+    
 
         <div
-        
+
     style={{
-
-         position: "sticky",
-    top: 0,
-    zIndex: 10,
-
         display: "grid",
         gridTemplateColumns:
-"130px 170px 120px 90px 140px 90px 90px",
+        "1.4fr 1.5fr 1.2fr 0.9fr 1.3fr 0.9fr 0.8fr",
         fontWeight: 700,
         padding: "12px 8px",
         background: "#e5e7eb",
@@ -292,26 +487,26 @@ if (!open) return null;
     onDoubleClick={() => onOpen(draft)}
 
     onMouseEnter={(e) => {
-        e.currentTarget.style.background = "#f8fbff";
+        e.currentTarget.style.background = "#f9fafb"
     }}
 
     onMouseLeave={(e) => {
 
-    e.currentTarget.style.background =
-        index % 2 === 0
-            ? "#ffffff"
-            : "#fafafa";
+   e.currentTarget.style.background =
+    index % 2 === 0
+        ? "#ffffff"
+        : "#fafafa";
 
 }}
     
                 style={{
                     background:
-                       index % 2 === 0
-                       ? "#ffffff"
-                       : "#fafafa",
+    index % 2 === 0
+        ? "#ffffff"
+        : "#fafafa",
                     display: "grid",
                     gridTemplateColumns:
-                    "130px 170px 120px 90px 140px 90px 90px",
+                    "1.4fr 1.5fr 1.2fr 0.9fr 1.3fr 0.9fr 0.8fr",
                     alignItems: "center",
                     padding: "12px 8px",
                     borderBottom: "1px solid #e5e7eb",
@@ -321,12 +516,26 @@ if (!open) return null;
                 }}
             >
 
-                <div>
-                    <strong>
-                        {displayQuotationNo(draft.quotationNo)}
-                    </strong>
-                </div>
+                <div
+    style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "6px"
+    }}
+>
 
+    <div
+        style={{
+            fontWeight: 700
+        }}
+    >
+        {displayQuotationNo(draft.quotationNo)}
+    </div>
+
+    
+
+</div>
                 <div>
                     {draft.clientName || "-"}
                 </div>
@@ -340,18 +549,46 @@ if (!open) return null;
 </div>
 
 <div>
-    {formatSavedDate(draft.savedAt)}
+    {formatRelativeDate(draft.savedAt)}
 </div>
 
 <div>
-    {draft.status}
+
+    {(() => {
+
+        const status = getStatus(draft.status);
+
+        return (
+
+            <span
+                style={{
+                    display: "inline-block",
+                    background: `${status.color}22`,
+                    color: status.color,
+                    padding: "5px 12px",
+                    borderRadius: "999px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    whiteSpace: "nowrap"
+                }}
+            >
+                {status.label}
+            </span>
+
+        );
+
+    })()}
+
 </div>
-                <div
-                    style={{
-                        display: "flex",
-                        gap: "8px"
-                    }}
-                >
+
+               <div
+    style={{
+        position: "relative",
+        display: "flex",
+        gap: "8px",
+        alignItems: "center"
+    }}
+>
 
                     <button
                      title="Open Draft"
@@ -369,6 +606,243 @@ if (!open) return null;
                     >
                         📂 
                     </button>
+
+                    <button
+    title="More Actions"
+    onClick={() => {
+
+        setActionMenuFor(
+
+            actionMenuFor === draft.quotationNo
+
+                ? null
+
+                : draft.quotationNo
+
+        );
+
+    }}
+
+    style={{
+
+        background:"#f59e0b",
+
+        color:"#fff",
+
+        border:"none",
+
+        padding:"6px 10px",
+
+        fontSize:"12px",
+
+        borderRadius:"5px",
+
+        cursor:"pointer",
+
+        fontWeight:600
+
+    }}
+
+>
+
+    ⋮
+
+</button>
+
+{actionMenuFor === draft.quotationNo && (
+
+    <div
+        style={{
+            position: "absolute",
+            top: "115%",
+            right: "40px",
+            minWidth: "210px",
+            background: "#fff",
+            border: "1px solid #d1d5db",
+            borderRadius: "10px",
+            boxShadow: "0 10px 30px rgba(0,0,0,.15)",
+            overflow: "hidden",
+            zIndex: 500
+        }}
+    >
+
+        <div
+            onClick={() => {
+
+                onDuplicate(draft);
+
+                setActionMenuFor(null);
+
+            }}
+            style={menuItemStyle}
+        >
+            📄 Duplicate Quotation
+        </div>
+
+        <div
+            style={{
+                height: "1px",
+                background: "#e5e7eb"
+            }}
+        />
+
+        <div
+    style={{
+        padding: "10px 14px"
+    }}
+>
+
+    <div
+
+    onClick={() =>
+
+    setExpandedStatusFor(
+
+        expandedStatusFor === draft.quotationNo
+
+            ? null
+
+            : draft.quotationNo
+
+    )
+
+}
+
+    style={{
+
+        display: "flex",
+
+        justifyContent: "space-between",
+
+        alignItems: "center",
+
+        cursor: "pointer",
+
+        fontWeight: 700,
+
+        color: "#374151",
+
+        padding: "6px 0"
+
+    }}
+
+>
+
+    <span>
+
+        Change Status
+
+    </span>
+
+    <span>
+
+       {expandedStatusFor === draft.quotationNo
+
+    ? "▼"
+
+    : "▶"}
+
+    </span>
+
+</div>
+
+   {expandedStatusFor === draft.quotationNo && (
+
+    quotationStatuses
+    .filter(item =>
+
+        statusTransitions[
+            draft.status
+        ]?.includes(item.value)
+
+    )
+    .map((item) => (
+        
+        <div
+
+            key={item.value}
+
+            onClick={() => {
+
+                onStatusChange(
+
+                    draft.quotationNo,
+
+                    item.value
+
+                );
+
+                setActionMenuFor(null);
+
+            }}
+
+            style={{
+                padding: "8px 10px",
+                cursor: "pointer",
+                borderRadius: "6px",
+                fontSize: "14px",
+                fontWeight:
+                    draft.status === item.value
+                        ? 700
+                        : 500,
+                background:
+                    draft.status === item.value
+                        ? "#f3f4f6"
+                        : "#fff"
+            }}
+
+            onMouseEnter={(e)=>
+                e.currentTarget.style.background="#f9fafb"
+            }
+
+            onMouseLeave={(e)=>
+                e.currentTarget.style.background=
+                    draft.status===item.value
+                        ? "#f3f4f6"
+                        : "#fff"
+            }
+
+        >
+
+            {item.label}
+
+        </div>
+
+    ))
+
+    )}
+
+</div>
+
+        <div
+            style={{
+                height: "1px",
+                background: "#e5e7eb"
+            }}
+        />
+
+        <div
+            style={menuItemStyle}
+        >
+            📄 Export PDF
+        </div>
+
+        <div
+            style={{
+                height: "1px",
+                background: "#e5e7eb"
+            }}
+        />
+
+        <div
+            style={menuItemStyle}
+        >
+            🕒 Revision History
+        </div>
+
+    </div>
+
+)}
 
                     <button
                      title="Delete Draft"
@@ -406,8 +880,6 @@ if (!open) return null;
             </div>
 
                ))}
-
-    </div>
 
     </>
 

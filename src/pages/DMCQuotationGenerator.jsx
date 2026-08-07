@@ -1,5 +1,7 @@
 
-import { useState } from "react";
+
+
+import { useState, useEffect, useRef } from "react";
 
 import QuoteForm from "../components/quotation/QuoteForm";
 import QuotePreview from "../components/quotation/QuotePreview";
@@ -10,25 +12,26 @@ import { itineraryTemplates } from "../data/itineraryTemplates";
 
 import { defaultItineraryDay } from "../data/defaultItineraryDay";
 
+import ResumeWorkingCopyModal
+from "../components/quotation/ResumeWorkingCopyModal";
+
 
 import {
     saveDraft,
     getLatestDraft,
     getAllDrafts,
-    deleteDraft
+    deleteDraft,
+    updateDraftStatus,
+    saveWorkingCopy,
+    clearWorkingCopy,
+    getWorkingCopy
 } from "../utils/quotationStorage";
 
 import DraftLibrary
 from "../components/quotation/DraftLibrary";
 
+const defaultCommonData = {
 
-
-export default function DMCQuotationGenerator() {
-
-  const [showDraftLibrary, setShowDraftLibrary] =
-    useState(false);
-
-    const [commonData, setCommonData] = useState({
    quoteMode: "package",
    showInclusionExclusion: false,
     quotationNo: `ORB-${Date.now()}`,
@@ -66,20 +69,15 @@ perChildCost: 0,
 markupPercent: 15,
 gstPercent: 5,
 
-    terms: [
-      "Rates subject to availability.",
-      "Hotels may change without notice.",
-      "Booking confirmation against payment.",
-      "Cancellation charges apply."
-    ],
+    
 
     cancellationRefundPolicy: defaultCancellationPolicies.map(policy => ({
     ...policy
 })),
 
-  });
+  };
 
-  const [packageData, setPackageData] = useState({
+  const defaultPackageData = {
 
     hotelCategory: "3 Star",
 
@@ -101,10 +99,9 @@ gstPercent: 5,
 
     inclusions: [],
     exclusions: []
-  });
+  };
 
-  const [itineraryData, setItineraryData] = useState({
-
+  const defaultItineraryData = {
     itinerary: [
   {
   day: 1,
@@ -143,9 +140,103 @@ gstPercent: 5,
   transferText: ""
 }
 ]
-  });
+  };
+
+
+
+
+export default function DMCQuotationGenerator() {
+
+  const [showDraftLibrary, setShowDraftLibrary] =
+    useState(false);
+
+    const [resumeModalOpen, setResumeModalOpen] =
+    useState(false);
+
+    const autoSaveTimer = useRef(null);
+
+    const autoSaveEnabled = useRef(true);
+
+    const [workingCopy, setWorkingCopy] =
+    useState(null);
+
+    const [isDraftModified, setIsDraftModified] = useState(false);
+
+    const workingCopyLoaded = useRef(false);
+
+    const [commonData, setCommonData] =
+useState(() => ({
+
+    ...defaultCommonData,
+
+    quotationNo: `ORB-${Date.now()}`,
+
+    vehicleCosts: [
+        {
+            id: Date.now(),
+            vehicle: "",
+            cost: ""
+        }
+    ],
+
+    cancellationRefundPolicy:
+        defaultCancellationPolicies.map(
+            policy => ({
+                ...policy
+            })
+        )
+
+}));
+
+ const [packageData, setPackageData] =
+    useState(() => ({
+
+        ...defaultPackageData
+
+    }));
+
+  const [itineraryData, setItineraryData] =
+    useState(() => ({
+
+        ...defaultItineraryData
+
+    }));
+
+    const handleStatusChange = (
+
+    quotationNo,
+
+    status
+
+) => {
+
+    updateDraftStatus(
+
+        quotationNo,
+
+        status
+
+    );
+
+    setShowDraftLibrary(false);
+
+    setTimeout(() => {
+
+        setShowDraftLibrary(true);
+
+    }, 0);
+
+};
 
   const handleSaveDraft = () => {
+
+    if (autoSaveTimer.current) {
+
+    clearTimeout(autoSaveTimer.current);
+
+    autoSaveTimer.current = null;
+
+}
 
     saveDraft({
 
@@ -175,7 +266,13 @@ gstPercent: 5,
 
 });
 
-    alert("Draft saved successfully.");
+    
+setIsDraftModified(false);
+clearWorkingCopy();
+setWorkingCopy(null);
+setResumeModalOpen(false);
+alert("Draft saved successfully.");
+resetQuotation();
 
 };
 
@@ -215,6 +312,35 @@ const handleOpenDraftLibrary =
 
 };
 
+const handleDuplicateDraft = (draft) => {
+
+    // Create a deep copy
+    const copy = structuredClone(draft);
+
+    // Generate a NEW quotation number
+    copy.commonData = {
+    ...copy.commonData,
+    quotationNo: `ORB-${Date.now()}`
+};
+
+// Update draft metadata
+copy.savedAt = new Date().toISOString();
+copy.status = "Draft";
+
+    // Load into the editor
+    setCommonData(copy.commonData);
+    setPackageData(copy.packageData);
+    setItineraryData(copy.itineraryData);
+    setIsDraftModified(true);
+
+    // Close the library
+    setShowDraftLibrary(false);
+    alert(
+    "Quotation duplicated successfully.\n\nA new quotation has been opened in the editor.\nSave it when you're ready."
+);
+
+};
+
 const handleOpenDraft = (draft) => {
 
     setCommonData(
@@ -244,6 +370,77 @@ const handleDeleteDraft = (quotationNo) => {
         setShowDraftLibrary(true);
 
     }, 0);
+
+};
+
+const handleResumeWorkingCopy = () => {
+
+    setCommonData(
+        workingCopy.commonData
+    );
+
+    setPackageData(
+        workingCopy.packageData
+    );
+
+    setItineraryData(
+        workingCopy.itineraryData
+    );
+
+    setIsDraftModified(true);
+
+    setResumeModalOpen(false);
+
+};
+
+const handleDiscardWorkingCopy = () => {
+
+    clearWorkingCopy();
+
+    setWorkingCopy(null);
+
+    setResumeModalOpen(false);
+
+};
+
+const resetQuotation = () => {
+
+    setCommonData({
+
+    ...defaultCommonData,
+
+    quotationNo: `ORB-${Date.now()}`,
+
+    vehicleCosts: [
+        {
+            id: Date.now(),
+            vehicle: "",
+            cost: ""
+        }
+    ],
+
+    cancellationRefundPolicy:
+        defaultCancellationPolicies.map(
+            policy => ({
+                ...policy
+            })
+        )
+
+});
+
+    setPackageData({
+
+    ...defaultPackageData
+
+});
+
+    setItineraryData({
+
+    ...defaultItineraryData
+
+});
+
+    setIsDraftModified(false);
 
 };
 
@@ -316,8 +513,135 @@ const key = `${totalNights}N${totalDays}D`;
     }));
 
 };
-  
 
+
+useEffect(() => {
+
+    if (workingCopyLoaded.current) return;
+
+    workingCopyLoaded.current = true;
+
+    const saved = getWorkingCopy();
+
+    if (!saved) return;
+
+    setWorkingCopy(saved);
+
+    setResumeModalOpen(true);
+
+}, []);
+
+function hasMeaningfulData() {
+    
+console.log(itineraryData.itinerary[0]);
+    
+    return (
+
+        commonData.clientName.trim() !== "" ||
+
+        commonData.destination.trim() !== "" ||
+
+        commonData.mobile.trim() !== "" ||
+
+        commonData.email.trim() !== "" ||
+
+        commonData.specialNotes.trim() !== "" ||
+
+        packageData.selectedHotels.length > 0 ||
+
+        packageData.customHotels.length > 0 ||
+
+        packageData.sightseeing.length > 0 ||
+
+        packageData.customSightseeing.length > 0 ||
+
+        packageData.transfers.length > 0 ||
+
+        packageData.customTransfers.length > 0 ||
+
+        itineraryData.itinerary.some(day =>
+
+    (day.title || "").trim() !== "" ||
+
+    (day.city || "").trim() !== "" ||
+
+    (day.customCity || "").trim() !== "" ||
+
+   (day.description || "").trim() !== "" ||
+
+   (day.noteText || "").trim() !== "" ||
+
+   (day.hotel || "").trim() !== "" ||
+
+   (day.customHotel || "").trim() !== "" ||
+
+   (day.sightseeingText || "").trim() !== "" ||
+
+   (day.mealText || "").trim() !== "" ||
+
+   (day.transferText || "").trim() !== ""
+
+)
+    );
+
+}
+
+useEffect(() => {
+
+    if (autoSaveTimer.current) {
+
+        clearTimeout(autoSaveTimer.current);
+
+    }
+
+   autoSaveTimer.current = setTimeout(() => {
+
+    console.log(
+        "Meaningful:",
+        hasMeaningfulData()
+    );
+
+    if (hasMeaningfulData()) {
+
+        console.log("Saving working copy");
+
+        saveWorkingCopy({
+
+            commonData,
+            packageData,
+            itineraryData,
+
+            savedAt: new Date().toISOString()
+
+        });
+
+    } else {
+
+        console.log("Clearing working copy");
+
+        clearWorkingCopy();
+
+    }
+
+}, 3000);
+
+    return () => {
+
+        if (autoSaveTimer.current) {
+
+            clearTimeout(autoSaveTimer.current);
+
+        }
+
+    };
+
+}, [
+
+    commonData,
+    packageData,
+    itineraryData
+
+]);
 
 return (
   <div
@@ -351,16 +675,31 @@ return (
        handleSaveDraft={handleSaveDraft}
        handleOpenLastDraft={handleOpenLastDraft}
        handleOpenDraftLibrary={handleOpenDraftLibrary}
+       isDraftModified={isDraftModified}
     />
 
   <DraftLibrary
     open={showDraftLibrary}
     drafts={getAllDrafts()}
     onOpen={handleOpenDraft}
+    onDuplicate={handleDuplicateDraft}
     onDelete={handleDeleteDraft}
+    onStatusChange={handleStatusChange}
     onClose={() =>
         setShowDraftLibrary(false)
     }
+/>
+
+<ResumeWorkingCopyModal
+
+    open={resumeModalOpen}
+
+    workingCopy={workingCopy}
+
+    onResume={handleResumeWorkingCopy}
+
+    onDiscard={handleDiscardWorkingCopy}
+
 />
 
   </div>

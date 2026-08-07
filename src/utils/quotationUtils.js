@@ -46,3 +46,53 @@ export function formatSavedDate(savedAt) {
 
     return date.toLocaleDateString();
 }
+
+export function formatRelativeDate(dateString) {
+
+    if (!dateString) return "-";
+
+    const date = new Date(dateString);
+    const now = new Date();
+
+    const today = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+    );
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const target = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
+    );
+
+    const formattedDate = date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
+
+    const formattedTime = date.toLocaleTimeString("en-GB", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+    });
+
+    if (target.getTime() === today.getTime()) {
+
+        return `Today (${formattedDate}), ${formattedTime}`;
+
+    }
+
+    if (target.getTime() === yesterday.getTime()) {
+
+        return `Yesterday (${formattedDate}), ${formattedTime}`;
+
+    }
+
+    return `${formattedDate}, ${formattedTime}`;
+
+}
