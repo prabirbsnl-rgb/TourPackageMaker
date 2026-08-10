@@ -204,6 +204,8 @@ function movePolicyDown(policyId) {
   
 
 return (
+
+  
     <div
       style={{
         background: "#fff",
@@ -212,9 +214,34 @@ return (
         boxShadow: "0 2px 10px rgba(0,0,0,0.08)"
       }}
     >
-      <h2 style={{ marginBottom: "20px" }}>
-        DMC Quotation Form
-      </h2>
+     <div
+    style={{
+        textAlign: "center",
+        marginBottom: "20px"
+    }}
+>
+    <img
+        src="/orbitz-logo.png"
+        alt="Orbitz Holidays"
+        style={{
+            height: "55px",
+            width: "auto",
+            objectFit: "contain",
+            display: "block",
+            margin: "0 auto 8px auto"
+        }}
+    />
+
+    <div
+        style={{
+            fontSize: "24px",
+            color: "#1e3a8a",
+            fontWeight: 700
+        }}
+    >
+        Quotation Form
+    </div>
+</div>
 
       {/* QUOTATION MODE */}
 

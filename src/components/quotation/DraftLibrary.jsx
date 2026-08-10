@@ -56,6 +56,10 @@ export default function DraftLibrary({
 
     onStatusChange,
 
+    onReviewPdf,
+
+    onRevisionHistory,
+
     onClose
 
 })
@@ -105,32 +109,59 @@ quotationStatuses.forEach(status => {
 
 });
 
+console.log(
+    "LIBRARY DRAFTS:",
+    drafts
+);
+
+console.log(
+    "LIBRARY REVISION STATES:",
+    drafts
+        .filter(draft => draft.revisionNo > 0)
+        .map(draft => ({
+            quotationNo: draft.quotationNo,
+            revisionNo: draft.revisionNo,
+            revisionHistoryLength:
+                draft.revisionHistory?.length || 0,
+            clientName: draft.clientName
+        }))
+);
 
     const filteredDrafts = drafts.filter((draft) => {
 
     const search =
         searchText.toLowerCase();
 
-    const matchesSearch =
+   const matchesSearch =
 
-        displayQuotationNo(
-            draft.quotationNo
-        )
-            .toLowerCase()
-            .includes(search)
+    displayQuotationNo(
+        draft.quotationNo
+    )
+        .toLowerCase()
+        .includes(search)
 
-        ||
+    ||
 
-        (draft.clientName || "")
-            .toLowerCase()
-            .includes(search)
+    (draft.clientName || "")
+        .toLowerCase()
+        .includes(search)
 
-        ||
+    ||
 
-        (draft.destination || "")
-            .toLowerCase()
-            .includes(search);
+    (draft.destination || "")
+        .toLowerCase()
+        .includes(search)
 
+    ||
+
+(
+    draft.mobile
+    || draft.commonData?.mobile
+    || ""
+)
+    .toLowerCase()
+    .includes(search);
+        
     const matchesStatus =
 
         statusFilter === "All"
@@ -541,7 +572,19 @@ color:
     >
         {displayQuotationNo(draft.quotationNo)}
     </div>
-
+    
+{draft.revisionNo > 0 && (
+    <div
+        style={{
+            fontSize: "11px",
+            fontWeight: 700,
+            color: "#7c3aed",
+            marginTop: "2px"
+        }}
+    >
+        Revision {draft.revisionNo}
+    </div>
+)}
     
 
 </div>
@@ -768,17 +811,35 @@ color:
 
                 key={item.value}
 
-                onClick={() => {
+               onClick={() => {
 
-                    onStatusChange(
-                        draft.quotationNo,
-                        item.value
-                    );
+    const confirmed = window.confirm(
+        `Change Quotation Status?\n\n` +
 
-                    setActionMenuFor(null);
-                    setExpandedStatusFor(null);
+        `${displayQuotationNo(draft.quotationNo)}\n` +
 
-                }}
+        `Client: ${draft.clientName || "No client"}\n\n` +
+
+        `Current Status: ${draft.status || "Draft"}\n` +
+
+        `New Status: ${item.label}\n\n` +
+
+        `Change status to ${item.label}?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    onStatusChange(
+        draft.quotationNo,
+        item.value
+    );
+
+    setActionMenuFor(null);
+    setExpandedStatusFor(null);
+
+}}
 
                 style={{
                     padding: "8px 10px",
@@ -818,10 +879,22 @@ color:
         />
 
         <div
-            style={menuItemStyle}
-        >
-            📄 Export PDF
-        </div>
+
+    onClick={() => {
+
+        onReviewPdf(draft);
+
+        setActionMenuFor(null);
+
+    }}
+
+    style={menuItemStyle}
+
+>
+
+    📄 Review PDF
+
+</div>
 
         <div
             style={{
@@ -830,11 +903,14 @@ color:
             }}
         />
 
-        <div
-            style={menuItemStyle}
-        >
-            🕒 Revision History
-        </div>
+       <div
+    style={menuItemStyle}
+    onClick={() => {
+    onRevisionHistory(draft);
+}}
+>
+    🕒 Revision History
+</div>
 
     </div>
 
@@ -842,21 +918,34 @@ color:
 
                     <button
                      title="Delete Draft"
+
                         onClick={() => {
 
-                            if (
-                                window.confirm(
-                                    "Delete this draft?"
-                                )
-                            ) {
+    const confirmed = window.confirm(
+        `Delete Quotation?\n\n` +
 
-                                onDelete(
-                                    draft.quotationNo
-                                );
+        `${displayQuotationNo(draft.quotationNo)}\n` +
 
-                            }
+        `Client: ${draft.clientName || "No client"}\n` +
 
-                        }}
+        `Destination: ${draft.destination || "No destination"}\n\n` +
+
+        `This will permanently delete the quotation ` +
+        `and its complete revision history.\n\n` +
+
+        `This action cannot be undone.`
+    );
+
+    if (confirmed) {
+
+        onDelete(
+            draft.quotationNo
+        );
+
+    }
+
+}}
+
                         style={{
                             background:"#dc2626",
                             color:"#fff",

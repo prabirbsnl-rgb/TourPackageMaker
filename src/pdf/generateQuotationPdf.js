@@ -276,6 +276,12 @@ if (page > 1) {
 
 }
 
+if (quoteData.mode === "preview") {
+
+    return pdf.output("blob");
+
+}
+
 pdf.save("Quotation.pdf");
 
 }

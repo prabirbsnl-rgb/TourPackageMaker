@@ -26,6 +26,8 @@ import {
   TableLayoutType
 } from "docx";
 
+import { calculateQuotationTotals }
+    from "../../utils/quotationCalculator";
 
 import { saveAs } from "file-saver";
 
@@ -38,6 +40,7 @@ export default function QuotePreview(props) {
     packageData,
     itineraryData,
     isDraftModified,
+    onGeneratePdf,
     handleSaveDraft,
     handleOpenLastDraft,
     handleOpenDraftLibrary
@@ -123,29 +126,15 @@ pdf.save("quotation.pdf");
 
  const downloadPDF = async () => {
 
-console.log({
-    subtotal,
-    gstAmount,
-    grandTotal
-});
+    await onGeneratePdf(
 
-  await generateQuotationPdf({
+        commonData,
 
-    ...quoteData,
+        packageData,
 
-    applyGst: commonData.applyGst,
+        itineraryData
 
-    gstPercent: commonData.gstPercent,
-
-    subtotal,
-
-    gstAmount,
-
-    grandTotal,
-
-    grandTotalUsd,
-
-  });
+    );
 
 };
  
@@ -1603,46 +1592,27 @@ const previewItineraryRow = (label, value) => (
   </div>
 );
 
-   const packageCost =
-commonData?.useVehicleCosting
-  ? Number(commonData?.vehiclePackageCost || 0)
-  :
-(
-  (
-    Number(commonData?.perAdultCost || 0) *
-    Number(commonData?.adults || 0)
-  )
-  +
-  (
-    Number(commonData?.perChildCost || 0) *
-    Number(commonData?.children || 0)
-  )
-);
+  const {
 
-const markupAmount =
-  (
-    packageCost *
-    Number(commonData?.markupPercent || 0)
-  ) / 100;
+    packageCost,
 
-const subtotal = packageCost;
+    markupAmount,
 
-const gstAmount =
-  commonData?.applyGst
-    ? (
-        subtotal *
-        Number(commonData?.gstPercent || 0)
-      ) / 100
-    : 0;
+    subtotal,
 
-const grandTotal =
-  subtotal + gstAmount;
+    gstAmount,
 
-  const usdRate =
-  Number(quoteData?.usdRate || 86);
+    grandTotal,
 
-const grandTotalUsd =
-  grandTotal / usdRate;
+    grandTotalUsd
+
+} = calculateQuotationTotals({
+
+    commonData,
+
+    usdRate: quoteData.usdRate
+
+});
   
   const travelFrom = quoteData?.travelFrom
   ? new Date(quoteData.travelFrom)
@@ -1782,7 +1752,8 @@ const shortQuotationNo = (qtn) => {
 const costRow = (label, value) => (
   <div
     style={{
-  width: "390px",          // <- add this
+ width: "100%",
+maxWidth: "390px",        // <- add this
   display: "grid",
   gridTemplateColumns: "240px auto",
   alignItems: "center",
@@ -1821,7 +1792,8 @@ const costRow = (label, value) => (
 const grandTotalRow = (value) => (
   <div
     style={{
-  width: "390px",          // <- same width
+ width: "100%",
+maxWidth: "390px",         // <- same width
   display: "grid",
   gridTemplateColumns: "240px auto",
   columnGap: "20px",
@@ -2238,8 +2210,7 @@ return (
     }}
   >
 
-    {/* ACTION BUTTONS */}
-
+    
 <div
   style={{
     display: "flex",
@@ -2250,69 +2221,7 @@ return (
   }}
 >
 
-  <button
-    onClick={handleOpenDraftLibrary}
-    style={{
-      background:"#6b7280",
-      color:"#fff",
-      border:"none",
-      padding:"12px 20px",
-      borderRadius:"8px",
-      cursor:"pointer",
-      fontWeight:"600",
-      minWidth:"160px"
-    }}
-  >
-    📂 Draft Library
-  </button>
 
-  <button
-    onClick={handleSaveDraft}
-    style={{
-      background:"#f59e0b",
-      color:"#fff",
-      border:"none",
-      padding:"12px 20px",
-      borderRadius:"8px",
-      cursor:"pointer",
-      fontWeight:"600",
-      minWidth:"160px"
-    }}
-  >
-    💾 Save Draft
-  </button>
-
-  <button
-    onClick={downloadPDF}
-    style={{
-      background:"#2563eb",
-      color:"#fff",
-      border:"none",
-      padding:"12px 20px",
-      borderRadius:"8px",
-      cursor:"pointer",
-      fontWeight:"600",
-      minWidth:"160px"
-    }}
-  >
-    📄 Download PDF
-  </button>
-
-  <button
-    onClick={downloadWord}
-    style={{
-      background:"#16a34a",
-      color:"#fff",
-      border:"none",
-      padding:"12px 20px",
-      borderRadius:"8px",
-      cursor:"pointer",
-      fontWeight:"600",
-      minWidth:"160px"
-    }}
-  >
-    📝 Download Word
-  </button>
 
 </div>
 
@@ -2341,7 +2250,8 @@ return (
   src={orbitzLogo}
   alt="Orbitz Holidays"
   style={{
-    width: "295px",
+    width: "70%",
+maxWidth: "295px",
     height: "auto",
     display: "block",
     margin: "0 auto 8px auto"
