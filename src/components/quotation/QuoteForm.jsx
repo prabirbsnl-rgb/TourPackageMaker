@@ -1,6 +1,6 @@
 
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import hotels from "../../data/hotels.json";
 import HotelSelector from "./HotelSelector";
 import SightseeingSelector from "./SightseeingSelector";
@@ -13,6 +13,9 @@ import ExclusionSelector from "./ExclusionSelector";
 import CostCalculator from "./CostCalculator";
 import CancellationPolicyEditor from "./CancellationPolicyEditor";
 
+import ItineraryTemplateLibrary
+    from "./ItineraryTemplateLibrary";
+
 
 
 export default function QuoteForm(props) {
@@ -23,11 +26,31 @@ export default function QuoteForm(props) {
     setCommonData,
     packageData,
     setPackageData,
+    saveItineraryAsTemplate,
+setSaveItineraryAsTemplate,
     itineraryData,
     setItineraryData,
+    activeItineraryTemplate,
+    activeItineraryTemplateId,
+    setActiveItineraryTemplateId,
+    setItineraryTemplateSaveState,
+    setIsDraftModified,
+    setQuotationSaveState,
+    setIsImportingTemplate,
+    importingTemplateRef,
+setActiveItineraryTemplate,
+itineraryTemplateModified,
+setItineraryTemplateModified,
+itineraryTemplateLabel,
+setItineraryTemplateLabel,
+resetQuotation,
     applyItineraryTemplate
 } = props;
 
+console.log(
+    "ACTIVE TEMPLATE ID IN QUOTEFORM:",
+    activeItineraryTemplateId
+);
 
 const quoteData = {
     ...(commonData || {}),
@@ -45,7 +68,172 @@ const [expandedPolicyId, setExpandedPolicyId] =
   const [deletePolicyId, setDeletePolicyId] =
     useState(null);
 
+    const [showItineraryTemplateLibrary, setShowItineraryTemplateLibrary] =
+    useState(false);
+
     
+   
+    const [loadedTemplateItinerary, setLoadedTemplateItinerary] =
+    useState(null);
+
+    const [loadedTemplateCommonData, setLoadedTemplateCommonData] =
+    useState(null);
+
+    useEffect(() => {
+
+    if (
+        !activeItineraryTemplate ||
+        !loadedTemplateItinerary ||
+        !loadedTemplateCommonData
+    ) {
+        return;
+    }
+
+    const normalize = (value) => {
+
+        if (value === undefined) {
+            return null;
+        }
+
+        if (value === null) {
+            return null;
+        }
+
+        if (Array.isArray(value)) {
+            return value.map(normalize);
+        }
+
+        if (typeof value === "object") {
+
+            const normalized = {};
+
+            Object.keys(value)
+                .sort()
+                .forEach(key => {
+
+                    normalized[key] =
+                        normalize(value[key]);
+
+                });
+
+            return normalized;
+        }
+
+        return value;
+    };
+
+
+    const originalItinerary =
+        JSON.stringify(
+            normalize(
+                loadedTemplateItinerary
+            )
+        );
+
+    const currentItinerary =
+        JSON.stringify(
+            normalize(
+                itineraryData
+            )
+        );
+
+
+    const originalCommonData =
+        JSON.stringify(
+            normalize(
+                loadedTemplateCommonData
+            )
+        );
+
+    const currentCommonData =
+        JSON.stringify(
+            normalize(
+                commonData
+            )
+        );
+
+        const originalDay =
+    loadedTemplateItinerary?.itinerary?.[0];
+
+const currentDay =
+    itineraryData?.itinerary?.[0];
+
+const itineraryDifferences = {};
+
+if (originalDay && currentDay) {
+
+    const allKeys = new Set([
+        ...Object.keys(originalDay),
+        ...Object.keys(currentDay)
+    ]);
+
+    allKeys.forEach(key => {
+
+        const originalValue =
+            JSON.stringify(
+                originalDay[key]
+            );
+
+        const currentValue =
+            JSON.stringify(
+                currentDay[key]
+            );
+
+        if (
+            originalValue !==
+            currentValue
+        ) {
+            itineraryDifferences[key] = {
+                original:
+                    originalDay[key],
+
+                current:
+                    currentDay[key]
+            };
+        }
+
+    });
+}
+
+console.log(
+    "DAY 1 DIFFERENCES:",
+    itineraryDifferences
+);
+
+
+   const itineraryChanged =
+    originalItinerary !==
+    currentItinerary;
+
+const commonDataChanged =
+    originalCommonData !==
+    currentCommonData;
+
+console.log(
+    "TEMPLATE COMPARISON:",
+    {
+        itineraryChanged,
+        commonDataChanged
+    }
+);
+
+const hasChanged =
+    itineraryChanged ||
+    commonDataChanged;
+
+
+    setItineraryTemplateModified(
+        hasChanged
+    );
+
+}, [
+    itineraryData,
+    commonData,
+    activeItineraryTemplate,
+    loadedTemplateItinerary,
+    loadedTemplateCommonData
+]);
+
 
   function handleAddPolicy() {
 
@@ -220,52 +408,222 @@ return (
         marginBottom: "20px"
     }}
 >
-    <img
-        src="/orbitz-logo.png"
-        alt="Orbitz Holidays"
-        style={{
-            height: "55px",
-            width: "auto",
-            objectFit: "contain",
-            display: "block",
-            margin: "0 auto 8px auto"
-        }}
-    />
+    
 
-    <div
-        style={{
-            fontSize: "24px",
-            color: "#1e3a8a",
-            fontWeight: 700
-        }}
-    >
-        Quotation Form
-    </div>
+   
 </div>
 
       {/* QUOTATION MODE */}
 
-<h3>Quotation Type</h3>
-
-
-<select
- value={commonData?.quoteMode || ""}
-  onChange={(e) =>
-    setCommonData({
-      ...commonData,
-      quoteMode: e.target.value
-    })
-  }
-  style={inputStyle}
+<h3
+    style={{
+        display: "block",
+        width: "fit-content",
+        marginTop: "8px",
+        marginBottom: "10px",
+        marginLeft: "0px",
+        marginRight: "auto",
+        padding: "7px 16px",
+        background: "#ecfdf5",
+        border: "1px solid #bbf7d0",
+        borderRadius: "999px",
+        fontSize: "13px",
+        fontWeight: 800,
+        color: "#166534",
+        textAlign: "left",
+        letterSpacing: "0.5px"
+    }}
 >
-<option value="package">
-    General Package Details
-  </option>
+    QUOTATION TYPE
+</h3>
 
-  <option value="itinerary">
-    Day Wise Itinerary
-  </option>
-</select>
+{/* ============================== */}
+{/* QUOTATION MODE / TEMPLATE ROW */}
+{/* ============================== */}
+
+<div
+    style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "10px",
+        marginTop: "6px",
+        marginBottom: "6px",
+        width: "fit-content",
+        maxWidth: "100%"
+    }}
+>
+
+    {/* QUOTATION MODE */}
+
+    <select
+        value={commonData?.quoteMode || ""}
+        onChange={(e) =>
+            setCommonData({
+                ...commonData,
+                quoteMode: e.target.value
+            })
+        }
+        style={{
+            ...inputStyle,
+
+            width: "300px",
+            maxWidth: "calc(100vw - 260px)",
+
+            height: "40px",
+            minHeight: "40px",
+
+            boxSizing: "border-box",
+
+            margin: "0",
+
+            padding: "0 12px",
+
+            borderRadius: "8px",
+
+            display: "block"
+        }}
+    >
+        <option value="package">
+            General Package Details
+        </option>
+
+        <option value="itinerary">
+            Day Wise Itinerary
+        </option>
+    </select>
+
+
+    {/* TEMPLATE LIBRARY */}
+
+    {commonData?.quoteMode === "itinerary" && (
+
+        <button
+            type="button"
+            onClick={() =>
+                setShowItineraryTemplateLibrary(true)
+            }
+            style={{
+    width: "195px",
+    height: "40px",
+    minHeight: "40px",
+    boxSizing: "border-box",
+    margin: "0",
+    padding: "0 14px",
+
+    background: "#f8fafc",
+    color: "#334155",
+
+    border: "1px solid #94a3b8",
+    borderRadius: "8px",
+
+    cursor: "pointer",
+
+    fontWeight: 700,
+    fontSize: "12px",
+
+    whiteSpace: "nowrap",
+
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+
+    flexShrink: 0,
+
+    boxShadow: "0 1px 2px rgba(15, 23, 42, 0.05)"
+}}
+        >
+            📚 Itinerary Template Library
+        </button>
+
+    )}
+
+</div>
+
+
+{/* ============================== */}
+{/* ACTIVE TEMPLATE INFORMATION */}
+{/* ============================== */}
+
+{commonData?.quoteMode === "itinerary" &&
+    activeItineraryTemplate && (
+
+    <div
+        style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            marginTop: "5px",
+            marginBottom: "6px"
+        }}
+    >
+
+        {/* WORKING ON TEMPLATE */}
+
+        <div
+            style={{
+                padding: "5px 10px",
+                background: itineraryTemplateModified
+                    ? "#fff7ed"
+                    : "#eff6ff",
+                border: itineraryTemplateModified
+                    ? "1px solid #fdba74"
+                    : "1px solid #93c5fd",
+                borderRadius: "6px",
+                color: itineraryTemplateModified
+                    ? "#c2410c"
+                    : "#1e3a8a",
+                fontSize: "12px",
+                fontWeight: 700
+            }}
+        >
+            📌 Working on Template:{" "}
+            {activeItineraryTemplate ||
+                "Untitled Template"}
+
+            {itineraryTemplateLabel?.trim()
+                ? ` – ${itineraryTemplateLabel.trim()}`
+                : ""}
+        </div>
+
+
+        {/* START FRESH */}
+
+        <button
+            type="button"
+            onClick={() => {
+
+                const proceed = window.confirm(
+                    "Start a fresh quotation? The current template work will be cleared."
+                );
+
+                if (!proceed) return;
+
+                resetQuotation({
+                    preserveItineraryMode: true
+                });
+
+            }}
+            style={{
+                marginTop: "6px",
+                padding: "7px 12px",
+                background: "#374151",
+                color: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: 700
+            }}
+        >
+            🆕 Start Fresh
+        </button>
+
+    </div>
+
+)}
+
+
+
 {commonData?.quoteMode === "itinerary" && (
 
   <label
@@ -706,6 +1064,155 @@ applyItineraryTemplate(updatedCommonData);
     setItineraryData={setItineraryData}
   />
 )}
+
+<ItineraryTemplateLibrary
+    open={showItineraryTemplateLibrary}
+    onClose={() =>
+        setShowItineraryTemplateLibrary(false)
+    }
+   onSelectTemplate={(template) => {
+
+    if (!template) {
+        return;
+    }
+
+    importingTemplateRef.current = true;
+
+    // -----------------------------------
+    // 1. Import itinerary
+    // -----------------------------------
+
+    let importedItinerary = null;
+
+    if (template.itineraryData) {
+
+        importedItinerary =
+            structuredClone(
+                template.itineraryData
+            );
+
+            console.log(
+    "TEMPLATE SOURCE BEFORE IMPORT:",
+    template.itineraryData
+);
+
+console.log(
+    "IMPORTED ITINERARY:",
+    importedItinerary
+);
+
+console.log(
+    "SOURCE DAY 1 CITY:",
+    template.itineraryData?.itinerary?.[0]?.city
+);
+
+console.log(
+    "IMPORTED DAY 1 CITY:",
+    importedItinerary?.itinerary?.[0]?.city
+);
+
+        setItineraryData(
+            importedItinerary
+        );
+
+        // Keep an independent snapshot
+        // of the original imported itinerary.
+        setLoadedTemplateItinerary(
+            structuredClone(
+                importedItinerary
+            )
+        );
+    }
+
+console.log(
+    "TEMPLATE IMPORT SETTING MODE TO:",
+    "itinerary"
+);
+    // -----------------------------------
+    // 2. Build the new working commonData
+    // -----------------------------------
+
+    const updatedCommonData = {
+
+    ...commonData,
+
+    destination:
+        template.commonData?.destination ||
+        "",
+
+    customDestination:
+        template.commonData?.customDestination ||
+        "",
+
+    totalDays:
+        template.commonData?.totalDays ||
+        template.totalDays ||
+        0,
+
+    totalNights:
+        template.commonData?.totalNights ||
+        template.totalNights ||
+        0,
+
+    quoteMode:
+        "itinerary"
+};
+
+importingTemplateRef.current = true;
+
+
+setCommonData(
+    updatedCommonData
+);
+
+setLoadedTemplateCommonData(
+    structuredClone(
+        updatedCommonData
+    )
+);
+
+
+
+setIsDraftModified(false);
+setQuotationSaveState("new");
+
+
+
+    // -----------------------------------
+    // 4. Show active template
+    // -----------------------------------
+setActiveItineraryTemplate(
+    template.label?.trim()
+        ? `${template.name} – ${template.label.trim()}`
+        : (
+            template.name ||
+            "Untitled Template"
+        )
+);
+
+setActiveItineraryTemplateId(
+    template.id || null
+);
+
+setItineraryTemplateSaveState("loaded");
+
+    setItineraryTemplateModified(
+        false
+    );
+
+
+    // -----------------------------------
+    // 5. Close template library
+    // -----------------------------------
+importingTemplateRef.current = false;
+
+    setShowItineraryTemplateLibrary(
+        false
+    );
+
+}}
+
+/>
 
 <h3
   style={{

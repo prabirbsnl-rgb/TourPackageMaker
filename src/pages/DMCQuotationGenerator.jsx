@@ -43,6 +43,8 @@ import {
 import DraftLibrary
 from "../components/quotation/DraftLibrary";
 
+const STORAGE_KEY = "orbitz_itinerary_templates";
+
 const defaultCommonData = {
 
    quoteMode: "package",
@@ -211,6 +213,33 @@ export default function DMCQuotationGenerator() {
 
     const [editingDraft, setEditingDraft] = useState(null);
 
+   const [saveItineraryAsTemplate, setSaveItineraryAsTemplate] =
+    useState(false);
+
+    const [showSaveDestinationModal, setShowSaveDestinationModal] =
+    useState(false);
+
+    const [saveDestinationChoice, setSaveDestinationChoice] =
+    useState(null);
+
+    const [templateSaveMode, setTemplateSaveMode] =
+    useState(null);
+
+    const [itineraryTemplateLabel, setItineraryTemplateLabel] =
+    useState("");
+
+    const [activeItineraryTemplate, setActiveItineraryTemplate] =
+    useState(null);
+
+    const [activeItineraryTemplateId, setActiveItineraryTemplateId] =
+    useState(null);
+
+    const [itineraryTemplateModified, setItineraryTemplateModified] =
+    useState(false);
+
+    const [itineraryTemplateSaveState, setItineraryTemplateSaveState] =
+    useState("none");
+
     const [workingCopy, setWorkingCopy] =
     useState(null);
 
@@ -229,9 +258,17 @@ export default function DMCQuotationGenerator() {
     const [quotationSaveState, setQuotationSaveState] =
     useState("new");
 
+    const [isImportingTemplate, setIsImportingTemplate] =
+    useState(false);
+
+    const importingTemplateRef = useRef(false);
+
+    const [showEmailOptions, setShowEmailOptions] = useState(false);
+
     const [commonData, setCommonData] =
 useState(() => ({
 
+    
     ...defaultCommonData,
 
     quotationNo: `ORB-${Date.now()}`,
@@ -252,6 +289,16 @@ useState(() => ({
         )
 
 }));
+
+useEffect(() => {
+
+    console.log(
+        "CURRENT COMMON DATA:",
+        commonData
+    );
+
+}, [commonData]);
+
 
 const [currentRevision, setCurrentRevision] =
     useState(0);
@@ -276,7 +323,21 @@ const [currentRevision, setCurrentRevision] =
      
 const updatePackageData = (value) => {
 
+     console.log(
+        "UPDATE PACKAGE DATA → DRAFT MODIFICATION CHECK",
+        {
+            importing:
+                importingTemplateRef.current
+        }
+    );
+
     setPackageData(value);
+
+    if (!importingTemplateRef.current) {
+
+    
+
+    console.trace();
 
     setIsDraftModified(true);
 
@@ -285,26 +346,80 @@ const updatePackageData = (value) => {
     if (viewingRevision) {
         setViewingRevisionModified(true);
     }
+
+}
 
 };
 
 const updateCommonData = (value) => {
 
-    setCommonData(value);
+    console.log(
+        "UPDATE COMMON DATA → DRAFT MODIFICATION CHECK",
+        {
+            importing:
+                importingTemplateRef.current,
 
-    setIsDraftModified(true);
+            quoteMode:
+                value?.quoteMode,
 
-    setQuotationSaveState("modified");
+            value
+        }
+    );
 
-    if (viewingRevision) {
-        setViewingRevisionModified(true);
+    const onlyQuoteModeChanged =
+        commonData?.quoteMode !== value?.quoteMode &&
+        Object.keys(commonData || {}).every(key => {
+
+            if (key === "quoteMode") {
+                return true;
+            }
+
+            return (
+                JSON.stringify(commonData?.[key]) ===
+                JSON.stringify(value?.[key])
+            );
+
+        });
+
+    if (
+        !importingTemplateRef.current &&
+        !onlyQuoteModeChanged
+    ) {
+
+       
+
+        setIsDraftModified(true);
+
+        setQuotationSaveState("modified");
+
+        if (viewingRevision) {
+            setViewingRevisionModified(true);
+        }
+
     }
+
+    setCommonData(value);
 
 };
 
 const updateItineraryData = (value) => {
 
+     console.log(
+        "UPDATE ITINERARY DATA → DRAFT MODIFICATION CHECK",
+        {
+            importing:
+                importingTemplateRef.current
+        }
+    );
+
+
     setItineraryData(value);
+
+    if (!importingTemplateRef.current) {
+
+    
+
+    console.trace();
 
     setIsDraftModified(true);
 
@@ -313,6 +428,8 @@ const updateItineraryData = (value) => {
     if (viewingRevision) {
         setViewingRevisionModified(true);
     }
+
+}
 
 };
 
@@ -419,19 +536,24 @@ setPdfFitMode(false);
 
     setReviewDraft({
 
-        quotationNo: commonData.quotationNo,
+    quotationNo: commonData.quotationNo,
 
-        clientName: commonData.clientName,
+    displayQuotationNo:
+        `ORB-${commonData.quotationNo
+            .replace("ORB-", "")
+            .slice(-6)}`,
 
-        destination: commonData.destination,
+    clientName: commonData.clientName,
 
-        commonData,
+    destination:
+        commonData.customDestination?.trim()
+        || commonData.destination,
 
-        packageData,
+    commonData,
+    packageData,
+    itineraryData
 
-        itineraryData
-
-    });
+});
 
     setPdfViewerMode("preview");
 
@@ -501,189 +623,514 @@ const handleGeneratePdf = async (
 
 };
 
-  const handleSaveDraft = () => {
+const saveCurrentItineraryAsTemplate = () => {
 
-    if (autoSaveTimer.current) {
+    if (
+        !itineraryData ||
+        !Array.isArray(itineraryData.itinerary) ||
+        itineraryData.itinerary.length === 0
+    ) {
+        console.error(
+            "Cannot save template: itinerary is empty."
+        );
 
-    clearTimeout(autoSaveTimer.current);
+        alert(
+            "Cannot save template because the itinerary is empty."
+        );
 
-    autoSaveTimer.current = null;
+        return false;
+    }
+
+    const destination =
+        commonData?.customDestination?.trim() ||
+        commonData?.destination ||
+        "Custom Destination";
+
+    const totalDays =
+        Number(commonData?.totalDays || 0);
+
+    const totalNights =
+        Number(commonData?.totalNights || 0);
+
+    const now =
+        new Date().toISOString();
+
+    const isUpdating =
+        templateSaveMode === "update" &&
+        !!activeItineraryTemplateId;
+
+    console.log(
+        "TEMPLATE SAVE CHECK:",
+        {
+            templateSaveMode,
+            activeItineraryTemplateId,
+            isUpdating
+        }
+    );
+
+    const template = {
+
+        id:
+            isUpdating
+                ? activeItineraryTemplateId
+                : `IT-${Date.now()}`,
+
+        name:
+            `${destination} ${totalNights}N/${totalDays}D`,
+
+        label:
+            itineraryTemplateLabel?.trim() || "",
+
+        destination,
+
+        totalDays,
+
+        totalNights,
+
+        createdAt:
+            now,
+
+        updatedAt:
+            now,
+
+        usageCount: 0,
+
+        isMaster: false,
+
+        commonData:
+            structuredClone(commonData),
+
+        packageData:
+            structuredClone(packageData),
+
+        itineraryData:
+            structuredClone(itineraryData)
+
+    };
+
+    try {
+
+        const existing =
+            localStorage.getItem(
+                STORAGE_KEY
+            );
+
+        const parsedTemplates =
+            existing
+                ? JSON.parse(existing)
+                : [];
+
+        const templates =
+            Array.isArray(parsedTemplates)
+                ? parsedTemplates
+                : [];
+
+        let updatedTemplates;
+
+        if (isUpdating) {
+
+            let foundExistingTemplate = false;
+
+            updatedTemplates =
+                templates.map(item => {
+
+                    if (
+                        item.id !==
+                        activeItineraryTemplateId
+                    ) {
+                        return item;
+                    }
+
+                    foundExistingTemplate = true;
+
+                    return {
+
+                        ...item,
+
+                        ...template,
+
+                        id:
+                            item.id,
+
+                        // Preserve original creation date.
+                        createdAt:
+                            item.createdAt ||
+                            now,
+
+                        // Preserve existing usage count.
+                        usageCount:
+                            item.usageCount || 0
+
+                    };
+
+                });
+
+            if (!foundExistingTemplate) {
+
+                console.warn(
+                    "Template ID not found. Saving as new template:",
+                    activeItineraryTemplateId
+                );
+
+                updatedTemplates = [
+                    template,
+                    ...templates
+                ];
+
+            }
+
+        } else {
+
+            updatedTemplates = [
+                template,
+                ...templates
+            ];
+
+        }
+
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(
+                updatedTemplates
+            )
+        );
+
+setItineraryTemplateSaveState("saved");
+
+        console.log(
+            "TEMPLATE SAVED SUCCESSFULLY:",
+            template
+        );
+
+        // If this was Save as New,
+        // make the newly created template active.
+       
+        if (!isUpdating) {
+
+    setActiveItineraryTemplateId(
+        template.id
+    );
+
+    setActiveItineraryTemplate(
+        template.name ||
+        "Untitled Template"
+    );
+
+    
+
+    setCommonData({
+    ...commonData,
+    quoteMode: "itinerary"
+});
+
+    setItineraryTemplateLabel(
+        template.label || ""
+    );
 
 }
 
-const isSavedDraftEdit =
-    Boolean(editingDraft);
+console.log(
+    "NEW TEMPLATE ACTIVE:",
+    {
+        id: template.id,
+        name: template.name,
+        label: template.label
+    }
+);
 
-const nextRevision =
-    isSavedDraftEdit
-        ? (currentRevision || 0) + 1
-        : 0;
+        return true;
 
-        const isViewingRevisionEdit =
-          Boolean(
-        viewingRevision &&
-        viewingRevisionModified
-    );
+    } catch (error) {
+
+        console.error(
+            "Failed to save itinerary template:",
+            error
+        );
+
+        alert(
+            "Unable to save the template. Please check the browser console."
+        );
+
+        return false;
+
+    }
+
+};
+
+ const handleSaveDraft = ({
+    showSuccessAlert = true,
+    closeAfterSave = true
+} = {}) => {
+
+    if (autoSaveTimer.current) {
+        clearTimeout(autoSaveTimer.current);
+        autoSaveTimer.current = null;
+    }
+
+    const isSavedDraftEdit =
+        Boolean(editingDraft);
+
+    const nextRevision =
+        isSavedDraftEdit
+            ? (currentRevision || 0) + 1
+            : 0;
+
+    const isViewingRevisionEdit =
+        Boolean(
+            viewingRevision &&
+            viewingRevisionModified
+        );
 
     const isFirstSave =
-    !editingDraft;
+        !editingDraft;
 
     saveDraft({
 
-    quotationNo:
-    commonData.quotationNo,
+        quotationNo:
+            commonData.quotationNo,
 
-    displayQuotationNo:
-    `ORB-${commonData.quotationNo.replace("ORB-", "").slice(-6)}`,
+        displayQuotationNo:
+            `ORB-${commonData.quotationNo.replace(
+                "ORB-",
+                ""
+            ).slice(-6)}`,
 
-    destination:
-        commonData.customDestination?.trim()
-            || commonData.destination,
+        destination:
+            commonData.customDestination?.trim()
+                || commonData.destination,
 
-    clientName:
-        commonData.clientName,
+        clientName:
+            commonData.clientName,
 
-    savedAt:
-        new Date().toISOString(),
+        savedAt:
+            new Date().toISOString(),
 
-    status: "Draft",
+        status:
+            "Draft",
 
-       originalData:
-    editingDraft?.originalData
-        ? structuredClone(
-            editingDraft.originalData
-        )
-        : {
-            commonData:
-                structuredClone(commonData),
+        originalData:
+            editingDraft?.originalData
+                ? structuredClone(
+                    editingDraft.originalData
+                )
+                : {
+                    commonData:
+                        structuredClone(
+                            commonData
+                        ),
 
-            packageData:
-                structuredClone(packageData),
+                    packageData:
+                        structuredClone(
+                            packageData
+                        ),
 
-            itineraryData:
-                structuredClone(itineraryData)
-        },
+                    itineraryData:
+                        structuredClone(
+                            itineraryData
+                        )
+                },
 
-...(isSavedDraftEdit
-    ? {
-        revisionNo: nextRevision,
+        ...(isSavedDraftEdit
+            ? {
+                revisionNo:
+                    nextRevision,
 
-        revisionHistory: [
-    ...(editingDraft?.revisionHistory || revisionHistory || []),
+                revisionHistory: [
+                    ...(
+                        editingDraft?.revisionHistory
+                        ||
+                        revisionHistory
+                        ||
+                        []
+                    ),
+
+                    {
+                        revisionNo:
+                            nextRevision,
+
+                        savedAt:
+                            new Date().toISOString(),
+
+                        commonData:
+                            structuredClone(
+                                commonData
+                            ),
+
+                        packageData:
+                            structuredClone(
+                                packageData
+                            ),
+
+                        itineraryData:
+                            structuredClone(
+                                itineraryData
+                            )
+                    }
+                ]
+            }
+            : {}),
+
+        commonData:
+            structuredClone(
+                commonData
+            ),
+
+        packageData:
+            structuredClone(
+                packageData
+            ),
+
+        itineraryData:
+            structuredClone(
+                itineraryData
+            )
+
+    });
+
+    if (isSavedDraftEdit) {
+
+        setCurrentRevision(
+            nextRevision
+        );
+
+        setRevisionHistory(prev => [
+            ...prev,
 
             {
-                revisionNo: nextRevision,
+                revisionNo:
+                    nextRevision,
+
                 savedAt:
                     new Date().toISOString(),
 
                 commonData:
-                    structuredClone(commonData),
+                    structuredClone(
+                        commonData
+                    ),
 
                 packageData:
-                    structuredClone(packageData),
+                    structuredClone(
+                        packageData
+                    ),
 
                 itineraryData:
-                    structuredClone(itineraryData)
+                    structuredClone(
+                        itineraryData
+                    )
             }
-        ]
+        ]);
+
     }
-    : {}),
 
-commonData,
+    setIsDraftModified(false);
 
-packageData,
+    refreshDrafts();
 
-itineraryData
+    setQuotationSaveState(
+        "saved"
+    );
 
-});
+    setViewingRevision(null);
 
-if (isSavedDraftEdit) {
+    setViewingRevisionModified(false);
 
-    setCurrentRevision(nextRevision);
+    setViewingRevisionCurrentNo(0);
 
-    setRevisionHistory(prev => [
-        ...prev,
+    if (isSavedDraftEdit) {
 
-        {
-            revisionNo: nextRevision,
-            savedAt: new Date().toISOString(),
+        setEditingDraft({
 
-            commonData:
-                structuredClone(commonData),
+            ...(editingDraft || {}),
 
-            packageData:
-                structuredClone(packageData),
+            quotationNo:
+                commonData.quotationNo,
 
-            itineraryData:
-                structuredClone(itineraryData)
-        }
-    ]);
+            originalData:
+                editingDraft?.originalData
+                    ? structuredClone(
+                        editingDraft.originalData
+                    )
+                    : {
+                        commonData:
+                            structuredClone(
+                                commonData
+                            ),
 
-}
+                        packageData:
+                            structuredClone(
+                                packageData
+                            ),
 
-setIsDraftModified(false);
-refreshDrafts();
-setIsDraftModified(false);
-setQuotationSaveState("saved");
+                        itineraryData:
+                            structuredClone(
+                                itineraryData
+                            )
+                    },
 
-setViewingRevision(null);
-setViewingRevisionModified(false);
-setViewingRevisionCurrentNo(0);
+            revisionNo:
+                nextRevision,
 
-if (isSavedDraftEdit) {
+            revisionHistory: [
+                ...(
+                    editingDraft?.revisionHistory
+                    ||
+                    revisionHistory
+                    ||
+                    []
+                ),
 
-    setEditingDraft({
-        ...(editingDraft || {}),
-        quotationNo: commonData.quotationNo,
+                {
+                    revisionNo:
+                        nextRevision,
 
-        originalData:
-    editingDraft?.originalData
-        ? structuredClone(
-            editingDraft.originalData
-        )
-        : {
-            commonData:
-                structuredClone(commonData),
+                    savedAt:
+                        new Date().toISOString(),
 
-            packageData:
-                structuredClone(packageData),
+                    commonData:
+                        structuredClone(
+                            commonData
+                        ),
 
-            itineraryData:
-                structuredClone(itineraryData)
-        },
+                    packageData:
+                        structuredClone(
+                            packageData
+                        ),
 
-        revisionNo: nextRevision,
+                    itineraryData:
+                        structuredClone(
+                            itineraryData
+                        )
+                }
+            ]
 
-        revisionHistory: [
-            ...(editingDraft?.revisionHistory || revisionHistory || []),
-            {
-                revisionNo: nextRevision,
-                savedAt: new Date().toISOString(),
+        });
 
-                commonData:
-                    structuredClone(commonData),
+    } else {
 
-                packageData:
-                    structuredClone(packageData),
+        // First save remains a normal saved quotation.
+        // It is NOT considered an existing draft being edited.
 
-                itineraryData:
-                    structuredClone(itineraryData)
-            }
-        ]
-    });
+        setEditingDraft(null);
 
-} else {
+    }
 
-    // First save remains a normal saved quotation.
-    // It is NOT considered an "existing draft" being edited.
-    setEditingDraft(null);
+    if (closeAfterSave) {
 
-}
+        clearWorkingCopy();
 
-clearWorkingCopy();
-setWorkingCopy(null);
-setResumeModalOpen(false);
-alert("Draft saved successfully.");
+        setWorkingCopy(null);
+
+        setResumeModalOpen(false);
+
+    }
+
+    if (showSuccessAlert) {
+
+        alert(
+            "Draft saved successfully."
+        );
+
+    }
 
 };
 
@@ -731,15 +1178,9 @@ const handleOpenDraftLibrary =
 
 const handleRevisionHistory = (draft) => {
 
-    console.log(
-        "REVISION HISTORY DRAFT:",
-        draft
-    );
+    
 
-    console.log(
-        "ORIGINAL DATA FROM DRAFT:",
-        draft?.originalData
-    );
+    
 
     setHistoryOpenedFromLibrary(true);
 
@@ -748,6 +1189,107 @@ const handleRevisionHistory = (draft) => {
     );
 
     setRevisionHistoryDraft(draft);
+};
+
+const handleViewOriginalDraft = () => {
+
+    if (
+        !revisionHistoryDraft ||
+        !revisionHistoryDraft.originalData
+    ) {
+        return;
+    }
+
+    const original =
+        revisionHistoryDraft.originalData;
+
+    // Keep the saved quotation available
+    // for Return to Current.
+    const savedDraft =
+        structuredClone(
+            revisionHistoryDraft
+        );
+
+    setCommonData(
+        structuredClone(
+            original.commonData
+        )
+    );
+
+    setPackageData(
+        structuredClone(
+            original.packageData
+        )
+    );
+
+    setItineraryData(
+        structuredClone(
+            original.itineraryData
+        )
+    );
+
+    // Mark this specifically as Original Draft
+   setViewingRevision({
+
+    isOriginalDraft: true,
+
+    revisionNo: 0,
+
+    commonData:
+        structuredClone(
+            original.commonData
+        ),
+
+    packageData:
+        structuredClone(
+            original.packageData
+        ),
+
+    itineraryData:
+        structuredClone(
+            original.itineraryData
+        ),
+
+    // Keep the current saved quotation available
+    // while viewing the Original Draft.
+    currentSavedDraft:
+        structuredClone(
+            savedDraft
+        )
+});
+
+    // Keep current saved quotation
+    // available for Return to Current.
+   setEditingDraft(null);
+
+    setCurrentRevision(
+        savedDraft.revisionNo || 0
+    );
+
+    setViewingRevisionCurrentNo(
+        savedDraft.revisionNo || 0
+    );
+
+    setViewingRevisionModified(false);
+
+    setIsDraftModified(false);
+
+    setQuotationSaveState("library");
+
+    // Close Revision History
+    setRevisionHistoryDraft(null);
+
+    // IMPORTANT:
+    // Close Library as well.
+    setShowDraftLibrary(false);
+
+    setHistoryOpenedFromLibrary(false);
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
 };
 
 const handleViewRevision = (
@@ -808,35 +1350,112 @@ window.scrollTo({
 
 const handleDuplicateDraft = (draft) => {
 
-    // Create a deep copy
+    // Create a deep copy of the quotation data
     const copy = structuredClone(draft);
 
     // Generate a NEW quotation number
+    const newQuotationNo =
+        `ORB-${Date.now()}`;
+
+    // Preserve the quotation's current displayed data,
+    // but make it a completely independent new quotation.
     copy.commonData = {
-    ...copy.commonData,
-    quotationNo: `ORB-${Date.now()}`
-};
+        ...copy.commonData,
+        quotationNo: newQuotationNo
+    };
 
-// Update draft metadata
-copy.savedAt = new Date().toISOString();
-copy.status = "Draft";
+    // New quotation metadata
+    copy.quotationNo = newQuotationNo;
 
-    // Load into the editor
-    setCommonData(copy.commonData);
-    setPackageData(copy.packageData);
-    setItineraryData(copy.itineraryData);
+    copy.displayQuotationNo =
+        `ORB-${newQuotationNo
+            .replace("ORB-", "")
+            .slice(-6)}`;
+
+    copy.savedAt =
+        new Date().toISOString();
+
+    copy.status = "Draft";
+
+    // ------------------------------------------------
+    // IMPORTANT:
+    // A duplicate starts completely fresh.
+    // No revision number.
+    // No revision history.
+    // Its current data becomes its Original Draft.
+    // ------------------------------------------------
+
+    copy.revisionNo = undefined;
+
+    copy.revisionHistory = [];
+
+    copy.originalData = {
+        commonData:
+            structuredClone(
+                copy.commonData
+            ),
+
+        packageData:
+            structuredClone(
+                copy.packageData
+            ),
+
+        itineraryData:
+            structuredClone(
+                copy.itineraryData
+            )
+    };
+
+    // Load duplicate into editor
+    setCommonData(
+        structuredClone(
+            copy.commonData
+        )
+    );
+
+    setPackageData(
+        structuredClone(
+            copy.packageData
+        )
+    );
+
+    setItineraryData(
+        structuredClone(
+            copy.itineraryData
+        )
+    );
+
+    // IMPORTANT:
+    // This is a NEW quotation, not an edit
+    // of the quotation it was duplicated from.
+    setEditingDraft(null);
+
+    setCurrentRevision(0);
+
+    setRevisionHistory([]);
+
     setIsDraftModified(true);
 
+    // Clear revision-viewing state
     setViewingRevision(null);
+
+    setViewingRevisionModified(false);
+
     setViewingRevisionCurrentNo(0);
+
     setHistoryOpenedFromLibrary(false);
+
     setRevisionHistoryDraft(null);
 
-    // Close the library
+    // Close Library
     setShowDraftLibrary(false);
+
     alert(
-    "Quotation duplicated successfully.\n\nA new quotation has been opened in the editor.\nSave it when you're ready."
-);
+        "Quotation duplicated successfully.\n\n" +
+        "A new quotation has been opened in the editor.\n" +
+        "It has no revision history.\n\n" +
+        "Save it when you're ready."
+    );
 
 };
 
@@ -1227,11 +1846,18 @@ const handleDiscardWorkingCopy = () => {
 
 };
 
-const resetQuotation = () => {
+const resetQuotation = ({
+    preserveItineraryMode = false
+} = {}) => {
 
     setCommonData({
 
         ...defaultCommonData,
+
+        quoteMode:
+    preserveItineraryMode
+        ? "itinerary"
+        : defaultCommonData.quoteMode,
 
         quotationNo: `ORB-${Date.now()}`,
 
@@ -1251,6 +1877,18 @@ const resetQuotation = () => {
             )
 
     });
+
+    // Keep Itinerary mode when
+    // Start Fresh is used from a template.
+    if (preserveItineraryMode) {
+
+        setCommonData(prev => ({
+            ...prev,
+            quoteMode: "itinerary"
+        }));
+
+    }
+
 
     setPackageData({
 
@@ -1285,6 +1923,17 @@ const resetQuotation = () => {
     setReviewPdfUrl(null);
 
     setReviewPdfOpen(false);
+
+    setActiveItineraryTemplate(null);
+
+setActiveItineraryTemplateId(null);
+
+setItineraryTemplateSaveState("none");
+
+setItineraryTemplateLabel("");
+setSaveDestinationChoice(null);
+setShowSaveDestinationModal(false);
+setTemplateSaveMode(null);
 
 };
 
@@ -1402,15 +2051,15 @@ console.log(itineraryData.itinerary[0]);
     
     return (
 
-        commonData.clientName.trim() !== "" ||
+        (String(commonData?.clientName || "").trim() !== "") ||
 
-        commonData.destination.trim() !== "" ||
+(String(commonData?.destination || "").trim() !== "") ||
 
-        commonData.mobile.trim() !== "" ||
+(String(commonData?.mobile || "").trim() !== "") ||
 
-        commonData.email.trim() !== "" ||
+(String(commonData?.email || "").trim() !== "") ||
 
-        commonData.specialNotes.trim() !== "" ||
+(String(commonData?.specialNotes || "").trim() !== "") ||
 
         packageData.selectedHotels.length > 0 ||
 
@@ -1629,7 +2278,8 @@ return (
 
         )}
 
-       {editingDraft && (
+       {(editingDraft || viewingRevision) && (
+
     <div
         style={{
             marginBottom: "6px",
@@ -1655,8 +2305,14 @@ return (
 
         <div>
             {viewingRevision
-    ? (
-        viewingRevisionModified
+    ? viewingRevision.isOriginalDraft
+        ? (
+            <>
+                👁 Viewing Original Draft
+            </>
+        )
+        : (
+            viewingRevisionModified
             ? (
                 <>
     ✏ Modified from Revision{" "}
@@ -1704,31 +2360,36 @@ return (
         <button
             onClick={() => {
 
-                if (editingDraft) {
+               const currentDraft =
+    editingDraft ||
+    revisionHistoryDraft ||
+    viewingRevision?.currentSavedDraft;
 
-                    setCommonData(
-                        structuredClone(
-                            editingDraft.commonData
-                        )
-                    );
+if (currentDraft) {
 
-                    setPackageData(
-                        structuredClone(
-                            editingDraft.packageData
-                        )
-                    );
+    setCommonData(
+        structuredClone(
+            currentDraft.commonData
+        )
+    );
 
-                    setItineraryData(
-                        structuredClone(
-                            editingDraft.itineraryData
-                        )
-                    );
+    setPackageData(
+        structuredClone(
+            currentDraft.packageData
+        )
+    );
 
-                    setCurrentRevision(
-                        editingDraft.revisionNo || 0
-                    );
+    setItineraryData(
+        structuredClone(
+            currentDraft.itineraryData
+        )
+    );
 
-                }
+    setCurrentRevision(
+        currentDraft.revisionNo || 0
+    );
+
+}
 
                 setViewingRevision(null);
 
@@ -1759,15 +2420,25 @@ return (
     <button
         onClick={() => {
 
-            if (editingDraft) {
+    const currentDraft =
+        editingDraft ||
+        revisionHistoryDraft ||
+        viewingRevision?.currentSavedDraft;
 
-                setRevisionHistoryDraft(
-                    structuredClone(editingDraft)
-                );
+    if (currentDraft) {
 
-            }
+        // This History window was opened
+        // from the Editor.
+        setHistoryOpenedFromLibrary(false);
 
-        }}
+        setRevisionHistoryDraft(
+            structuredClone(currentDraft)
+        );
+
+    }
+
+}}
+
         style={{
             height: "28px",
             padding: "0 10px",
@@ -1847,206 +2518,304 @@ return (
 
     {/* DIVIDER */}
 
-    <div
-        style={{
-            width: "1px",
-            height: "30px",
-            background: "#d1d5db",
-            margin: "0 4px"
-        }}
-    />
-
-
-    {/* ========================= */}
-    {/* DRAFT MANAGEMENT */}
-    {/* ========================= */}
-
-   <button
-    onClick={handleSaveDraft}
-
-    disabled={
-        quotationSaveState === "saved" ||
-        (
-            quotationSaveState === "library" &&
-            !isDraftModified
-        )
-    }
-
+   <div
     style={{
-        background:
-            quotationSaveState === "saved" ||
-            (
-                quotationSaveState === "library" &&
-                !isDraftModified
-            )
-                ? "#15803d"
-                : "#f59e0b",
+        width: "1px",
+        height: "30px",
+        background: "#d1d5db",
+        margin: "0 4px"
+    }}
+/>
 
+
+{/* ========================= */}
+{/* DRAFT MANAGEMENT */}
+{/* ========================= */}
+
+<button
+    type="button"
+    onClick={() =>
+        setShowSaveDestinationModal(true)
+    }
+    style={{
+        background: "#f59e0b",
         color: "#fff",
-
         border: "none",
-
         padding: "10px 18px",
-
         borderRadius: "8px",
-
-        cursor:
-            quotationSaveState === "saved" ||
-            (
-                quotationSaveState === "library" &&
-                !isDraftModified
-            )
-                ? "default"
-                : "pointer",
-
-        fontWeight: 600,
-
-        opacity:
-            quotationSaveState === "saved" ||
-            (
-                quotationSaveState === "library" &&
-                !isDraftModified
-            )
-                ? 0.85
-                : 1
+        cursor: "pointer",
+        fontWeight: 600
     }}
 >
-    {quotationSaveState === "saved"
-    ? "✓ Saved"
-    : quotationSaveState === "library"
-        ? (
-            isDraftModified
-                ? "💾 Save Changes"
-                : "✓ Saved"
-        )
-        : quotationSaveState === "modified"
-            ? (
-                editingDraft
-                    ? "💾 Save Changes"
-                    : "💾 Save Draft"
-            )
-            : "💾 Save Draft"}
+    💾 Save Quotation
 </button>
 
-    <button
-        onClick={handleOpenDraftLibrary}
-        style={{
-            background: "#6b7280",
-            color: "#fff",
-            border: "none",
-            padding: "10px 18px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: 600
-        }}
-    >
-        📂 Draft Library
-    </button>
 
-    <button
-        onClick={() => {
+<button
+    type="button"
+    onClick={handleOpenDraftLibrary}
+    style={{
+        background: "#6b7280",
+        color: "#fff",
+        border: "none",
+        padding: "10px 18px",
+        borderRadius: "8px",
+        cursor: "pointer",
+        fontWeight: 600
+    }}
+>
+    📂 Draft Library
+</button>
 
-            if (isDraftModified) {
 
-                const proceed = window.confirm(
-                    "You have unsaved changes. Start a new quotation anyway?"
-                );
+<button
+    type="button"
+    onClick={() => {
 
-                if (!proceed) return;
+        if (isDraftModified) {
 
-            }
+            const proceed = window.confirm(
+                "You have unsaved changes. Start a new quotation anyway?"
+            );
 
-            resetQuotation();
+            if (!proceed) return;
+        }
 
-        }}
-        style={{
-            background: "#374151",
-            color: "#fff",
-            border: "none",
-            padding: "10px 18px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: 600
-        }}
-    >
-        🆕 New Quotation
-    </button>
+        resetQuotation();
+
+    }}
+    style={{
+        background: "#374151",
+        color: "#fff",
+        border: "none",
+        padding: "10px 18px",
+        borderRadius: "8px",
+        cursor: "pointer",
+        fontWeight: 600
+    }}
+>
+    🆕 New Quotation
+</button>
+
+
+{/* LOGO — remains in top-right toolbar */}
+<img
+    src="/orbitz-logo.png"
+    alt="Orbitz Holidays"
+    style={{
+        height: "72px",
+        width: "auto",
+        maxWidth: "190px",
+        objectFit: "contain",
+        display: "block",
+        marginLeft: "auto",
+        marginRight: "0"
+    }}
+/>
+
+
+</div>
+
+
+{/* ===================================================== */}
+{/* PROMINENT SAVE STATUS */}
+{/* ===================================================== */}
 
 <div
     style={{
+        width: "100%",
+        boxSizing: "border-box",
+        marginTop: "10px",
+        marginBottom: "0px",
+        padding: "11px 16px",
+        background: "#f8fafc",
+        border: "1px solid #cbd5e1",
+        borderRadius: "8px",
         display: "flex",
         alignItems: "center",
-        gap: "10px",
-        marginLeft: "auto",
-        paddingLeft: "16px"
-    }}
->
-
-    <div
-    style={{
-        minWidth: "220px",
-        textAlign: "right",
-        lineHeight: 1.35
+        gap: "28px",
+        flexWrap: "wrap"
     }}
 >
 
     <div
         style={{
-            fontSize: "14px",
-            fontWeight: 700,
-            color: "#374151"
+            fontSize: "13px",
+            fontWeight: 800,
+            color: "#1f2937",
+            whiteSpace: "nowrap"
         }}
     >
-        {commonData?.quotationNo || "-"}
+        💾 QUOTATION STATUS
     </div>
 
+
     <div
+        style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "24px",
+            flexWrap: "wrap",
+            fontSize: "13px",
+            fontWeight: 700
+        }}
+    >
+
+        {/* DRAFT STATUS */}
+
+        <div>
+
+            <span
+                style={{
+                    color: "#374151"
+                }}
+            >
+                Draft:
+            </span>{" "}
+
+            {quotationSaveState === "saved" ||
+            (
+                quotationSaveState === "library" &&
+                !isDraftModified
+            ) ? (
+
+                <span
+                    style={{
+                        color: "#15803d"
+                    }}
+                >
+                    ✓ SAVED
+                </span>
+
+            ) : quotationSaveState === "new" ? (
+
+                <span
+                    style={{
+                        color: "#d97706"
+                    }}
+                >
+                    ⚠️ NOT SAVED
+                </span>
+
+            ) : (
+
+                <span
+                    style={{
+                        color: "#d97706"
+                    }}
+                >
+                    ⚠️ UNSAVED CHANGES
+                </span>
+
+            )}
+
+        </div>
+
+
+        {/* TEMPLATE STATUS */}
+
+        <div>
+
+            <span
+                style={{
+                    color: "#374151"
+                }}
+            >
+                Template:
+            </span>{" "}
+
+            {itineraryTemplateSaveState === "saved" ? (
+
+                <span
+                    style={{
+                        color: "#15803d"
+                    }}
+                >
+                    ✓ SAVED
+                </span>
+
+            ) : itineraryTemplateSaveState === "loaded" ? (
+
+                <span
+                    style={{
+                        color: "#2563eb"
+                    }}
+                >
+                    ✓ LOADED
+                </span>
+
+            ) : (
+
+                <span
+                    style={{
+                        color: "#6b7280"
+                    }}
+                >
+                    —
+                </span>
+
+            )}
+
+        </div>
+
+    </div>
+
+</div>
+
+
+{/* ===================================================== */}
+{/* CURRENT QUOTATION IDENTITY */}
+{/* ===================================================== */}
+
+<div
+    style={{
+        width: "fit-content",
+        maxWidth: "100%",
+        boxSizing: "border-box",
+        alignSelf: "stretch",
+        marginTop: "6px",
+        marginBottom: "12px",
+        marginLeft: "16px",
+        padding: "7px 14px",
+        background: "#f1f5f9",
+        border: "1px solid #dbe3ec",
+        borderRadius: "999px",
+        textAlign: "left",
+        lineHeight: 1.25,
+        boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)"
+    }}
+>
+    <span
         style={{
             fontSize: "12px",
-            marginTop: "2px",
-            fontWeight: 600,
-            color:
-                quotationSaveState === "saved"
-                    ? "#15803d"
-                    : quotationSaveState === "modified"
-                        ? "#b45309"
-                        : quotationSaveState === "library"
-                            ? "#2563eb"
-                            : "#6b7280"
+            fontWeight: 800,
+            color: "#334155"
         }}
     >
-        {quotationSaveState === "saved"
-            ? "✓ Saved"
-            : quotationSaveState === "modified"
-                ? "⚠️ Unsaved Changes"
-                : quotationSaveState === "library"
-                    ? "📂 Working on Saved Draft"
-                    : "🆕 New Quotation"}
-    </div>
+        {commonData?.quotationNo
+    ? `ORB-${commonData.quotationNo
+        .replace("ORB-", "")
+        .slice(-6)}`
+    : "-"
+}
+    </span>
 
-    <div
-    style={{
-        fontSize: "12px",
-        color: "#1f2937",
-        fontWeight: 700,
-        marginTop: "4px",
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis"
-    }}
->
-        {commonData?.clientName || "No client"}
+    <span
+        style={{
+            fontSize: "11px",
+            marginLeft: "9px",
+            color: "#64748b",
+            fontWeight: 600
+        }}
+    >
+        {commonData?.clientName?.trim()
+            || "No client"}
         {" • "}
         {commonData?.customDestination?.trim()
-            || commonData?.destination
+            || commonData?.destination?.trim()
             || "No destination"}
-    </div>
-
+    </span>
 </div>
-
-</div>
-</div>
-
 
 
    <QuoteForm
@@ -2060,6 +2829,79 @@ return (
     setItineraryData={updateItineraryData}
 
     applyItineraryTemplate={applyItineraryTemplate}
+
+    saveItineraryAsTemplate={
+    saveItineraryAsTemplate
+}
+
+setSaveItineraryAsTemplate={
+    setSaveItineraryAsTemplate
+}
+
+activeItineraryTemplate={
+    activeItineraryTemplate
+}
+
+activeItineraryTemplateId={
+    activeItineraryTemplateId
+}
+
+setItineraryTemplateSaveState={
+    setItineraryTemplateSaveState
+}
+
+setIsDraftModified={
+    setIsDraftModified
+}
+
+setQuotationSaveState={
+    setQuotationSaveState
+}
+
+setIsDraftModified={
+    setIsDraftModified
+}
+
+setQuotationSaveState={
+    setQuotationSaveState
+}
+
+setActiveItineraryTemplateId={
+    setActiveItineraryTemplateId
+}
+
+setActiveItineraryTemplate={
+    setActiveItineraryTemplate
+}
+
+itineraryTemplateModified={
+    itineraryTemplateModified
+}
+
+setItineraryTemplateModified={
+    setItineraryTemplateModified
+}
+
+itineraryTemplateLabel={
+    itineraryTemplateLabel
+}
+
+setItineraryTemplateLabel={
+    setItineraryTemplateLabel
+}
+
+resetQuotation={
+    resetQuotation
+}
+
+setIsImportingTemplate={
+    setIsImportingTemplate
+}
+
+importingTemplateRef={
+    importingTemplateRef
+}
+
 />
 
     {showPreview && (
@@ -2343,27 +3185,7 @@ return (
                 </div>
 
 
-                {/* CLOSE */}
-
-                <button
-                    onClick={() =>
-                        setRevisionHistoryDraft(null)
-                    }
-                    style={{
-                        width: "32px",
-                        height: "32px",
-                        border: "1px solid #d1d5db",
-                        background: "#fff",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        fontSize: "18px",
-                        fontWeight: 600,
-                        color: "#374151"
-                    }}
-                >
-                    ×
-                </button>
-
+               
             </div>
 
 
@@ -2377,149 +3199,248 @@ return (
                 }}
             >
 
-                {revisionHistoryDraft.revisionHistory?.length > 0 ? (
+               {revisionHistoryDraft.revisionHistory?.length > 0 ? (
 
-                    [...revisionHistoryDraft.revisionHistory]
-                        .sort(
-                            (a, b) =>
-                                b.revisionNo -
-                                a.revisionNo
-                        )
-                        .map((revision) => (
+    <>
 
-                            <div
-                                key={revision.revisionNo}
-                                style={{
-    border:
-        revision.revisionNo ===
-        revisionHistoryDraft.revisionNo
-            ? "2px solid #2563eb"
-            : "1px solid #e5e7eb",
+        {/* ORIGINAL DRAFT */}
 
-    borderRadius: "10px",
+        <div
+            style={{
+                border: "2px solid #16a34a",
+                borderRadius: "10px",
+                padding: "14px 16px",
+                marginBottom: "14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "15px",
+                background: "#f0fdf4"
+            }}
+        >
 
-    padding: "14px 16px",
+            <div>
 
-    marginBottom: "10px",
+                <div
+                    style={{
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        color: "#166534"
+                    }}
+                >
+                    🟢 Original Draft
+                </div>
 
-    display: "flex",
-
-    alignItems: "center",
-
-    justifyContent: "space-between",
-
-    gap: "15px",
-
-    background:
-        revision.revisionNo ===
-        revisionHistoryDraft.revisionNo
-            ? "#eff6ff"
-            : "#fff"
-}}
-                            >
-
-                                <div>
-
-                                    <div
-                                        style={{
-                                            fontSize: "14px",
-                                            fontWeight: 700,
-                                            color: "#111827"
-                                        }}
-                                    >
-                                        Revision {revision.revisionNo}
-
-                                        {revision.revisionNo ===
-                                            revisionHistoryDraft.revisionNo && (
-                                            <span
-                                                style={{
-                                                    marginLeft: "8px",
-                                                    fontSize: "11px",
-                                                    color: "#16a34a",
-                                                    fontWeight: 700
-                                                }}
-                                            >
-                                                ✓ Current
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div
-                                        style={{
-                                            marginTop: "4px",
-                                            fontSize: "12px",
-                                            color: "#6b7280"
-                                        }}
-                                    >
-                                        {new Date(
-                                            revision.savedAt
-                                        ).toLocaleString()}
-                                    </div>
-
-                                </div>
-
-
-                                <button
-    onClick={() => {
-        handleViewRevision(
-            revision,
-            historyOpenedFromLibrary
-        );
-    }}
-                                    style={{
-                                        background: "#2563eb",
-                                        color: "#fff",
-                                        border: "none",
-                                        padding: "7px 12px",
-                                        borderRadius: "6px",
-                                        cursor: "pointer",
-                                        fontSize: "12px",
-                                        fontWeight: 600
-                                    }}
-                                >
-                                    👁 View
-                                </button>
-
-                                <button
-    onClick={() => {
-        handleDeleteRevision(revision);
-    }}
-    style={{
-        background: "#dc2626",
-        color: "#fff",
-        border: "none",
-        padding: "7px 10px",
-        borderRadius: "6px",
-        cursor: "pointer",
-        fontSize: "12px",
-        fontWeight: 600,
-        marginLeft: "6px"
-    }}
-    title={`Delete Revision ${revision.revisionNo}`}
->
-    🗑
-</button>
-
-                            </div>
-
-                        ))
-
-                ) : (
-
-                    <div
-                        style={{
-                            padding: "40px 20px",
-                            textAlign: "center",
-                            color: "#6b7280",
-                            fontSize: "14px"
-                        }}
-                    >
-                        No revisions yet.
-                    </div>
-
-                )}
+                <div
+                    style={{
+                        marginTop: "4px",
+                        fontSize: "12px",
+                        color: "#6b7280"
+                    }}
+                >
+                    Original saved quotation
+                </div>
 
             </div>
+
+            <button
+                onClick={() => {
+
+                    handleViewOriginalDraft();
+
+                }}
+                style={{
+                    background: "#16a34a",
+                    color: "#fff",
+                    border: "none",
+                    padding: "7px 12px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    fontWeight: 600
+                }}
+            >
+                👁 View
+            </button>
+
+        </div>
+
+
+        {/* REVISION HISTORY LABEL */}
+
+        <div
+            style={{
+                margin: "4px 0 10px",
+                paddingBottom: "6px",
+                borderBottom: "1px solid #e5e7eb",
+                fontSize: "12px",
+                fontWeight: 700,
+                color: "#6b7280"
+            }}
+        >
+            Revision History
+        </div>
+
+
+        {/* REVISIONS */}
+
+        {
+            [...revisionHistoryDraft.revisionHistory]
+                .sort(
+                    (a, b) =>
+                        b.revisionNo -
+                        a.revisionNo
+                )
+                .map((revision) => (
+
+                    <div
+                        key={revision.revisionNo}
+                        style={{
+                            border:
+                                revision.revisionNo ===
+                                revisionHistoryDraft.revisionNo
+                                    ? "2px solid #2563eb"
+                                    : "1px solid #e5e7eb",
+
+                            borderRadius: "10px",
+
+                            padding: "14px 16px",
+
+                            marginBottom: "10px",
+
+                            display: "flex",
+
+                            alignItems: "center",
+
+                            justifyContent: "space-between",
+
+                            gap: "15px",
+
+                            background:
+                                revision.revisionNo ===
+                                revisionHistoryDraft.revisionNo
+                                    ? "#eff6ff"
+                                    : "#fff"
+                        }}
+                    >
+
+                        <div>
+
+                            <div
+                                style={{
+                                    fontSize: "14px",
+                                    fontWeight: 700,
+                                    color: "#111827"
+                                }}
+                            >
+                                Revision {revision.revisionNo}
+
+                                {revision.revisionNo ===
+                                    revisionHistoryDraft.revisionNo && (
+                                    <span
+                                        style={{
+                                            marginLeft: "8px",
+                                            fontSize: "11px",
+                                            color: "#16a34a",
+                                            fontWeight: 700
+                                        }}
+                                    >
+                                        ✓ Current
+                                    </span>
+                                )}
+                            </div>
+
+                            <div
+                                style={{
+                                    marginTop: "4px",
+                                    fontSize: "12px",
+                                    color: "#6b7280"
+                                }}
+                            >
+                                {new Date(
+                                    revision.savedAt
+                                ).toLocaleString()}
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center"
+                            }}
+                        >
+
+                            <button
+                                onClick={() => {
+                                    handleViewRevision(
+                                        revision,
+                                        historyOpenedFromLibrary
+                                    );
+                                }}
+                                style={{
+                                    background: "#2563eb",
+                                    color: "#fff",
+                                    border: "none",
+                                    padding: "7px 12px",
+                                    borderRadius: "6px",
+                                    cursor: "pointer",
+                                    fontSize: "12px",
+                                    fontWeight: 600
+                                }}
+                            >
+                                👁 View
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    handleDeleteRevision(
+                                        revision
+                                    );
+                                }}
+                                style={{
+                                    background: "#dc2626",
+                                    color: "#fff",
+                                    border: "none",
+                                    padding: "7px 10px",
+                                    borderRadius: "6px",
+                                    cursor: "pointer",
+                                    fontSize: "12px",
+                                    fontWeight: 600,
+                                    marginLeft: "6px"
+                                }}
+                                title={`Delete Revision ${revision.revisionNo}`}
+                            >
+                                🗑
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                ))
+
+        }
+
+    </>
+
+) : (
+
+    <div
+        style={{
+            padding: "40px 20px",
+            textAlign: "center",
+            color: "#6b7280",
+            fontSize: "14px"
+        }}
+    >
+        No revisions yet.
+    </div>
+
+)}
+
+</div>
 
             <div
     style={{
@@ -2531,17 +3452,23 @@ return (
     }}
 >
     <button
-        onClick={() => {
-
-    setShowDraftLibrary(true);
+       onClick={() => {
 
     setRevisionHistoryDraft(null);
 
-if (openedFromLibrary) {
-    setShowDraftLibrary(false);
-}
+    if (historyOpenedFromLibrary) {
 
-setHistoryOpenedFromLibrary(false);
+        // History was opened directly from Library
+        setShowDraftLibrary(true);
+
+    } else {
+
+        // History was opened from Editor
+        setShowDraftLibrary(false);
+
+    }
+
+    setHistoryOpenedFromLibrary(false);
 
 }}
         style={{
@@ -2887,6 +3814,439 @@ setHistoryOpenedFromLibrary(false);
 
         <>
 
+        <button
+    type="button"
+    onClick={async () => {
+
+        if (!reviewDraft) return;
+
+        const clientName =
+            reviewDraft.clientName?.trim()
+            || "there";
+
+        const destination =
+            reviewDraft.destination?.trim()
+            || reviewDraft.commonData?.customDestination?.trim()
+            || reviewDraft.commonData?.destination?.trim()
+            || "your destination";
+
+        const quotationNo =
+            reviewDraft.displayQuotationNo
+            || (
+                reviewDraft.commonData?.quotationNo
+                    ? `ORB-${reviewDraft.commonData.quotationNo
+                        .replace("ORB-", "")
+                        .slice(-6)}`
+                    : ""
+            );
+
+        // ---------------------------------------
+        // CLIENT MOBILE
+        // ---------------------------------------
+
+        const rawMobile =
+            reviewDraft.commonData?.mobile?.trim()
+            || "";
+
+        let mobile =
+            rawMobile.replace(/\D/g, "");
+
+        if (mobile.length === 10) {
+            mobile = `91${mobile}`;
+        }
+
+        // ---------------------------------------
+        // WHATSAPP MESSAGE
+        // ---------------------------------------
+
+        const message =
+            `Dear ${clientName},\n\n` +
+            `Greetings from Orbitz Holidays!\n\n` +
+            `Please find your quotation ` +
+            `${quotationNo ? `(${quotationNo}) ` : ""}` +
+            `for ${destination}.\n\n` +
+            `We look forward to helping you plan your journey.\n\n` +
+            `Regards,\n` +
+            `Orbitz Holidays\n` +
+            `Anywhere, Anytime, Around the World`;
+
+        // ---------------------------------------
+        // GENERATE FINAL PDF
+        // ---------------------------------------
+
+        try {
+
+            const blob =
+    await handleGeneratePdf(
+        reviewDraft.commonData,
+        reviewDraft.packageData,
+        reviewDraft.itineraryData,
+        "preview"
+    );
+
+            // ---------------------------------------
+            // DOWNLOAD PDF
+            // ---------------------------------------
+
+            const pdfUrl =
+                URL.createObjectURL(blob);
+
+            const link =
+                document.createElement("a");
+
+            link.href = pdfUrl;
+
+            link.download =
+                `${quotationNo || "Orbitz-Quotation"}.pdf`;
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(pdfUrl);
+
+        } catch (error) {
+
+            console.error(
+                "WHATSAPP PDF GENERATION FAILED:",
+                error
+            );
+
+            alert(
+                "Unable to generate the quotation PDF."
+            );
+
+            return;
+        }
+
+        // ---------------------------------------
+        // OPEN CLIENT WHATSAPP
+        // ---------------------------------------
+
+        const whatsappUrl =
+            mobile.length >= 10
+                ? `https://web.whatsapp.com/send?phone=${mobile}&text=${encodeURIComponent(message)}`
+                : `https://web.whatsapp.com/`;
+
+        window.open(
+            whatsappUrl,
+            "_blank",
+            "noopener,noreferrer"
+        );
+
+    }}
+    style={{
+        height: "34px",
+        padding: "0 12px",
+        background: "#ecfdf5",
+        color: "#166534",
+        border: "1px solid #86efac",
+        borderRadius: "7px",
+        cursor: "pointer",
+        fontSize: "12px",
+        fontWeight: 700,
+        whiteSpace: "nowrap"
+    }}
+>
+    📱 WhatsApp
+</button>
+
+<div
+    style={{
+        position: "relative",
+        display: "inline-flex"
+    }}
+>
+
+    {/* EMAIL BUTTON */}
+
+    <button
+        type="button"
+        onClick={() =>
+            setShowEmailOptions(prev => !prev)
+        }
+        style={{
+            height: "34px",
+            padding: "0 12px",
+            background: "#eff6ff",
+            color: "#1d4ed8",
+            border: "1px solid #93c5fd",
+            borderRadius: "7px",
+            cursor: "pointer",
+            fontSize: "12px",
+            fontWeight: 700,
+            whiteSpace: "nowrap"
+        }}
+    >
+        ✉️ Email ▾
+    </button>
+
+
+    {/* EMAIL OPTIONS */}
+
+    {showEmailOptions && (
+
+        <div
+            style={{
+                position: "absolute",
+                top: "40px",
+                left: 0,
+                minWidth: "190px",
+                background: "#fff",
+                border: "1px solid #d1d5db",
+                borderRadius: "8px",
+                boxShadow:
+                    "0 8px 20px rgba(0,0,0,.15)",
+                padding: "5px",
+                zIndex: 10000
+            }}
+        >
+
+            {/* GMAIL */}
+
+            <button
+                type="button"
+                onClick={async () => {
+
+                    setShowEmailOptions(false);
+
+                    if (!reviewDraft) return;
+
+                    const clientName =
+                        reviewDraft.clientName?.trim()
+                        || "there";
+
+                    const destination =
+                        reviewDraft.destination?.trim()
+                        || reviewDraft.commonData?.customDestination?.trim()
+                        || reviewDraft.commonData?.destination?.trim()
+                        || "your destination";
+
+                    const quotationNo =
+                        reviewDraft.displayQuotationNo
+                        || (
+                            reviewDraft.commonData?.quotationNo
+                                ? `ORB-${reviewDraft.commonData.quotationNo
+                                    .replace("ORB-", "")
+                                    .slice(-6)}`
+                                : ""
+                        );
+
+                    const email =
+                        reviewDraft.commonData?.email?.trim()
+                        || "";
+
+                    const subject =
+                        `Quotation ${quotationNo} – ${destination}`;
+
+                    const body =
+                        `Dear ${clientName},\n\n` +
+                        `Greetings from Orbitz Holidays!\n\n` +
+                        `Please find your quotation ` +
+                        `${quotationNo ? `(${quotationNo}) ` : ""}` +
+                        `for ${destination} attached for your reference.\n\n` +
+                        `We look forward to helping you plan your journey.\n\n` +
+                        `Regards,\n` +
+                        `Orbitz Holidays\n` +
+                        `Anywhere, Anytime, Around the World`;
+
+                    try {
+
+                        const blob =
+                            await handleGeneratePdf(
+                                reviewDraft.commonData,
+                                reviewDraft.packageData,
+                                reviewDraft.itineraryData,
+                                "preview"
+                            );
+
+                        const pdfUrl =
+                            URL.createObjectURL(blob);
+
+                        const link =
+                            document.createElement("a");
+
+                        link.href = pdfUrl;
+
+                        link.download =
+                            `${quotationNo || "Orbitz-Quotation"}.pdf`;
+
+                        document.body.appendChild(link);
+
+                        link.click();
+
+                        document.body.removeChild(link);
+
+                        URL.revokeObjectURL(pdfUrl);
+
+                    } catch (error) {
+
+                        console.error(
+                            "EMAIL PDF GENERATION FAILED:",
+                            error
+                        );
+
+                        alert(
+                            "Unable to generate the quotation PDF."
+                        );
+
+                        return;
+                    }
+
+                    const gmailUrl =
+                        `https://mail.google.com/mail/?view=cm&fs=1` +
+                        `&to=${encodeURIComponent(email)}` +
+                        `&su=${encodeURIComponent(subject)}` +
+                        `&body=${encodeURIComponent(body)}`;
+
+                    window.open(
+                        gmailUrl,
+                        "_blank",
+                        "noopener,noreferrer"
+                    );
+
+                }}
+                style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    background: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: "#374151"
+                }}
+            >
+                📧 Gmail
+            </button>
+
+
+            {/* DEFAULT EMAIL APP */}
+
+            <button
+                type="button"
+                onClick={async () => {
+
+                    setShowEmailOptions(false);
+
+                    if (!reviewDraft) return;
+
+                    const clientName =
+                        reviewDraft.clientName?.trim()
+                        || "there";
+
+                    const destination =
+                        reviewDraft.destination?.trim()
+                        || reviewDraft.commonData?.customDestination?.trim()
+                        || reviewDraft.commonData?.destination?.trim()
+                        || "your destination";
+
+                    const quotationNo =
+                        reviewDraft.displayQuotationNo
+                        || (
+                            reviewDraft.commonData?.quotationNo
+                                ? `ORB-${reviewDraft.commonData.quotationNo
+                                    .replace("ORB-", "")
+                                    .slice(-6)}`
+                                : ""
+                        );
+
+                    const email =
+                        reviewDraft.commonData?.email?.trim()
+                        || "";
+
+                    const subject =
+                        `Quotation ${quotationNo} – ${destination}`;
+
+                    const body =
+                        `Dear ${clientName},\n\n` +
+                        `Greetings from Orbitz Holidays!\n\n` +
+                        `Please find your quotation ` +
+                        `${quotationNo ? `(${quotationNo}) ` : ""}` +
+                        `for ${destination} attached for your reference.\n\n` +
+                        `We look forward to helping you plan your journey.\n\n` +
+                        `Regards,\n` +
+                        `Orbitz Holidays\n` +
+                        `Anywhere, Anytime, Around the World`;
+
+                    try {
+
+                        const blob =
+                            await handleGeneratePdf(
+                                reviewDraft.commonData,
+                                reviewDraft.packageData,
+                                reviewDraft.itineraryData,
+                                "preview"
+                            );
+
+                        const pdfUrl =
+                            URL.createObjectURL(blob);
+
+                        const link =
+                            document.createElement("a");
+
+                        link.href = pdfUrl;
+
+                        link.download =
+                            `${quotationNo || "Orbitz-Quotation"}.pdf`;
+
+                        document.body.appendChild(link);
+
+                        link.click();
+
+                        document.body.removeChild(link);
+
+                        URL.revokeObjectURL(pdfUrl);
+
+                    } catch (error) {
+
+                        console.error(
+                            "EMAIL PDF GENERATION FAILED:",
+                            error
+                        );
+
+                        alert(
+                            "Unable to generate the quotation PDF."
+                        );
+
+                        return;
+                    }
+
+                    const mailtoUrl =
+                        `mailto:${encodeURIComponent(email)}` +
+                        `?subject=${encodeURIComponent(subject)}` +
+                        `&body=${encodeURIComponent(body)}`;
+
+                    window.location.href =
+                        mailtoUrl;
+
+                }}
+                style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    background: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: "#374151"
+                }}
+            >
+                💻 Default Email App
+            </button>
+
+        </div>
+
+    )}
+
+</div>
+
             <button
                 onClick={() =>
                     handleGeneratePdf(
@@ -3050,6 +4410,397 @@ document.title = "Orbitz Holidays";
 
     </div>
 
+)}
+
+{showSaveDestinationModal && (
+    <div
+        style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999
+        }}
+    >
+        <div
+            style={{
+                width: "420px",
+                maxWidth: "90%",
+                background: "#fff",
+                borderRadius: "14px",
+                border: "1px solid #d1d5db",
+                boxShadow:
+                    "0 20px 50px rgba(0,0,0,0.25)",
+                padding: "24px"
+            }}
+        >
+
+            <h3
+                style={{
+                    marginTop: 0,
+                    marginBottom: "8px",
+                    color: "#111827"
+                }}
+            >
+                {saveDestinationChoice === "template"
+    ? "📚 Save to Template Library"
+    : saveDestinationChoice === "both"
+        ? "💾📚 Save to Draft + Template"
+        : "💾 Save Quotation"}
+
+            </h3>
+
+            <p
+                style={{
+                    marginTop: 0,
+                    marginBottom: "20px",
+                    color: "#6b7280",
+                    fontSize: "14px"
+                }}
+            >
+                Where would you like to save this quotation?
+            </p>
+
+{(saveDestinationChoice === "template" ||
+saveDestinationChoice === "both") && (
+    <div
+        style={{
+            marginBottom: "16px",
+            padding: "12px",
+            background: "#f9fafb",
+            border: "1px solid #d1d5db",
+            borderRadius: "8px"
+        }}
+    >
+
+        <div
+            style={{
+                fontSize: "13px",
+                fontWeight: 700,
+                color: "#374151",
+                marginBottom: "6px"
+            }}
+        >
+            Template Label / Version
+        </div>
+
+        <input
+            type="text"
+            placeholder="e.g. Premium, Family, Honeymoon"
+            value={itineraryTemplateLabel || ""}
+            onChange={(e) =>
+                setItineraryTemplateLabel(
+                    e.target.value
+                )
+            }
+            style={{
+                width: "100%",
+                padding: "9px 10px",
+                border: "1px solid #d1d5db",
+                borderRadius: "6px",
+                fontSize: "14px",
+                boxSizing: "border-box"
+            }}
+        />
+
+        {activeItineraryTemplateId && (
+            <div
+                style={{
+                    marginTop: "14px",
+                    paddingTop: "12px",
+                    borderTop: "1px solid #e5e7eb"
+                }}
+            >
+
+                <div
+                    style={{
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        color: "#374151",
+                        marginBottom: "8px"
+                    }}
+                >
+                    Save template as:
+                </div>
+
+                <label
+                    style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "8px",
+                        marginBottom: "8px",
+                        fontSize: "13px",
+                        color: "#374151",
+                        cursor: "pointer"
+                    }}
+                >
+                    <input
+                        type="radio"
+                        name="templateSaveMode"
+                        value="update"
+                        checked={
+                            templateSaveMode === "update"
+                        }
+                        onChange={() =>
+                            setTemplateSaveMode("update")
+                        }
+                    />
+
+                    <span>
+                        <strong>
+                            Update Existing Template
+                        </strong>
+
+                        <br />
+
+                        <span
+                            style={{
+                                color: "#6b7280",
+                                fontSize: "12px"
+                            }}
+                        >
+                            Update the imported template and keep
+                            its existing template ID.
+                        </span>
+                    </span>
+                </label>
+
+                <label
+                    style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "8px",
+                        fontSize: "13px",
+                        color: "#374151",
+                        cursor: "pointer"
+                    }}
+                >
+                    <input
+                        type="radio"
+                        name="templateSaveMode"
+                        value="new"
+                        checked={
+                            templateSaveMode === "new"
+                        }
+                        onChange={() =>
+                            setTemplateSaveMode("new")
+                        }
+                    />
+
+                    <span>
+                        <strong>
+                            Save as New Template
+                        </strong>
+
+                        <br />
+
+                        <span
+                            style={{
+                                color: "#6b7280",
+                                fontSize: "12px"
+                            }}
+                        >
+                            Keep the original template unchanged
+                            and create a separate template.
+                        </span>
+                    </span>
+                </label>
+
+            </div>
+        )}
+
+    </div>
+)}
+            {!saveDestinationChoice && (
+    <div
+        style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px"
+        }}
+    >
+                <button
+                    type="button"
+                    onClick={() => {
+    const proceed = window.confirm(
+        "Save this quotation to the Draft Library?"
+    );
+
+    if (!proceed) {
+        return;
+    }
+
+    setSaveDestinationChoice(null);
+    setTemplateSaveMode(null);
+    setShowSaveDestinationModal(false);
+
+    handleSaveDraft();
+}}
+                    style={{
+                        width: "100%",
+                        padding: "12px 16px",
+                        background: "#15803d",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontWeight: 700,
+                        textAlign: "left"
+                    }}
+                >
+                    💾 Save to Draft Library
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => {
+
+    setSaveDestinationChoice("template");
+
+    setTemplateSaveMode(
+        activeItineraryTemplateId
+            ? "update"
+            : "new"
+    );
+
+}}
+                    style={{
+                        width: "100%",
+                        padding: "12px 16px",
+                        background: "#1e3a8a",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontWeight: 700,
+                        textAlign: "left"
+                    }}
+                >
+                    📚 Save to Template Library
+                </button>
+
+                <button
+
+                    type="button"
+onClick={() => {
+
+    setSaveDestinationChoice("both");
+
+    setTemplateSaveMode(
+        activeItineraryTemplateId
+            ? "update"
+            : "new"
+    );
+
+}}
+                    style={{
+                        width: "100%",
+                        padding: "12px 16px",
+                        background: "#7f1d1d",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontWeight: 700,
+                        textAlign: "left"
+                    }}
+                >
+                    💾📚 Save to Both
+                </button>
+
+            </div>
+)}
+
+            {saveDestinationChoice === "template" ||
+saveDestinationChoice === "both" ? (
+    <button
+        type="button"
+        onClick={() => {
+
+            if (
+                saveDestinationChoice === "both"
+            ) {
+                handleSaveDraft({
+                    showSuccessAlert: false,
+                    closeAfterSave: false
+                });
+
+                saveCurrentItineraryAsTemplate();
+
+                alert(
+                    "Quotation saved to Draft Library and Template Library."
+                );
+            } else {
+                saveCurrentItineraryAsTemplate();
+
+                alert(
+                    "Quotation saved to Template Library."
+                );
+            }
+
+            setSaveDestinationChoice(null);
+            setTemplateSaveMode(null);
+            setShowSaveDestinationModal(false);
+
+        }}
+        style={{
+            width: "100%",
+            marginTop: "14px",
+            padding: "12px 16px",
+            background: "#15803d",
+            color: "#fff",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: 700
+        }}
+    >
+        ✓ Confirm Save
+    </button>
+) : null}
+
+            <button
+                type="button"
+                onClick={() => {
+
+    if (
+        saveDestinationChoice === "template" ||
+        saveDestinationChoice === "both"
+    ) {
+
+        // Return to the first save-choice screen
+        setSaveDestinationChoice(null);
+        setTemplateSaveMode(null);
+
+    } else {
+
+        // Cancel from the first screen
+        setSaveDestinationChoice(null);
+        setTemplateSaveMode(null);
+        setShowSaveDestinationModal(false);
+
+    }
+
+}}
+                style={{
+                    width: "100%",
+                    marginTop: "16px",
+                    padding: "10px",
+                    background: "#fff",
+                    color: "#374151",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontWeight: 600
+                }}
+            >
+                Cancel
+            </button>
+
+        </div>
+    </div>
 )}
 
  </>

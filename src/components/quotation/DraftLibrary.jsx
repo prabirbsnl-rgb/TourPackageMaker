@@ -66,8 +66,31 @@ export default function DraftLibrary({
 
 {
 
+    const normalizeSearchValue = (value) => {
+
+    let normalized =
+        String(value || "")
+            .toLowerCase()
+            .replace(/\s+/g, "")
+            .replace(/[-()]/g, "");
+
+    // Normalize Indian mobile numbers
+    // so +91 98765 43210 matches 9876543210
+    if (
+        normalized.startsWith("+91") &&
+        normalized.length === 13
+    ) {
+        normalized =
+            normalized.slice(3);
+    }
+
+    return normalized;
+};
+
     
     const [searchText, setSearchText] = useState("");
+
+    const [sortBy, setSortBy] = useState("");
 
     const [statusFilter, setStatusFilter] =
     useState("All");
@@ -109,76 +132,142 @@ quotationStatuses.forEach(status => {
 
 });
 
-console.log(
-    "LIBRARY DRAFTS:",
-    drafts
-);
 
-console.log(
-    "LIBRARY REVISION STATES:",
-    drafts
-        .filter(draft => draft.revisionNo > 0)
-        .map(draft => ({
-            quotationNo: draft.quotationNo,
-            revisionNo: draft.revisionNo,
-            revisionHistoryLength:
-                draft.revisionHistory?.length || 0,
-            clientName: draft.clientName
-        }))
-);
+
 
     const filteredDrafts = drafts.filter((draft) => {
 
     const search =
-        searchText.toLowerCase();
+    normalizeSearchValue(searchText);
+
+    
 
    const matchesSearch =
 
-    displayQuotationNo(
-        draft.quotationNo
-    )
-        .toLowerCase()
-        .includes(search)
+    normalizeSearchValue(
+        displayQuotationNo(
+            draft.quotationNo
+        )
+    ).includes(search)
 
     ||
 
-    (draft.clientName || "")
-        .toLowerCase()
-        .includes(search)
+    normalizeSearchValue(
+        draft.clientName
+    ).includes(search)
 
     ||
 
-    (draft.destination || "")
-        .toLowerCase()
-        .includes(search)
+    normalizeSearchValue(
+        draft.destination
+    ).includes(search)
 
     ||
 
-(
-    draft.mobile
-    || draft.commonData?.mobile
-    || ""
-)
-    .toLowerCase()
-    .includes(search);
-        
+    normalizeSearchValue(
+        draft.mobile
+        || draft.commonData?.mobile
+    ).includes(search);
+
     const matchesStatus =
 
         statusFilter === "All"
 
-        ||
+         ||
 
         draft.status === statusFilter;
 
-    return (
+    return matchesSearch && matchesStatus;
 
-        matchesSearch
+});
 
-        &&
+const sortedDrafts = [...filteredDrafts].sort((a, b) => {
 
-        matchesStatus
+    switch (sortBy) {
 
-    );
+        case "newest":
+            return (
+                new Date(b.savedAt) -
+                new Date(a.savedAt)
+            );
+
+        case "oldest":
+            return (
+                new Date(a.savedAt) -
+                new Date(b.savedAt)
+            );
+
+        case "clientAZ":
+            return (
+                (a.clientName || "")
+                    .toLowerCase()
+                    .localeCompare(
+                        (b.clientName || "")
+                            .toLowerCase()
+                    )
+            );
+
+        case "clientZA":
+            return (
+                (b.clientName || "")
+                    .toLowerCase()
+                    .localeCompare(
+                        (a.clientName || "")
+                            .toLowerCase()
+                    )
+            );
+
+        case "quotationAsc":
+            return (
+                displayQuotationNo(a.quotationNo)
+                    .localeCompare(
+                        displayQuotationNo(
+                            b.quotationNo
+                        ),
+                        undefined,
+                        {
+                            numeric: true
+                        }
+                    )
+            );
+
+        case "quotationDesc":
+            return (
+                displayQuotationNo(b.quotationNo)
+                    .localeCompare(
+                        displayQuotationNo(
+                            a.quotationNo
+                        ),
+                        undefined,
+                        {
+                            numeric: true
+                        }
+                    )
+            );
+
+        case "destinationAZ":
+            return (
+                (a.destination || "")
+                    .toLowerCase()
+                    .localeCompare(
+                        (b.destination || "")
+                            .toLowerCase()
+                    )
+            );
+
+        case "destinationZA":
+            return (
+                (b.destination || "")
+                    .toLowerCase()
+                    .localeCompare(
+                        (a.destination || "")
+                            .toLowerCase()
+                    )
+            );
+
+        default:
+            return 0;
+    }
 
 });
 
@@ -204,25 +293,32 @@ if (!open) return null;
             }}
         >
 
-            <div
-                style={{
-                    width: "900px",
-                    maxHeight: "80vh",
-                    overflowY: "auto",
-                    background: "#fff",
-                    borderRadius: "12px",
-                    padding: "24px",
-                    boxShadow:
-                        "0 15px 40px rgba(0,0,0,.25)"
-                }}
-            >
+          <div
+    style={{
+       width: "96vw",
+       maxWidth: "1400px",
+        height: "92vh",
+        maxHeight: "92vh",
+        background: "#fff",
+        borderRadius: "12px",
+        boxShadow:
+            "0 15px 40px rgba(0,0,0,.25)",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden"
+    }}
+>
 
                 <div
     style={{
+        position: "relative",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: "14px"
+        padding: "5px 14px",
+        flexShrink: 0,
+        background: "#fff",
+        zIndex: 10
     }}
 >
 
@@ -230,7 +326,7 @@ if (!open) return null;
 
         <div
             style={{
-                fontSize: "24px",
+                fontSize: "20px",
                 fontWeight: 700,
                 color:"#1f2937"
             }}
@@ -240,9 +336,9 @@ if (!open) return null;
 
         <div
             style={{
-                marginTop: "4px",
+                marginTop: "1px",
                 color: "#6b7280",
-                fontSize: "14px"
+                fontSize: "11px"
             }}
         >
             Quotation Management Workspace
@@ -250,15 +346,45 @@ if (!open) return null;
 
     </div>
 
+    <div
+    style={{
+        position: "absolute",
+        left: "50%",
+        top: "50%",
+        transform: "translate(-50%, -50%)",
+        display: "flex",
+        alignItems: "center"
+    }}
+>
     <img
         src={orbitzLogo}
         alt="Orbitz Holidays"
         style={{
-    width: "95px",
-    height: "auto",
-    opacity: 0.9
-}}
+            width: "150px",
+            height: "auto",
+            opacity: 0.9
+        }}
     />
+</div>
+
+<button
+    onClick={onClose}
+    title="Close Quotation Library"
+    style={{
+        background: "#dc2626",
+        color: "#fff",
+        border: "none",
+        padding: "6px 14px",
+        borderRadius: "999px",
+        cursor: "pointer",
+        fontSize: "12px",
+        fontWeight: 700,
+        lineHeight: 1,
+        marginLeft: "auto"
+    }}
+>
+    Close
+</button>
 
 </div>
 
@@ -267,12 +393,12 @@ if (!open) return null;
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        marginTop: "12px",
-        marginBottom: "18px",
-        padding: "10px 14px",
+        margin: "4px 0 6px",
+        padding: "6px 10px",
         background: "#f8fafc",
         border: "1px solid #e5e7eb",
-        borderRadius: "8px"
+        borderRadius: "6px",
+        minHeight: "48px"
     }}
 >
 
@@ -280,7 +406,7 @@ if (!open) return null;
 
         <div
             style={{
-                fontSize: "18px",
+                fontSize: "16px",
                 fontWeight: 700,
                 color: "#1f2937"
             }}
@@ -290,9 +416,9 @@ if (!open) return null;
 
         <div
             style={{
-                fontSize: "13px",
+                fontSize: "11px",
                 color: "#6b7280",
-                marginTop: "4px"
+                marginTop: "1px"
             }}
         >
             Saved quotations available for editing
@@ -306,33 +432,36 @@ if (!open) return null;
     }}
 >
 
-    <div
-        style={{
-            fontSize: "12px",
-            color: "#6b7280"
-        }}
-    >
-        Latest Quotation
-    </div>
+   <div
+    style={{
+        fontSize: "10px",
+        color: "#6b7280",
+        lineHeight: 1
+    }}
+>
+    Latest Quotation
+</div>
 
     {latestDraft ? (
 
         <>
 
-            <div
-                style={{
-                    fontWeight: 700,
-                    color: "#111827",
-                    marginTop: "4px"
-                }}
-            >
+           <div
+    style={{
+        fontWeight: 700,
+        color: "#111827",
+        marginTop: "1px",
+        lineHeight: 1.1
+    }}
+>
                 {displayQuotationNo(latestDraft.quotationNo)}
             </div>
 
             <div
                 style={{
                     fontSize: "13px",
-                    color: "#374151"
+                    color: "#374151",
+                    lineHeight: 1.1
                 }}
             >
                 {latestDraft.clientName || "No Client"}
@@ -341,7 +470,8 @@ if (!open) return null;
             <div
                 style={{
                     fontSize: "13px",
-                    color: "#374151"
+                    color: "#374151",
+                    lineHeight: 1.1
                 }}
             >
                 {latestDraft.destination || "-"}
@@ -351,7 +481,8 @@ if (!open) return null;
                 style={{
                     fontSize: "12px",
                     color: "#6b7280",
-                    marginTop: "4px"
+                    marginTop: "1px",
+                    lineHeight: 1.1
                 }}
             >
                 {formatRelativeDate(latestDraft.savedAt)}
@@ -378,6 +509,16 @@ if (!open) return null;
     }}
 >
 
+   <div
+    style={{
+        position: "relative",
+        flex: 1,
+        minHeight: 0,
+        display: "grid",
+        gridTemplateRows: "auto auto auto auto 1fr",
+        overflow: "hidden"
+    }}
+>
     <input
         type="text"
         placeholder="🔍 Search quotation, client or destination..."
@@ -387,8 +528,9 @@ if (!open) return null;
             setSearchText(e.target.value)
         }
         style={{
-            flex: 1,
-            padding: "10px 14px",
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "7px 42px 7px 14px",
             borderRadius: "8px",
             border: "1px solid #d1d5db",
             fontSize: "14px",
@@ -396,12 +538,110 @@ if (!open) return null;
         }}
     />
 
+    {searchText && (
+        <button
+            type="button"
+            title="Clear Search"
+            onClick={() => {
+                setSearchText("");
+                searchRef.current?.focus();
+            }}
+            
+
+             onMouseEnter={(e) => {
+        e.currentTarget.style.background = "#e5e7eb";
+    }}
+    onMouseLeave={(e) => {
+        e.currentTarget.style.background = "#f3f4f6";
+    }}
+
+            style={{
+    position: "absolute",
+    right: "8px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    width: "28px",
+    height: "28px",
+    border: "1px solid #d1d5db",
+    background: "#f3f4f6",
+    color: "#374151",
+    cursor: "pointer",
+    fontSize: "18px",
+    fontWeight: 800,
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    lineHeight: 1,
+    padding: 0
+}}
+        >
+            ×
+        </button>
+    )}
 </div>
+
+<select
+    value={sortBy}
+    onChange={(e) =>
+        setSortBy(e.target.value)
+    }
+    style={{
+        padding: "7px 12px",
+        borderRadius: "8px",
+        border: "1px solid #d1d5db",
+        background: "#fff",
+        fontSize: "14px",
+        cursor: "pointer",
+        outline: "none"
+    }}
+>
+    <option value="">
+    Default Order
+</option>
+
+    <option value="newest">
+        Newest First
+    </option>
+
+    <option value="oldest">
+        Oldest First
+    </option>
+
+    <option value="clientAZ">
+        Client A–Z
+    </option>
+
+    <option value="clientZA">
+        Client Z–A
+    </option>
+
+    <option value="quotationAsc">
+    Quotation No. — Low to High
+</option>
+
+<option value="quotationDesc">
+    Quotation No. — High to Low
+</option>
+
+    <option value="destinationAZ">
+        Destination A–Z
+    </option>
+
+    <option value="destinationZA">
+        Destination Z–A
+    </option>
+</select>
+
+</div>
+
+
 
 <div
     style={{
         display: "flex",
         gap: "10px",
+        padding: "0 16px",
         marginBottom: "18px",
         flexWrap: "wrap"
     }}
@@ -419,7 +659,7 @@ if (!open) return null;
 
             style={{
 
-                padding: "8px 14px",
+               padding: "4px 9px",
 
                 borderRadius: "999px",
 
@@ -442,6 +682,8 @@ if (!open) return null;
                 cursor: "pointer",
 
                 fontWeight:700,
+
+                fontSize: "12px",
 
 color:
 
@@ -470,8 +712,13 @@ color:
     ))}
 
 </div>
-
-                <hr style={{ margin: "20px 0" }} />
+<hr
+    style={{
+        margin: "2px 0",
+        border: 0,
+        borderTop: "1px solid #e5e7eb"
+    }}
+/>
 
 {filteredDrafts.length === 0 ? (
 
@@ -483,33 +730,65 @@ color:
 
     
 
-        <div
+       
 
+   <div
     style={{
-        display: "grid",
-        gridTemplateColumns:
-        "1.4fr 1.5fr 1.2fr 0.9fr 1.3fr 0.9fr 0.8fr",
-        fontWeight: 700,
-        padding: "12px 8px",
-        background: "#e5e7eb",
-       borderBottom: "2px solid #9ca3af",
-       color: "#1f2937",
-       letterSpacing: "0.3px",
-        fontSize: "14px"
+        height: "45vh",
+        overflowY: "auto",
+        padding: "0 8px 24px",
+        boxSizing: "border-box"
     }}
 >
 
-    <div>Quotation</div>
-    <div>Client</div>
-    <div>Destination</div>
-    <div>Duration</div>
-    <div>Saved</div>
-    <div>Status</div>
-    <div>Actions</div>
+    <div
+    style={{
+        display: "grid",
+       gridTemplateColumns:
+    "1.25fr 1.4fr 1.15fr 0.8fr 1.45fr 1fr 0.75fr",
+        padding: "6px 8px",
+        background: "#e5e7eb",
+        borderBottom: "2px solid #9ca3af",
+        color: "#1f2937",
+        letterSpacing: "0.3px",
+        fontSize: "14px",
+        position: "sticky",
+        top: 0,
+        zIndex: 10,
+        boxSizing: "border-box"
+    }}
+>
+    <div style={{ textAlign: "left" }}>
+    Quotation
+</div>
+
+<div style={{ textAlign: "left" }}>
+    Client
+</div>
+
+<div style={{ textAlign: "left" }}>
+    Destination
+</div>
+
+<div style={{ textAlign: "left" }}>
+    Duration
+</div>
+
+<div style={{ textAlign: "center" }}>
+    Saved
+</div>
+
+<div style={{ textAlign: "center" }}>
+    Status
+</div>
+
+<div style={{ textAlign: "center" }}>
+    Actions
+</div>
 
 </div>
 
-       {filteredDrafts.map((draft, index) => {
+    {sortedDrafts.map((draft, index) => {
 
     const status = getStatus(draft.status);
 
@@ -520,7 +799,7 @@ color:
 
     return (
 
-        <div
+       <div
 
     key={draft.quotationNo}
 
@@ -546,9 +825,9 @@ color:
         : "#fafafa",
                     display: "grid",
                     gridTemplateColumns:
-                    "1.4fr 1.5fr 1.2fr 0.9fr 1.3fr 0.9fr 0.8fr",
+    "1.25fr 1.4fr 1.15fr 0.8fr 1.45fr 1fr 0.75fr",
                     alignItems: "center",
-                    padding: "12px 8px",
+                    padding: "5px 0",
                     borderBottom: "1px solid #e5e7eb",
                     fontSize: "14px",
                     cursor:"pointer",
@@ -559,9 +838,10 @@ color:
                 <div
     style={{
         display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "6px"
+        flexDirection: "column",
+        alignItems: "flex-start",
+        justifyContent: "center",
+        gap: "2px"
     }}
 >
 
@@ -575,39 +855,67 @@ color:
     
 {draft.revisionNo > 0 && (
     <div
-        style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#7c3aed",
-            marginTop: "2px"
-        }}
-    >
-        Revision {draft.revisionNo}
-    </div>
+    style={{
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "#7c3aed",
+        lineHeight: 1.1
+    }}
+>
+    Revision {draft.revisionNo}
+</div>
 )}
     
 
 </div>
-                <div>
-                    {draft.clientName || "-"}
-                </div>
+                <div
+    style={{
+        minWidth: 0,
+        textAlign: "left"
+    }}
+>
+    {draft.clientName || "-"}
+</div>
 
-                <div>
+
+                <div
+    style={{
+        minWidth: 0,
+        textAlign: "left"
+    }}
+>
     {draft.destination || "-"}
 </div>
 
-<div>
+<div
+    style={{
+        minWidth: 0,
+        textAlign: "left"
+    }}
+>
     {draft.commonData?.totalDays || 0}D / {draft.commonData?.totalNights || 0}N
 </div>
 
-<div>
+<div
+    style={{
+        minWidth: 0,
+        textAlign: "center"
+    }}
+>
     {formatRelativeDate(draft.savedAt)}
 </div>
 
-<div>
+<div
+    style={{
+        display: "flex",
+        justifyContent: "center",
+        minWidth: 0,
+        alignItems: "center"
+    }}
+>
 
     <span
-    style={{
+        style={{
         display: "inline-block",
         background: `${status.color}22`,
         color: status.color,
@@ -623,12 +931,15 @@ color:
 
 </div>
 
+
+
                <div
     style={{
         position: "relative",
         display: "flex",
         gap: "8px",
-        alignItems: "center"
+        alignItems: "center",
+        justifyContent: "center"
     }}
 >
 
@@ -695,31 +1006,66 @@ color:
 
     <div
         style={{
-            position: "absolute",
-            top: "115%",
-            right: "40px",
-            minWidth: "210px",
-            background: "#fff",
-            border: "1px solid #d1d5db",
-            borderRadius: "10px",
-            boxShadow: "0 10px 30px rgba(0,0,0,.15)",
-            overflow: "hidden",
-            zIndex: 500
-        }}
+    position: "absolute",
+    top: "115%",
+    right: "0",
+    minWidth: "220px",
+    padding: "8px",
+    background: "#ffffff",
+    border: "2px solid #374151",
+    borderRadius: "12px",
+    boxShadow: "0 12px 30px rgba(0,0,0,.18)",
+    zIndex: 500
+}}
     >
 
         <div
-            onClick={() => {
+    onClick={() => {
 
-                onDuplicate(draft);
+        const confirmed = window.confirm(
+            `Duplicate Quotation?\n\n` +
 
-                setActionMenuFor(null);
+            `${displayQuotationNo(draft.quotationNo)}\n` +
 
-            }}
-            style={menuItemStyle}
-        >
-            📄 Duplicate Quotation
-        </div>
+            `Client: ${draft.clientName || "No client"}\n` +
+
+            `Destination: ${draft.destination || "No destination"}\n\n` +
+
+            `A new quotation will be created as a separate quotation.\n\n` +
+
+            `Revision history will NOT be copied.\n\n` +
+
+            `The new quotation will start as an Original Draft ` +
+            `with no revisions.\n\n` +
+
+            `Continue?`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        onDuplicate(draft);
+
+        setActionMenuFor(null);
+
+    }}
+    style={{
+    background: "#1e3a8a",
+    color: "#fff",
+    padding: "9px 12px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: 700,
+    textAlign: "left",
+    marginBottom: "6px",
+    whiteSpace: "nowrap"
+}}
+
+>
+    📄 Duplicate Quotation
+</div>
 
         <div
             style={{
@@ -728,9 +1074,10 @@ color:
             }}
         />
 
-        <div
+       <div
     style={{
-        padding: "10px 14px"
+        padding: "0",
+        marginBottom: "6px"
     }}
 >
 
@@ -751,30 +1098,24 @@ color:
 }
 
     style={{
-
-        display: "flex",
-
-        justifyContent: "space-between",
-
-        alignItems: "center",
-
-        cursor: "pointer",
-
-        fontWeight: 700,
-
-        color: "#374151",
-
-        padding: "6px 0"
-
-    }}
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    cursor: "pointer",
+    fontWeight: 700,
+    color: "#fff",
+   background: "#1e3a8a",
+    padding: "9px 12px",
+    borderRadius: "999px",
+    fontSize: "13px",
+    marginBottom: "6px"
+}}
 
 >
 
     <span>
-
-        Change Status
-
-    </span>
+    🔄 Change Status
+</span>
 
     <span>
 
@@ -842,12 +1183,16 @@ color:
 }}
 
                 style={{
-                    padding: "8px 10px",
-                    cursor: "pointer",
-                    borderRadius: "6px",
-                    fontSize: "14px",
-                    fontWeight: 600
-                }}
+    padding: "7px 12px",
+    marginTop: "5px",
+    background: "#fff",
+    color: "#111827",
+    border: "1px solid #111827",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: 600
+}}
 
                 onMouseEnter={(e) =>
                     e.currentTarget.style.background = "#f9fafb"
@@ -888,7 +1233,18 @@ color:
 
     }}
 
-    style={menuItemStyle}
+    style={{
+   background: "#1e3a8a",
+    color: "#fff",
+    padding: "9px 12px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: 700,
+    textAlign: "left",
+    marginBottom: "6px",
+    whiteSpace: "nowrap"
+}}
 
 >
 
@@ -904,7 +1260,17 @@ color:
         />
 
        <div
-    style={menuItemStyle}
+    style={{
+    background: "#1e3a8a",
+    color: "#fff",
+    padding: "9px 12px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: 700,
+    textAlign: "left",
+    whiteSpace: "nowrap"
+}}
     onClick={() => {
     onRevisionHistory(draft);
 }}
@@ -968,34 +1334,13 @@ color:
 
 })}
 
-    </>
+</div>
 
+</>
 )}
 
-                <div
-    style={{
-        display:"flex",
-        justifyContent:"flex-end",
-        marginTop:"20px"
-    }}
->
 
-    <button
-        onClick={onClose}
-        style={{
-            background:"#6b7280",
-            color:"#fff",
-            border:"none",
-            padding:"8px 16px",
-            borderRadius:"6px",
-            cursor:"pointer",
-            fontWeight:600
-        }}
-    >
-        Close
-    </button>
-
-</div>
+                
 
             </div>
 

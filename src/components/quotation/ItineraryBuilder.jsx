@@ -9,6 +9,9 @@ import { sightseeing } from "../../data/sightseeing";
 
 import { defaultItineraryDay } from "../../data/defaultItineraryDay";
 
+import ItineraryTemplateLibrary
+    from "./ItineraryTemplateLibrary";
+
 
 
 export default function ItineraryBuilder({
@@ -17,6 +20,9 @@ export default function ItineraryBuilder({
   itineraryData,
   setItineraryData
 }) {
+
+  const [showTemplateLibrary, setShowTemplateLibrary] =
+    useState(false);
   
 const [openMealSelector, setOpenMealSelector] =
   useState({});
@@ -121,10 +127,13 @@ const removeDay = (index) => {
 };
 
   return (
+
+    
     <div style={{ marginTop: "20px" }}>
 
       <h3>🗓 Day Wise Itinerary</h3>
 
+      
       {(itineraryData.itinerary || []).map(
   (day, index) => {
 
@@ -230,20 +239,28 @@ const sightseeingOptions =
   type="text"
   placeholder="Day Title"
   value={day.title}
+
   onChange={(e) => {
 
     const updated =
-      [...(itineraryData.itinerary || [])];
+        [...(itineraryData.itinerary || [])];
 
     updated[index].title =
-      e.target.value;
+        e.target.value;
 
-    setItineraryData({
-  ...itineraryData,
-      itinerary: updated
-    });
+    const updatedItineraryData = {
+        ...itineraryData,
+        itinerary: updated
+    };
 
-  }}
+    
+
+    setItineraryData(
+        updatedItineraryData
+    );
+
+}}
+
   style={{
     width: "100%",
     padding: "10px",
@@ -354,44 +371,54 @@ const sightseeingOptions =
 {/* DAY CITY */}
 
 <select
-  value={day.city || ""}
-  onChange={(e) => {
+    value={day.city || ""}
+    onChange={(e) => {
 
-    const updated =
-      [...(itineraryData.itinerary || [])];
+        const updated =
+            [...(itineraryData.itinerary || [])];
 
-    updated[index].city =
-      e.target.value;
+        updated[index] = {
+            ...updated[index],
 
-    updated[index].hotel = "";
-    updated[index].roomType = "";
-    updated[index].mealPlan = "";
+            city: e.target.value,
+            customCity: "",
 
-    setItineraryData({
-      ...itineraryData,
-      itinerary: updated
-    });
+            hotel: "",
+            roomType: "",
+            mealPlan: ""
+        };
 
-  }}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "10px"
-  }}
+        console.log(
+    "CITY AFTER CHANGE:",
+    updated[index]
+);
+
+        setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+        });
+
+    }}
+    style={{
+        width: "100%",
+        padding: "10px",
+        marginBottom: "10px"
+    }}
 >
-  <option value="">
-    Select City
-  </option>
-
-  {cities.map((city) => (
-    <option
-      key={city}
-      value={city}
-    >
-      {city}
+    <option value="">
+        Select City
     </option>
-  ))}
+
+    {cities.map((city) => (
+        <option
+            key={city}
+            value={city}
+        >
+            {city}
+        </option>
+    ))}
 </select>
+
 <input
   type="text"
   placeholder="Or enter custom city"
@@ -1832,12 +1859,29 @@ itinerary: updated
 )}
 
 <button
-        type="button"
-        onClick={addDay}
-      >
-        + Add Day
-      </button>
+  type="button"
+  onClick={addDay}
+>
+  + Add Day
+</button>
 
-    </div>
-  );
+<ItineraryTemplateLibrary
+  open={showTemplateLibrary}
+  onClose={() =>
+    setShowTemplateLibrary(false)
+  }
+  onSelectTemplate={(template) => {
+
+    console.log(
+      "Selected itinerary template:",
+      template
+    );
+
+    setShowTemplateLibrary(false);
+
+  }}
+/>
+
+</div>
+);
 }
