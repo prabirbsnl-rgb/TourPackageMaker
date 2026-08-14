@@ -33,15 +33,32 @@ import {
     saveDraft,
     getLatestDraft,
     getAllDrafts,
+    getAllDraftsFromFirestore,
+    migrateLocalDraftsToFirestore,
     deleteDraft,
     updateDraftStatus,
     saveWorkingCopy,
     clearWorkingCopy,
-    getWorkingCopy
+    getWorkingCopy,
+    saveTemplateToFirestore
+    
 } from "../utils/quotationStorage";
 
 import DraftLibrary
 from "../components/quotation/DraftLibrary";
+
+import {
+    doc,
+    setDoc,
+    getDoc
+} from "firebase/firestore";
+
+import {
+    db,
+    auth
+} from "../firebase";
+
+
 
 const STORAGE_KEY = "orbitz_itinerary_templates";
 
@@ -265,6 +282,14 @@ export default function DMCQuotationGenerator() {
 
     const [showEmailOptions, setShowEmailOptions] = useState(false);
 
+
+
+    
+
+
+
+
+
     const [commonData, setCommonData] =
 useState(() => ({
 
@@ -433,19 +458,23 @@ const updateItineraryData = (value) => {
 
 };
 
-    const handleStatusChange = (
+    const handleStatusChange = async (
     quotationNo,
     status
 ) => {
 
-    
-
-    updateDraftStatus(
+     console.log(
+        "🔥 HANDLE STATUS CHANGE:",
         quotationNo,
         status
     );
 
-    refreshDrafts();
+    await updateDraftStatus(
+        quotationNo,
+        status
+    );
+
+    await refreshDrafts();
 
 };
 
@@ -789,13 +818,20 @@ const saveCurrentItineraryAsTemplate = () => {
         }
 
         localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(
-                updatedTemplates
-            )
-        );
+    STORAGE_KEY,
+    JSON.stringify(
+        updatedTemplates
+    )
+);
+
+// ==========================================
+// FIRESTORE SHARED TEMPLATE STORAGE
+// ==========================================
+
+saveTemplateToFirestore(template);
 
 setItineraryTemplateSaveState("saved");
+
 
         console.log(
             "TEMPLATE SAVED SUCCESSFULLY:",
@@ -857,7 +893,7 @@ console.log(
 
 };
 
- const handleSaveDraft = ({
+ const handleSaveDraft = async ({
     showSuccessAlert = true,
     closeAfterSave = true
 } = {}) => {
@@ -884,7 +920,7 @@ console.log(
     const isFirstSave =
         !editingDraft;
 
-    saveDraft({
+    await saveDraft({
 
         quotationNo:
             commonData.quotationNo,
@@ -1163,9 +1199,25 @@ const handleOpenLastDraft = () => {
 
 };
 
-function refreshDrafts() {
+async function refreshDrafts() {
 
-    setDrafts(getAllDrafts());
+    const localDrafts =
+        getAllDrafts();
+
+    // Show local data immediately
+    setDrafts(localDrafts);
+
+    // Then try shared Firestore data
+    const firestoreDrafts =
+        await getAllDraftsFromFirestore();
+
+    if (firestoreDrafts !== null) {
+
+        setDrafts(
+            firestoreDrafts
+        );
+
+    }
 
 }
 
@@ -1517,11 +1569,11 @@ window.scrollTo({
 
 };
 
-const handleDeleteDraft = (quotationNo) => {
+const handleDeleteDraft = async (quotationNo) => {
 
-    deleteDraft(quotationNo);
+    await deleteDraft(quotationNo);
 
-refreshDrafts();
+    await refreshDrafts();
 
 };
 
@@ -2164,6 +2216,23 @@ useEffect(() => {
 
 ]);
 
+
+useEffect(() => {
+
+    const loadSharedDrafts =
+        async () => {
+
+            await migrateLocalDraftsToFirestore();
+
+            await refreshDrafts();
+
+        };
+
+    loadSharedDrafts();
+
+}, []);
+
+
 useEffect(() => {
 
     const updatePdfWidth = () => {
@@ -2485,6 +2554,9 @@ if (currentDraft) {
     {/* PREVIEW TOOLS */}
     {/* ========================= */}
 
+    
+
+
     <button
         onClick={() => setShowPreview(true)}
         style={{
@@ -2538,7 +2610,7 @@ if (currentDraft) {
         setShowSaveDestinationModal(true)
     }
     style={{
-        background: "#f59e0b",
+        background: "#7c3aed",
         color: "#fff",
         border: "none",
         padding: "10px 18px",

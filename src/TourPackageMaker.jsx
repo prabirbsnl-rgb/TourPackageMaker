@@ -166,6 +166,7 @@ const [excludingFlight, setExcludingFlight] = useState(false);
   const [currency, setCurrency] = useState('₹');
 
   const [selectedSightseeing, setSelectedSightseeing] = useState([]);
+  
   const [manualSightseeing, setManualSightseeing] = useState('');
 
   const calculateDuration = (from, to) => {

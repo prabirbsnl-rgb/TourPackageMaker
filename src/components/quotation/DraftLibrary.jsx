@@ -1152,7 +1152,7 @@ color:
 
                 key={item.value}
 
-               onClick={() => {
+              onClick={async () => {
 
     const confirmed = window.confirm(
         `Change Quotation Status?\n\n` +
@@ -1172,7 +1172,7 @@ color:
         return;
     }
 
-    onStatusChange(
+    await onStatusChange(
         draft.quotationNo,
         item.value
     );

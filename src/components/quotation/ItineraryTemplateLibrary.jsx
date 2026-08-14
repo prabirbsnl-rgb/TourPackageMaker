@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from "react";
 
+import {
+    getAllTemplatesFromFirestore,
+    deleteTemplateFromFirestore
+} from "../../utils/quotationStorage";
+
 const STORAGE_KEY = "orbitz_itinerary_templates";
 
 export default function ItineraryTemplateLibrary({
@@ -10,17 +15,46 @@ export default function ItineraryTemplateLibrary({
     onSelectTemplate
 }) {
     const [templates, setTemplates] = useState([]);
+
     const [searchText, setSearchText] = useState("");
 
     useEffect(() => {
-        if (!open) return;
+
+    if (!open) return;
+
+    const loadTemplates = async () => {
+
+        const firestoreTemplates =
+            await getAllTemplatesFromFirestore();
+
+        if (
+    Array.isArray(firestoreTemplates)
+) {
+
+    
+
+    
+
+    setTemplates(
+        firestoreTemplates
+    );
+
+    return;
+}
+
+        // Firestore failed → LocalStorage backup
 
         try {
+
             const stored =
-                localStorage.getItem(STORAGE_KEY);
+                localStorage.getItem(
+                    STORAGE_KEY
+                );
 
             const parsed =
-                stored ? JSON.parse(stored) : [];
+                stored
+                    ? JSON.parse(stored)
+                    : [];
 
             setTemplates(
                 Array.isArray(parsed)
@@ -29,15 +63,22 @@ export default function ItineraryTemplateLibrary({
             );
 
         } catch (error) {
+
             console.error(
                 "Failed to load itinerary templates:",
                 error
             );
 
             setTemplates([]);
+
         }
 
-    }, [open]);
+    };
+
+    loadTemplates();
+
+}, [open]);
+
 
     if (!open) return null;
 
@@ -350,7 +391,7 @@ export default function ItineraryTemplateLibrary({
 
     <button
         type="button"
-        onClick={() => {
+        onClick={async () => {
 
             const confirmDelete =
                 window.confirm(
@@ -390,6 +431,19 @@ export default function ItineraryTemplateLibrary({
                         updatedTemplates
                     )
                 );
+
+                const firestoreDeleted =
+    await deleteTemplateFromFirestore(
+        template.id
+    );
+
+if (!firestoreDeleted) {
+
+    console.error(
+        "Template was removed locally but could not be deleted from Firestore."
+    );
+
+}
 
                 // Refresh the library
                 setTemplates(
