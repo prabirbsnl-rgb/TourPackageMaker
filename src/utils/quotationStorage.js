@@ -39,6 +39,117 @@ export function getLatestDraft() {
 
 }
 
+export async function getAllUserProfiles() {
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "users"
+                )
+            );
+
+        return snapshot.docs.map(
+            docSnapshot => ({
+                uid: docSnapshot.id,
+                ...docSnapshot.data()
+            })
+        );
+
+    } catch (error) {
+
+        console.error(
+            "🔥 USER PROFILES LOAD FAILED:",
+            error
+        );
+
+        return null;
+
+    }
+
+}
+
+export async function updateUserStatus(uid, status) {
+
+    try {
+
+        await setDoc(
+            doc(
+                db,
+                "users",
+                uid
+            ),
+            {
+                status
+            },
+            {
+                merge: true
+            }
+        );
+
+        console.log(
+            "🔥 USER STATUS UPDATED:",
+            uid,
+            status
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "🔥 USER STATUS UPDATE FAILED:",
+            error
+        );
+
+        return false;
+
+    }
+
+}
+
+
+export async function getUserProfile(uid) {
+
+    try {
+
+        const userRef =
+            doc(
+                db,
+                "users",
+                uid
+            );
+
+        const snapshot =
+            await getDoc(userRef);
+
+        if (!snapshot.exists()) {
+
+            console.warn(
+                "USER PROFILE NOT FOUND:",
+                uid
+            );
+
+            return null;
+        }
+
+        return snapshot.data();
+
+    } catch (error) {
+
+        console.error(
+            "🔥 USER PROFILE LOAD FAILED:",
+            error
+        );
+
+        return null;
+    }
+
+}
+
+
 export async function saveDraft(draft) {
 
     // ==========================================

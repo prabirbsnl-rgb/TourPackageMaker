@@ -48,6 +48,8 @@ export default function DraftLibrary({
 
     drafts,
 
+    userProfile,
+
     onOpen,
 
     onDuplicate,
@@ -1282,49 +1284,69 @@ color:
 
 )}
 
-                    <button
-                     title="Delete Draft"
-
-                        onClick={() => {
-
-    const confirmed = window.confirm(
-        `Delete Quotation?\n\n` +
-
-        `${displayQuotationNo(draft.quotationNo)}\n` +
-
-        `Client: ${draft.clientName || "No client"}\n` +
-
-        `Destination: ${draft.destination || "No destination"}\n\n` +
-
-        `This will permanently delete the quotation ` +
-        `and its complete revision history.\n\n` +
-
-        `This action cannot be undone.`
-    );
-
-    if (confirmed) {
-
-        onDelete(
-            draft.quotationNo
-        );
-
+                   <button
+    title={
+        userProfile?.role === "admin"
+            ? "Delete Draft"
+            : "Only Admin can delete drafts"
     }
 
-}}
+    disabled={userProfile?.role !== "admin"}
 
-                        style={{
-                            background:"#dc2626",
-                            color:"#fff",
-                            border:"none",
-                            padding:"6px 10px",
-                            fontSize:"12px",
-                            borderRadius:"5px",
-                            cursor:"pointer",
-                             fontWeight:600
-                        }}
-                    >
-                        🗑
-                    </button>
+    onClick={() => {
+
+        const confirmed = window.confirm(
+            `Delete Quotation?\n\n` +
+
+            `${displayQuotationNo(draft.quotationNo)}\n` +
+
+            `Client: ${draft.clientName || "No client"}\n` +
+
+            `Destination: ${draft.destination || "No destination"}\n\n` +
+
+            `This will permanently delete the quotation ` +
+            `and its complete revision history.\n\n` +
+
+            `This action cannot be undone.`
+        );
+
+        if (confirmed) {
+
+            onDelete(
+                draft.quotationNo
+            );
+
+        }
+
+    }}
+
+    style={{
+        background:
+            userProfile?.role === "admin"
+                ? "#dc2626"
+                : "#9CA3AF",
+
+        color: "#fff",
+        border: "none",
+        padding: "6px 10px",
+        fontSize: "12px",
+        borderRadius: "5px",
+
+        cursor:
+            userProfile?.role === "admin"
+                ? "pointer"
+                : "not-allowed",
+
+        fontWeight: 600,
+
+        opacity:
+            userProfile?.role === "admin"
+                ? 1
+                : 0.6
+    }}
+>
+    🗑
+</button>
 
                 </div>
 

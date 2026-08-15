@@ -1,7 +1,8 @@
 
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "./firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "./firebase";
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -12,22 +13,57 @@ export default function Login({ onLogin }) {
   setError("");
 
   try {
-    const usernameMap = {
-      admin: "admin@gmail.com",
-      staff: "staff@gmail.com",
-    };
+    const normalizedUsername =
+  username.trim().toLowerCase();
 
-    const loginEmail = usernameMap[username.trim().toLowerCase()];
+if (!normalizedUsername) {
+  setError("Enter your username.");
+  return;
+}
 
-    if (!loginEmail) {
-      setError("Invalid username.");
-      return;
-    }
+const loginDirectoryRef =
+  doc(
+    db,
+    "loginDirectory",
+    normalizedUsername
+  );
 
-    await signInWithEmailAndPassword(auth, loginEmail, password);
+const loginDirectorySnapshot =
+  await getDoc(
+    loginDirectoryRef
+  );
+
+if (!loginDirectorySnapshot.exists()) {
+  setError("Invalid username.");
+  return;
+}
+
+const loginData =
+  loginDirectorySnapshot.data();
+
+const loginEmail =
+  loginData?.loginEmail;
+
+if (!loginEmail) {
+  setError("Invalid username.");
+  return;
+}
+
+await signInWithEmailAndPassword(
+  auth,
+  loginEmail,
+  password
+);
 
     onLogin();
+
   } catch (err) {
+
+      console.error(
+      "🔥 LOGIN FAILED:",
+      err
+    );
+
     setError("Invalid username or password.");
   }
 };

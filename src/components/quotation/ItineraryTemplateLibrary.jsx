@@ -12,7 +12,8 @@ const STORAGE_KEY = "orbitz_itinerary_templates";
 export default function ItineraryTemplateLibrary({
     open,
     onClose,
-    onSelectTemplate
+    onSelectTemplate,
+    userProfile
 }) {
     const [templates, setTemplates] = useState([]);
 
@@ -390,8 +391,19 @@ export default function ItineraryTemplateLibrary({
     </button>
 
     <button
-        type="button"
-        onClick={async () => {
+    type="button"
+
+    disabled={
+        userProfile?.role !== "admin"
+    }
+
+    title={
+        userProfile?.role === "admin"
+            ? "Delete Template"
+            : "Only Admin can delete templates"
+    }
+
+    onClick={async () => {
 
             const confirmDelete =
                 window.confirm(
@@ -461,14 +473,28 @@ if (!firestoreDeleted) {
 
         }}
         style={{
-            background: "#dc2626",
-            color: "#fff",
-            border: "none",
-            borderRadius: "999px",
-            padding: "7px 14px",
-            cursor: "pointer",
-            fontWeight: 700
-        }}
+    background:
+        userProfile?.role === "admin"
+            ? "#dc2626"
+            : "#9CA3AF",
+
+    color: "#fff",
+    border: "none",
+    borderRadius: "999px",
+    padding: "7px 14px",
+
+    cursor:
+        userProfile?.role === "admin"
+            ? "pointer"
+            : "not-allowed",
+
+    fontWeight: 700,
+
+    opacity:
+        userProfile?.role === "admin"
+            ? 1
+            : 0.6
+}}
     >
         🗑 Delete
     </button>

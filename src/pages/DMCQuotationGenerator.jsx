@@ -177,7 +177,9 @@ gstPercent: 5,
 
 
 
-export default function DMCQuotationGenerator() {
+export default function DMCQuotationGenerator({
+    userProfile
+}) {
 
     const [showDraftLibrary, setShowDraftLibrary] =
     useState(false);
@@ -2219,6 +2221,13 @@ useEffect(() => {
 
 useEffect(() => {
 
+    if (
+        !userProfile ||
+        userProfile.status !== "active"
+    ) {
+        return;
+    }
+
     const loadSharedDrafts =
         async () => {
 
@@ -2230,7 +2239,8 @@ useEffect(() => {
 
     loadSharedDrafts();
 
-}, []);
+}, [userProfile]);
+
 
 
 useEffect(() => {
@@ -2894,6 +2904,8 @@ if (currentDraft) {
     commonData={commonData}
     setCommonData={updateCommonData}
 
+    userProfile={userProfile}
+
     packageData={packageData}
     setPackageData={updatePackageData}
 
@@ -3163,6 +3175,7 @@ importingTemplateRef={
   <DraftLibrary
     open={showDraftLibrary}
     drafts={drafts}
+    userProfile={userProfile}
     onReviewPdf={handleReviewPdf}
     onOpen={handleOpenDraft}
     onDuplicate={handleDuplicateDraft}
@@ -3466,27 +3479,50 @@ importingTemplateRef={
                             </button>
 
                             <button
-                                onClick={() => {
-                                    handleDeleteRevision(
-                                        revision
-                                    );
-                                }}
-                                style={{
-                                    background: "#dc2626",
-                                    color: "#fff",
-                                    border: "none",
-                                    padding: "7px 10px",
-                                    borderRadius: "6px",
-                                    cursor: "pointer",
-                                    fontSize: "12px",
-                                    fontWeight: 600,
-                                    marginLeft: "6px"
-                                }}
-                                title={`Delete Revision ${revision.revisionNo}`}
-                            >
-                                🗑
-                            </button>
+    onClick={() => {
+        handleDeleteRevision(
+            revision
+        );
+    }}
 
+    disabled={
+        userProfile?.role !== "admin"
+    }
+
+    style={{
+        background:
+            userProfile?.role === "admin"
+                ? "#dc2626"
+                : "#9CA3AF",
+
+        color: "#fff",
+        border: "none",
+        padding: "7px 10px",
+        borderRadius: "6px",
+
+        cursor:
+            userProfile?.role === "admin"
+                ? "pointer"
+                : "not-allowed",
+
+        fontSize: "12px",
+        fontWeight: 600,
+        marginLeft: "6px",
+
+        opacity:
+            userProfile?.role === "admin"
+                ? 1
+                : 0.6
+    }}
+
+    title={
+        userProfile?.role === "admin"
+            ? `Delete Revision ${revision.revisionNo}`
+            : "Only Admin can delete revisions"
+    }
+>
+    🗑
+</button>
                         </div>
 
                     </div>

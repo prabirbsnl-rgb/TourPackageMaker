@@ -44,7 +44,8 @@ setItineraryTemplateModified,
 itineraryTemplateLabel,
 setItineraryTemplateLabel,
 resetQuotation,
-    applyItineraryTemplate
+    applyItineraryTemplate,
+    userProfile
 } = props;
 
 console.log(
@@ -1070,6 +1071,8 @@ applyItineraryTemplate(updatedCommonData);
     onClose={() =>
         setShowItineraryTemplateLibrary(false)
     }
+
+        userProfile={userProfile}
    onSelectTemplate={(template) => {
 
     if (!template) {
