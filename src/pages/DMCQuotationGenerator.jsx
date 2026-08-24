@@ -86,6 +86,33 @@ const defaultCommonData = {
 
     specialNotes: "",
 
+
+    // =====================================================
+// HOTEL USED
+// =====================================================
+
+hotelUsedEnabled: false,
+
+hotelUsed: [
+    {
+        id: Date.now(),
+
+        nightsRichText: "",
+        nights: "",
+
+        cityRichText: "",
+        city: "",
+
+        hotelNameRichText: "",
+        hotelName: "",
+
+        roomRichText: "",
+        room: ""
+    }
+],
+
+
+
 useVehicleCosting: false,
 
 vehicleCosts: [
@@ -286,14 +313,7 @@ export default function DMCQuotationGenerator({
 
 
 
-    
-
-
-
-
-
-    const [commonData, setCommonData] =
-useState(() => ({
+    const [commonData, setCommonData] = useState(() => ({
 
     
     ...defaultCommonData,
@@ -636,9 +656,23 @@ const handleGeneratePdf = async (
 
     ...quoteData,
 
-    applyGst: commonData.applyGst,
+    // =====================================================
+    // HOTEL USED
+    // =====================================================
 
-    gstPercent: commonData.gstPercent,
+    hotelUsedEnabled:
+        commonData?.hotelUsedEnabled,
+
+    hotelUsed:
+        commonData?.hotelUsed,
+
+    // =====================================================
+
+    applyGst:
+        commonData.applyGst,
+
+    gstPercent:
+        commonData.gstPercent,
 
     subtotal,
 
@@ -2680,20 +2714,7 @@ if (currentDraft) {
 </button>
 
 
-{/* LOGO — remains in top-right toolbar */}
-<img
-    src="/orbitz-logo.png"
-    alt="Orbitz Holidays"
-    style={{
-        height: "72px",
-        width: "auto",
-        maxWidth: "190px",
-        objectFit: "contain",
-        display: "block",
-        marginLeft: "auto",
-        marginRight: "0"
-    }}
-/>
+
 
 
 </div>
@@ -2709,28 +2730,36 @@ if (currentDraft) {
         boxSizing: "border-box",
         marginTop: "10px",
         marginBottom: "0px",
-        padding: "11px 16px",
+        padding: "8px 16px",
+
         background: "#f8fafc",
         border: "1px solid #cbd5e1",
         borderRadius: "8px",
+
         display: "flex",
         alignItems: "center",
-        gap: "28px",
+        gap: "20px",
+
         flexWrap: "wrap"
     }}
 >
+
+    {/* STATUS TITLE */}
 
     <div
         style={{
             fontSize: "13px",
             fontWeight: 800,
             color: "#1f2937",
-            whiteSpace: "nowrap"
+            whiteSpace: "nowrap",
+            flexShrink: 0
         }}
     >
         💾 QUOTATION STATUS
     </div>
 
+
+    {/* STATUS DETAILS */}
 
     <div
         style={{
@@ -2739,7 +2768,8 @@ if (currentDraft) {
             gap: "24px",
             flexWrap: "wrap",
             fontSize: "13px",
-            fontWeight: 700
+            fontWeight: 700,
+            flexShrink: 0
         }}
     >
 
@@ -2842,61 +2872,71 @@ if (currentDraft) {
 
     </div>
 
-</div>
 
+    {/* ================================================= */}
+    {/* CURRENT QUOTATION IDENTITY */}
+    {/* ================================================= */}
 
-{/* ===================================================== */}
-{/* CURRENT QUOTATION IDENTITY */}
-{/* ===================================================== */}
-
-<div
-    style={{
-        width: "fit-content",
-        maxWidth: "100%",
-        boxSizing: "border-box",
-        alignSelf: "stretch",
-        marginTop: "6px",
-        marginBottom: "12px",
-        marginLeft: "16px",
-        padding: "7px 14px",
-        background: "#f1f5f9",
-        border: "1px solid #dbe3ec",
-        borderRadius: "999px",
-        textAlign: "left",
-        lineHeight: 1.25,
-        boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)"
-    }}
->
-    <span
+    <div
         style={{
-            fontSize: "12px",
-            fontWeight: 800,
-            color: "#334155"
+           marginLeft: "4px",
+
+            display: "inline-flex",
+            alignItems: "center",
+
+            minHeight: "30px",
+            boxSizing: "border-box",
+
+            padding: "5px 12px",
+
+            background: "#f1f5f9",
+            border: "1px solid #dbe3ec",
+            borderRadius: "999px",
+
+            whiteSpace: "nowrap",
+
+            lineHeight: 1.25,
+
+            boxShadow:
+                "0 1px 2px rgba(15, 23, 42, 0.04)"
         }}
     >
-        {commonData?.quotationNo
-    ? `ORB-${commonData.quotationNo
-        .replace("ORB-", "")
-        .slice(-6)}`
-    : "-"
-}
-    </span>
 
-    <span
-        style={{
-            fontSize: "11px",
-            marginLeft: "9px",
-            color: "#64748b",
-            fontWeight: 600
-        }}
-    >
-        {commonData?.clientName?.trim()
-            || "No client"}
-        {" • "}
-        {commonData?.customDestination?.trim()
-            || commonData?.destination?.trim()
-            || "No destination"}
-    </span>
+        <span
+            style={{
+                fontSize: "12px",
+                fontWeight: 800,
+                color: "#334155"
+            }}
+        >
+            {commonData?.quotationNo
+                ? `ORB-${commonData.quotationNo
+                    .replace("ORB-", "")
+                    .slice(-6)}`
+                : "-"
+            }
+        </span>
+
+        <span
+            style={{
+                fontSize: "11px",
+                marginLeft: "9px",
+                color: "#64748b",
+                fontWeight: 600
+            }}
+        >
+            {commonData?.clientName?.trim()
+                || "No client"}
+
+            {" • "}
+
+            {commonData?.customDestination?.trim()
+                || commonData?.destination?.trim()
+                || "No destination"}
+        </span>
+
+    </div>
+
 </div>
 
 
@@ -2932,14 +2972,6 @@ activeItineraryTemplateId={
 
 setItineraryTemplateSaveState={
     setItineraryTemplateSaveState
-}
-
-setIsDraftModified={
-    setIsDraftModified
-}
-
-setQuotationSaveState={
-    setQuotationSaveState
 }
 
 setIsDraftModified={

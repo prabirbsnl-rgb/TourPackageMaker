@@ -30,9 +30,31 @@ export const COLORS = {
 
   border: "#D1D5DB",
 
-   ribbon: [225, 218, 240],
-  blueLine: [37, 99, 235],
-  grandTotal: [220, 238, 255],
+
+    sectionHeader: [22, 52, 78],
+
+    ribbon: [225, 218, 241],
+
+    dayRibbon: [47, 139, 139],
+
+    dayRibbonBorder: [30, 103, 104],
+
+    dayDivider: [211, 166, 72],
+
+   dayPanelBorder: [210, 220, 220],
+
+    blueLine: [37, 99, 235],
+
+    grandTotal: [220, 238, 255],
+
+    contentLabel: [20, 116, 116],
+
+    contentIcon: [20, 116, 116],
+
+    contentDivider: [215, 225, 225],
+
+    contentValue: [0, 0, 0],
+
 };
 
 export const FONT = {
@@ -69,13 +91,13 @@ export const SPACING = {
 
 export const RIBBON = {
 
-  height: 5.5,
+  height: 7,
 
   titleFont: 11,
 
   leftPadding: 4,
 
-  topPadding: 3.8,
+  topPadding: 4.8,
 
 };
 
@@ -86,18 +108,17 @@ export const LAYOUT = {
 
   // ---------- COLUMN 1 ----------
   col1LabelX: PAGE.marginLeft + 4,
-  col1ColonX: PAGE.marginLeft + 30,
-  col1ValueX: PAGE.marginLeft + 34,
+  col1ColonX: PAGE.marginLeft + 28,
+  col1ValueX: PAGE.marginLeft + 32,
 
   // ---------- COLUMN 2 ----------
-  col2LabelX: PAGE.marginLeft + 72,
-  col2ColonX: PAGE.marginLeft + 98,
-  col2ValueX: PAGE.marginLeft + 102,
+  col2LabelX: PAGE.marginLeft + 67,
+  col2ColonX: PAGE.marginLeft + 91,
+  col2ValueX: PAGE.marginLeft + 95,
 
   // ---------- COLUMN 3 ----------
-  col3LabelX: PAGE.marginLeft + 132,
-  col3ColonX: PAGE.marginLeft + 158,
-  col3ValueX: PAGE.marginLeft + 162,
+  col3LabelX: PAGE.marginLeft + 119,
+  col3ColonX: PAGE.marginLeft + 143,
+  col3ValueX: PAGE.marginLeft + 147,
 
 };
-

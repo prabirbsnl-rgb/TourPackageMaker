@@ -1,6 +1,11 @@
+
+
 import { useState } from "react";
 
+import SightseeingRichTextEditor from "../SightseeingRichTextEditor";
+
 export default function InclusionSelector({
+  commonData,
   packageData,
   setPackageData
 }) {
@@ -24,14 +29,18 @@ export default function InclusionSelector({
     "GST Included"
   ];
 
+  const isItinerary =
+    commonData?.quoteMode === "itinerary";
+
+  const inclusionMode =
+    packageData?.inclusionMode || "chips";
+
   return (
     <div style={{ marginTop: "20px" }}>
 
       <div
         onClick={() =>
-          setShowInclusions(
-            !showInclusions
-          )
+          setShowInclusions(!showInclusions)
         }
         style={{
           width: "100%",
@@ -44,12 +53,14 @@ export default function InclusionSelector({
         }}
       >
         <span>
-          📄Inclusions Selected (
+          📄 Inclusions Selected (
           {(packageData.inclusions || []).length}
           )
         </span>
 
-        <span>▼</span>
+        <span>
+          {showInclusions ? "▲" : "▼"}
+        </span>
       </div>
 
       {showInclusions && (
@@ -62,142 +73,288 @@ export default function InclusionSelector({
           }}
         >
 
-          {inclusionOptions.map(
-            (item) => (
+          {/* ================================================= */}
+          {/* ITINERARY MODE — MODE SELECTOR */}
+          {/* ================================================= */}
 
-              <label
-                key={item}
+          {isItinerary && (
+            <div
+              style={{
+                display: "flex",
+                gap: "8px",
+                marginBottom: "15px"
+              }}
+            >
+
+              <button
+                type="button"
+                onClick={() =>
+                  setPackageData({
+                    ...packageData,
+                    inclusionMode: "chips"
+                  })
+                }
                 style={{
-                  display: "block",
-                  marginBottom: "8px"
+                  padding: "7px 14px",
+                  borderRadius: "18px",
+                  border:
+                    inclusionMode === "chips"
+                      ? "1px solid #2563eb"
+                      : "1px solid #d1d5db",
+                  background:
+                    inclusionMode === "chips"
+                      ? "#eff6ff"
+                      : "#fff",
+                  color:
+                    inclusionMode === "chips"
+                      ? "#1d4ed8"
+                      : "#374151",
+                  cursor: "pointer",
+                  fontWeight: "600"
                 }}
               >
-                <input
-                  type="checkbox"
-                  checked={
-                    packageData.inclusions?.includes(
-                      item
-                    ) || false
-                  }
-                  onChange={(e) => {
+                Chips
+              </button>
 
-                    const current =
-                      packageData.inclusions || [];
+              <button
+                type="button"
+                onClick={() =>
+                  setPackageData({
+                    ...packageData,
+                    inclusionMode: "text"
+                  })
+                }
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: "18px",
+                  border:
+                    inclusionMode === "text"
+                      ? "1px solid #2563eb"
+                      : "1px solid #d1d5db",
+                  background:
+                    inclusionMode === "text"
+                      ? "#eff6ff"
+                      : "#fff",
+                  color:
+                    inclusionMode === "text"
+                      ? "#1d4ed8"
+                      : "#374151",
+                  cursor: "pointer",
+                  fontWeight: "600"
+                }}
+              >
+                Custom Text
+              </button>
 
-                    setPackageData({
-                      ...packageData,
-                      inclusions:
-                        e.target.checked
-                          ? [
-                              ...current,
-                              item
-                            ]
-                          : current.filter(
-                              (i) =>
-                                i !== item
-                            )
-                    });
-
-                  }}
-                />
-
-                {" "}
-                {item}
-
-              </label>
-
-            )
+            </div>
           )}
 
-          <hr />
+          {/* ================================================= */}
+          {/* CUSTOM TEXT — ITINERARY MODE ONLY */}
+          {/* ================================================= */}
 
-          <h4>
-            Custom Inclusion
-          </h4>
+          {isItinerary &&
+            inclusionMode === "text" && (
+              <div>
 
-          <input
-            type="text"
-            value={customInclusion}
-            placeholder="Add inclusion"
-            onChange={(e) =>
-              setCustomInclusion(
-                e.target.value
-              )
-            }
-            style={{
-              width: "100%",
-              padding: "10px",
-              marginBottom: "10px"
-            }}
-          />
+                <h4 style={{ marginBottom: "8px" }}>
+                  Custom Inclusion Text
+                </h4>
 
-          <button
-            type="button"
-            onClick={() => {
-
-              if (
-                !customInclusion.trim()
-                    )
-                return;
-
-              setPackageData({
-  ...packageData,
-  customInclusions: [
-    ...(packageData.customInclusions || []),
-    customInclusion
-  ]
-});
-
-              setCustomInclusion("");
-
-            }}
-          >
-            Add Inclusion
-          </button>
-
-          {(packageData.customInclusions || []).map((item, index) => (
-  <div
-    key={index}
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginTop: "8px",
-      padding: "8px 10px",
-      background: "#f3f4f6",
-      borderRadius: "6px",
-    }}
-  >
-    <span>{item}</span>
-
-    <button
-      type="button"
-      onClick={() => {
-        const updated =
-          [...(packageData.customInclusions || [])];
-
-        updated.splice(index, 1);
-
+                <SightseeingRichTextEditor
+    value={
+        packageData?.customInclusionRichText || ""
+    }
+    onChange={(html) =>
         setPackageData({
-          ...packageData,
-          customInclusions: updated,
-        });
-      }}
-      style={{
-        border: "none",
-        background: "transparent",
-        color: "red",
-        cursor: "pointer",
-        fontSize: "16px",
-      }}
-    >
-      ✕
-    </button>
-  </div>
-))}
+            ...packageData,
+            customInclusionRichText:
+                html
+        })
+    }
+    preserveLineBreaks={true}
+/>
+
+                <div
+                  style={{
+                    marginTop: "6px",
+                    fontSize: "12px",
+                    color: "#6b7280"
+                  }}
+                >
+                  Paste directly from your source PDF.
+                  Line breaks and marker structure will
+                  be preserved for the PDF output.
+                </div>
+
+              </div>
+            )}
+
+          {/* ================================================= */}
+          {/* EXISTING CHIP MODE */}
+          {/* ================================================= */}
+
+          {(!isItinerary ||
+            inclusionMode === "chips") && (
+            <>
+
+              {inclusionOptions.map(
+                (item) => (
+
+                  <label
+                    key={item}
+                    style={{
+                      display: "block",
+                      marginBottom: "8px"
+                    }}
+                  >
+
+                    <input
+                      type="checkbox"
+                      checked={
+                        packageData.inclusions?.includes(
+                          item
+                        ) || false
+                      }
+                      onChange={(e) => {
+
+                        const current =
+                          packageData.inclusions ||
+                          [];
+
+                        setPackageData({
+                          ...packageData,
+                          inclusions:
+                            e.target.checked
+                              ? [
+                                  ...current,
+                                  item
+                                ]
+                              : current.filter(
+                                  (i) =>
+                                    i !== item
+                                )
+                        });
+
+                      }}
+                    />
+
+                    {" "}
+                    {item}
+
+                  </label>
+
+                )
+              )}
+
+              <hr />
+
+              <h4>
+                Custom Inclusion
+              </h4>
+
+              <input
+                type="text"
+                value={customInclusion}
+                placeholder="Add inclusion"
+                onChange={(e) =>
+                  setCustomInclusion(
+                    e.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  marginBottom: "10px"
+                }}
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+
+                  if (
+                    !customInclusion.trim()
+                  ) {
+                    return;
+                  }
+
+                  setPackageData({
+                    ...packageData,
+                    customInclusions: [
+                      ...(packageData.customInclusions ||
+                        []),
+                      customInclusion
+                    ]
+                  });
+
+                  setCustomInclusion("");
+
+                }}
+              >
+                Add Inclusion
+              </button>
+
+              {(packageData.customInclusions ||
+                []).map((item, index) => (
+
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    justifyContent:
+                      "space-between",
+                    alignItems: "center",
+                    marginTop: "8px",
+                    padding: "8px 10px",
+                    background: "#f3f4f6",
+                    borderRadius: "6px"
+                  }}
+                >
+
+                  <span>{item}</span>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+
+                      const updated = [
+                        ...(packageData.customInclusions ||
+                          [])
+                      ];
+
+                      updated.splice(
+                        index,
+                        1
+                      );
+
+                      setPackageData({
+                        ...packageData,
+                        customInclusions:
+                          updated
+                      });
+
+                    }}
+                    style={{
+                      border: "none",
+                      background:
+                        "transparent",
+                      color: "red",
+                      cursor: "pointer",
+                      fontSize: "16px"
+                    }}
+                  >
+                    ✕
+                  </button>
+
+                </div>
+
+              ))}
+
+            </>
+          )}
 
         </div>
-
       )}
 
     </div>

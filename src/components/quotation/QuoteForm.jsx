@@ -13,8 +13,12 @@ import ExclusionSelector from "./ExclusionSelector";
 import CostCalculator from "./CostCalculator";
 import CancellationPolicyEditor from "./CancellationPolicyEditor";
 
+import DatePicker from "./DatePicker";
+
 import ItineraryTemplateLibrary
     from "./ItineraryTemplateLibrary";
+
+import SightseeingRichTextEditor from "../SightseeingRichTextEditor";
 
 
 
@@ -394,264 +398,261 @@ function movePolicyDown(policyId) {
 
 return (
 
-  
-    <div
-      style={{
-        background: "#fff",
-        padding: "24px",
-        borderRadius: "12px",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.08)"
-      }}
-    >
-     <div
-    style={{
-        textAlign: "center",
-        marginBottom: "20px"
-    }}
->
-    
-
-   
-</div>
-
-      {/* QUOTATION MODE */}
-
-<h3
-    style={{
-        display: "block",
-        width: "fit-content",
-        marginTop: "8px",
-        marginBottom: "10px",
-        marginLeft: "0px",
-        marginRight: "auto",
-        padding: "7px 16px",
-        background: "#ecfdf5",
-        border: "1px solid #bbf7d0",
-        borderRadius: "999px",
-        fontSize: "13px",
-        fontWeight: 800,
-        color: "#166534",
-        textAlign: "left",
-        letterSpacing: "0.5px"
-    }}
->
-    QUOTATION TYPE
-</h3>
-
-{/* ============================== */}
-{/* QUOTATION MODE / TEMPLATE ROW */}
-{/* ============================== */}
-
-<div
-    style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: "10px",
-        marginTop: "6px",
-        marginBottom: "6px",
-        width: "fit-content",
-        maxWidth: "100%"
-    }}
->
-
-    {/* QUOTATION MODE */}
-
-    <select
-        value={commonData?.quoteMode || ""}
-        onChange={(e) =>
-            setCommonData({
-                ...commonData,
-                quoteMode: e.target.value
-            })
-        }
-        style={{
-            ...inputStyle,
-
-            width: "300px",
-            maxWidth: "calc(100vw - 260px)",
-
-            height: "40px",
-            minHeight: "40px",
-
-            boxSizing: "border-box",
-
-            margin: "0",
-
-            padding: "0 12px",
-
-            borderRadius: "8px",
-
-            display: "block"
-        }}
-    >
-        <option value="package">
-            General Package Details
-        </option>
-
-        <option value="itinerary">
-            Day Wise Itinerary
-        </option>
-    </select>
-
-
-    {/* TEMPLATE LIBRARY */}
-
-    {commonData?.quoteMode === "itinerary" && (
-
-        <button
-            type="button"
-            onClick={() =>
-                setShowItineraryTemplateLibrary(true)
-            }
-            style={{
-    width: "195px",
-    height: "40px",
-    minHeight: "40px",
-    boxSizing: "border-box",
-    margin: "0",
-    padding: "0 14px",
-
-    background: "#f8fafc",
-    color: "#334155",
-
-    border: "1px solid #94a3b8",
-    borderRadius: "8px",
-
-    cursor: "pointer",
-
-    fontWeight: 700,
-    fontSize: "12px",
-
-    whiteSpace: "nowrap",
-
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-
-    flexShrink: 0,
-
-    boxShadow: "0 1px 2px rgba(15, 23, 42, 0.05)"
-}}
-        >
-            📚 Itinerary Template Library
-        </button>
-
-    )}
-
-</div>
-
-
-{/* ============================== */}
-{/* ACTIVE TEMPLATE INFORMATION */}
-{/* ============================== */}
-
-{commonData?.quoteMode === "itinerary" &&
-    activeItineraryTemplate && (
-
     <div
         style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            marginTop: "5px",
-            marginBottom: "6px"
+            background: "#fff",
+            padding: "16px 24px",
+            borderRadius: "12px",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.08)"
         }}
     >
 
-        {/* WORKING ON TEMPLATE */}
+        {/* ============================== */}
+        {/* QUOTATION MODE / TEMPLATE TOOLBAR */}
+        {/* ============================== */}
 
         <div
-            style={{
-                padding: "5px 10px",
-                background: itineraryTemplateModified
-                    ? "#fff7ed"
-                    : "#eff6ff",
-                border: itineraryTemplateModified
-                    ? "1px solid #fdba74"
-                    : "1px solid #93c5fd",
-                borderRadius: "6px",
-                color: itineraryTemplateModified
-                    ? "#c2410c"
-                    : "#1e3a8a",
-                fontSize: "12px",
-                fontWeight: 700
-            }}
-        >
-            📌 Working on Template:{" "}
-            {activeItineraryTemplate ||
-                "Untitled Template"}
+    style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        width: "100%",
+        flexWrap: "nowrap",
+        minWidth: 0,
+        marginTop: "2px",
+        marginBottom: "4px",
+        boxSizing: "border-box"
+    }}
+>
 
-            {itineraryTemplateLabel?.trim()
-                ? ` – ${itineraryTemplateLabel.trim()}`
-                : ""}
+            {/* QUOTATION TYPE */}
+
+            <h3
+                style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+
+                    height: "40px",
+                    boxSizing: "border-box",
+
+                    margin: "0",
+                    padding: "0 14px",
+
+                    background: "#ecfdf5",
+                    border: "1px solid #bbf7d0",
+                    borderRadius: "999px",
+
+                    fontSize: "12px",
+                    fontWeight: 800,
+                    color: "#166534",
+
+                    letterSpacing: "0.5px",
+                    whiteSpace: "nowrap"
+                }}
+            >
+                QUOTATION TYPE
+            </h3>
+
+
+            {/* QUOTATION MODE */}
+
+            <select
+                value={commonData?.quoteMode || ""}
+                onChange={(e) =>
+                    setCommonData({
+                        ...commonData,
+                        quoteMode: e.target.value
+                    })
+                }
+                style={{
+                    ...inputStyle,
+
+                    width: "235px",
+                    maxWidth: "100%",
+
+                    height: "40px",
+                    minHeight: "40px",
+
+                    boxSizing: "border-box",
+
+                    margin: "0",
+                    padding: "0 12px",
+
+                    borderRadius: "8px",
+
+                    display: "block",
+                    flexShrink: 0
+                }}
+            >
+                <option value="package">
+                    General Package Details
+                </option>
+
+                <option value="itinerary">
+                    Day Wise Itinerary
+                </option>
+            </select>
+
+
+            {/* TEMPLATE LIBRARY */}
+
+            {commonData?.quoteMode === "itinerary" && (
+
+                <button
+                    type="button"
+                    onClick={() =>
+                        setShowItineraryTemplateLibrary(true)
+                    }
+                    style={{
+                        width: "180px",
+                        height: "40px",
+                        minHeight: "40px",
+
+                        boxSizing: "border-box",
+
+                        margin: "0",
+                        padding: "0 14px",
+
+                        background: "#f8fafc",
+                        color: "#334155",
+
+                        border: "1px solid #94a3b8",
+                        borderRadius: "8px",
+
+                        cursor: "pointer",
+
+                        fontWeight: 700,
+                        fontSize: "12px",
+
+                        whiteSpace: "nowrap",
+
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+
+                        flexShrink: 0,
+
+                        boxShadow:
+                            "0 1px 2px rgba(15, 23, 42, 0.05)"
+                    }}
+                >
+                    📚 Itinerary Template Library
+                </button>
+
+            )}
+
+
+            {/* WORKING TEMPLATE */}
+
+            {commonData?.quoteMode === "itinerary" &&
+                activeItineraryTemplate && (
+
+                <div
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+
+                        minHeight: "40px",
+                        boxSizing: "border-box",
+
+                        padding: "0 12px",
+                        background:
+                            itineraryTemplateModified
+                                ? "#fff7ed"
+                                : "#eff6ff",
+
+                        border:
+                            itineraryTemplateModified
+                                ? "1px solid #fdba74"
+                                : "1px solid #93c5fd",
+
+                        borderRadius: "8px",
+
+                        color:
+                            itineraryTemplateModified
+                                ? "#c2410c"
+                                : "#1e3a8a",
+
+                        fontSize: "12px",
+                        fontWeight: 700,
+
+                       whiteSpace: "nowrap",
+maxWidth: "420px",
+overflow: "hidden",
+textOverflow: "ellipsis",
+flexShrink: 1
+                    }}
+                >
+                    📌 Working on Template:{" "}
+                    {activeItineraryTemplate ||
+                        "Untitled Template"}
+
+                    {itineraryTemplateLabel?.trim()
+                        ? ` – ${itineraryTemplateLabel.trim()}`
+                        : ""}
+                </div>
+
+            )}
+
+
+            {/* START FRESH */}
+
+            {commonData?.quoteMode === "itinerary" &&
+                activeItineraryTemplate && (
+
+                <button
+                    type="button"
+                    onClick={() => {
+
+                        const proceed =
+                            window.confirm(
+                                "Start a fresh quotation? The current template work will be cleared."
+                            );
+
+                        if (!proceed) return;
+
+                        resetQuotation({
+                            preserveItineraryMode: true
+                        });
+
+                    }}
+                    style={{
+                        height: "40px",
+                        minHeight: "40px",
+
+                        boxSizing: "border-box",
+
+                        padding: "0 14px",
+
+                        background: "#374151",
+                        color: "#fff",
+
+                        border: "none",
+                        borderRadius: "8px",
+
+                        cursor: "pointer",
+
+                        fontSize: "12px",
+                        fontWeight: 700,
+
+                        whiteSpace: "nowrap",
+                        flexShrink: 0
+                    }}
+                >
+                    🆕 Start Fresh
+                </button>
+
+            )}
+
         </div>
 
 
-        {/* START FRESH */}
-
-        <button
-            type="button"
-            onClick={() => {
-
-                const proceed = window.confirm(
-                    "Start a fresh quotation? The current template work will be cleared."
-                );
-
-                if (!proceed) return;
-
-                resetQuotation({
-                    preserveItineraryMode: true
-                });
-
-            }}
-            style={{
-                marginTop: "6px",
-                padding: "7px 12px",
-                background: "#374151",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: 700
-            }}
-        >
-            🆕 Start Fresh
-        </button>
-
-    </div>
-
-)}
 
 
 
-{commonData?.quoteMode === "itinerary" && (
 
-  <label
-    style={{
-      display: "block",
-      marginBottom: "15px"
-    }}
-  >
-    <input
-      type="checkbox"
-      checked={
-        commonData?.showInclusionExclusion || false
-      }
-      onChange={(e) =>
-        setCommonData({
-          ...commonData,
-          showInclusionExclusion:
-            e.target.checked
-        })
-      }
-    />
 
-    {" "}
-    Include Inclusions & Exclusions
-  </label>
-
-)}
 
   
 
@@ -830,74 +831,80 @@ onChange={(e) =>
     }}
   >
 
-    <input
-      type="date"
-      value={commonData?.travelFrom || ""}
-      onChange={(e) =>
-        setCommonData({
-          ...commonData,
-          travelFrom: e.target.value
-        })
-      }
-      style={{
-        ...inputStyle,
-        flex: 1,
-        marginBottom: 0
-      }}
-    />
+    <DatePicker
+  value={commonData?.travelFrom || ""}
+  placeholder="From date"
+  onChange={(travelFrom) => {
+
+    setCommonData({
+      ...commonData,
+      travelFrom
+    });
+
+  }}
+/>
 
     <span>→</span>
 
-    <input
-      type="date"
-      value={commonData?.travelTo || ""}
-      onChange={(e) => {
+    <DatePicker
+  value={commonData?.travelTo || ""}
+  placeholder="To date"
+  minDate={commonData?.travelFrom || ""}
+  initialViewDate={
+    commonData?.travelFrom ||
+    commonData?.travelTo ||
+    ""
+  }
+  onChange={(travelTo) => {
 
-        const travelTo = e.target.value;
+    let totalDays = "";
+    let totalNights = "";
 
-        let totalDays = "";
-        let totalNights = "";
+    if (
+      commonData.travelFrom &&
+      travelTo
+    ) {
 
-        if (
-          commonData.travelFrom &&
-          travelTo
-        ) {
+      const from =
+        new Date(
+          commonData.travelFrom
+        );
 
-          const from =
-            new Date(commonData.travelFrom);
+      const to =
+        new Date(travelTo);
 
-          const to =
-            new Date(travelTo);
+      const diffDays =
+        Math.ceil(
+          (to - from) /
+          (1000 * 60 * 60 * 24)
+        ) + 1;
 
-          const diffDays =
-            Math.ceil(
-              (to - from) /
-              (1000 * 60 * 60 * 24)
-            ) + 1;
+      totalDays = diffDays;
 
-          totalDays = diffDays;
-          totalNights =
-            Math.max(diffDays - 1, 0);
-        }
+      totalNights =
+        Math.max(
+          diffDays - 1,
+          0
+        );
+    }
 
-        const updatedCommonData = {
-    ...commonData,
-    travelTo,
-    totalDays,
-    totalNights
-};
+    const updatedCommonData = {
+      ...commonData,
+      travelTo,
+      totalDays,
+      totalNights
+    };
 
-setCommonData(updatedCommonData);
+    setCommonData(
+      updatedCommonData
+    );
 
-applyItineraryTemplate(updatedCommonData);
+    applyItineraryTemplate(
+      updatedCommonData
+    );
 
-      }}
-      style={{
-        ...inputStyle,
-        flex: 1,
-        marginBottom: 0
-      }}
-    />
+  }}
+/>
 
   </div>
 
@@ -1039,24 +1046,7 @@ applyItineraryTemplate(updatedCommonData);
   </>
 )}
 
-{(
-  commonData?.quoteMode === "package" ||
-  commonData?.showInclusionExclusion
-) && (
-  <>
-    <InclusionSelector
-      commonData={commonData}
-      packageData={packageData}
-      setPackageData={setPackageData}
-    />
 
-    <ExclusionSelector
-      commonData={commonData}
-      packageData={packageData}
-      setPackageData={setPackageData}
-    />
-  </>
-)}
 {commonData?.quoteMode === "itinerary" && (
   <ItineraryBuilder
     commonData={commonData}
@@ -1094,27 +1084,9 @@ applyItineraryTemplate(updatedCommonData);
                 template.itineraryData
             );
 
-            console.log(
-    "TEMPLATE SOURCE BEFORE IMPORT:",
-    template.itineraryData
-);
+           
 
-console.log(
-    "IMPORTED ITINERARY:",
-    importedItinerary
-);
-
-console.log(
-    "SOURCE DAY 1 CITY:",
-    template.itineraryData?.itinerary?.[0]?.city
-);
-
-console.log(
-    "IMPORTED DAY 1 CITY:",
-    importedItinerary?.itinerary?.[0]?.city
-);
-
-        setItineraryData(
+setItineraryData(
             importedItinerary
         );
 
@@ -1127,10 +1099,7 @@ console.log(
         );
     }
 
-console.log(
-    "TEMPLATE IMPORT SETTING MODE TO:",
-    "itinerary"
-);
+
     // -----------------------------------
     // 2. Build the new working commonData
     // -----------------------------------
@@ -1217,32 +1186,508 @@ importingTemplateRef.current = false;
 
 />
 
-<h3
+
+{/* =====================================================
+    HOTEL USED
+===================================================== */}
+
+<div
   style={{
     marginTop: "20px",
-    marginBottom: "12px"
+    marginBottom: "20px"
   }}
 >
-  Cancellation & Refund Policy
-</h3>
 
-<CancellationPolicyEditor
-    commonData={commonData}
-    setCommonData={setCommonData}
-/>
+  {/* ---------------------------------------------------
+      HEADER + PDF VISIBILITY
+  --------------------------------------------------- */}
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: "12px"
+    }}
+  >
+
+    <h3
+      style={{
+        margin: 0
+      }}
+    >
+      🏨 HOTEL USED
+    </h3>
+
+
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "7px",
+        fontSize: "14px",
+        fontWeight: "600",
+        cursor: "pointer"
+      }}
+    >
+
+      <input
+        type="checkbox"
+
+        checked={
+          commonData?.hotelUsedEnabled ||
+          false
+        }
+
+        onChange={(e) => {
+
+          setCommonData({
+
+            ...commonData,
+
+            hotelUsedEnabled:
+              e.target.checked
+
+          });
+
+        }}
+      />
+
+      Show in PDF
+
+    </label>
+
+  </div>
+
+
+  {/* ---------------------------------------------------
+      HOTEL ROWS
+  --------------------------------------------------- */}
+
+  {(commonData?.hotelUsed || []).map(
+    (hotel) => {
+
+      const updateHotelField = (
+        richField,
+        plainField,
+        html
+      ) => {
+
+        const temp =
+          document.createElement("div");
+
+        temp.innerHTML =
+          html || "";
+
+        const plainText =
+          temp.innerText
+            .replace(/\r\n/g, "\n");
+
+        setCommonData({
+
+          ...commonData,
+
+          hotelUsed:
+            commonData.hotelUsed.map(
+              (item) =>
+                item.id === hotel.id
+                  ? {
+                      ...item,
+
+                      [richField]:
+                        html,
+
+                      [plainField]:
+                        plainText
+                    }
+                  : item
+            )
+
+        });
+
+      };
 
 
 
-<hr style={{ margin: "20px 0" }} />
+      return (
+
+        <div
+  key={hotel.id}
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "145px 1fr 1.25fr 1fr",
+    gap: "8px",
+    marginBottom: "14px",
+    alignItems: "start"
+  }}
+>
+
+          {/* =========================================
+              NIGHTS
+          ========================================= */}
+
+          <div>
+
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: "600",
+                marginBottom: "4px"
+              }}
+            >
+              Nights
+            </div>
+
+            <SightseeingRichTextEditor
+
+              key={`hotel-nights-${hotel.id}`}
+
+              value={
+                hotel.nightsRichText ||
+                hotel.nights ||
+                ""
+              }
+
+              onChange={(html) => {
+
+                updateHotelField(
+                  "nightsRichText",
+                  "nights",
+                  html
+                );
+
+              }}
+
+              preserveLineBreaks={true}
+              compact={true}
+            />
+
+          </div>
 
 
-      {/* COSTING */}
+          {/* =========================================
+              CITY
+          ========================================= */}
+
+          <div>
+
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: "600",
+                marginBottom: "4px"
+              }}
+            >
+              City
+            </div>
+
+            <SightseeingRichTextEditor
+
+              key={`hotel-city-${hotel.id}`}
+
+              value={
+                hotel.cityRichText ||
+                hotel.city ||
+                ""
+              }
+
+              onChange={(html) => {
+
+                updateHotelField(
+                  "cityRichText",
+                  "city",
+                  html
+                );
+
+              }}
+
+              preserveLineBreaks={true}
+              compact={true}
+            />
+
+          </div>
+
+
+          {/* =========================================
+              HOTEL NAME
+          ========================================= */}
+
+          <div>
+
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: "600",
+                marginBottom: "4px"
+              }}
+            >
+              Hotel Name
+            </div>
+
+            <SightseeingRichTextEditor
+
+              key={`hotel-name-${hotel.id}`}
+
+              value={
+                hotel.hotelNameRichText ||
+                hotel.hotelName ||
+                ""
+              }
+
+              onChange={(html) => {
+
+                updateHotelField(
+                  "hotelNameRichText",
+                  "hotelName",
+                  html
+                );
+
+              }}
+
+              preserveLineBreaks={true}
+              compact={true}
+            />
+
+          </div>
+
+
+          {/* =========================================
+              ROOM
+          ========================================= */}
+
+          <div>
+
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: "600",
+                marginBottom: "4px"
+              }}
+            >
+              Room
+            </div>
+
+            <SightseeingRichTextEditor
+
+              key={`hotel-room-${hotel.id}`}
+
+              value={
+                hotel.roomRichText ||
+                hotel.room ||
+                ""
+              }
+
+              onChange={(html) => {
+
+                updateHotelField(
+                  "roomRichText",
+                  "room",
+                  html
+                );
+
+              }}
+
+              preserveLineBreaks={true}
+              compact={true}
+            />
+
+          </div>
+
+
+         
+
+        </div>
+
+      );
+
+    }
+  )}
+
+
+ {/* =====================================================
+    HOTEL ROW ACTIONS
+===================================================== */}
+
+<div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "10px",
+    marginTop: "4px"
+  }}
+>
+
+  {/* ADD HOTEL */}
+
+  <button
+    type="button"
+    onClick={() => {
+
+      setCommonData({
+
+        ...commonData,
+
+        hotelUsed: [
+          ...(commonData.hotelUsed || []),
+
+          {
+            id: Date.now(),
+
+            nightsRichText: "",
+            nights: "",
+
+            cityRichText: "",
+            city: "",
+
+            hotelNameRichText: "",
+            hotelName: "",
+
+            roomRichText: "",
+            room: ""
+          }
+        ]
+
+      });
+
+    }}
+    style={{
+      padding: "8px 14px",
+      cursor: "pointer"
+    }}
+  >
+    + Add Hotel
+  </button>
+
+
+  {/* DELETE LAST ROW */}
+
+  <button
+    type="button"
+    onClick={() => {
+
+      const hotels =
+        commonData.hotelUsed || [];
+
+      if (hotels.length === 0) {
+        return;
+      }
+
+      setCommonData({
+
+        ...commonData,
+
+        hotelUsed:
+          hotels.slice(0, -1)
+
+      });
+
+    }}
+    disabled={
+      (commonData?.hotelUsed || []).length === 0
+    }
+    style={{
+      padding: "8px 14px",
+
+      cursor:
+        (commonData?.hotelUsed || []).length === 0
+          ? "not-allowed"
+          : "pointer",
+
+      opacity:
+        (commonData?.hotelUsed || []).length === 0
+          ? 0.5
+          : 1,
+
+      border:
+        "1px solid #dc2626",
+
+      color: "#dc2626",
+
+      background: "#fff",
+
+      borderRadius: "4px",
+
+      fontWeight: "500"
+    }}
+  >
+    − Delete Row
+  </button>
+
+</div>
+</div>
+
+
+{/* COSTING */}
 <h3>💰Costing</h3>
 
 <CostCalculator
   commonData={commonData}
   setCommonData={setCommonData}
 />
+
+{/* PACKAGE COST DISPLAY DESCRIPTION */}
+
+<div
+  style={{
+    marginTop: "12px",
+    marginBottom: "15px",
+    padding: "12px",
+    background: "#f8fafc",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px"
+  }}
+>
+
+  <label
+    style={{
+      display: "block",
+      fontWeight: "bold",
+      marginBottom: "6px"
+    }}
+  >
+    Package Cost Description
+  </label>
+
+  <input
+    type="text"
+    value={
+      commonData?.packageCostDescription || ""
+    }
+    onChange={(e) =>
+      setCommonData({
+        ...commonData,
+        packageCostDescription:
+          e.target.value
+      })
+    }
+    placeholder="@ ₹34,999 / Pax"
+    style={{
+      ...inputStyle,
+      width: "100%",
+      boxSizing: "border-box"
+    }}
+  />
+
+  <div
+    style={{
+      marginTop: "5px",
+      fontSize: "12px",
+      color: "#64748b"
+    }}
+  >
+    Enter exactly how the package cost should be
+    described in the quotation. Example:
+    {" "}
+    <strong>
+      @ ₹34,999 / Pax, including GST & driver
+      allowances etc.
+    </strong>
+  </div>
+
+</div>
+
 {/* VEHICLE COSTING */}
 
 <h3>🚗 Vehicle Costing</h3>
@@ -1403,6 +1848,46 @@ importingTemplateRef.current = false;
   </strong>
 </p>
 </div>
+
+{(
+  commonData?.quoteMode === "package" ||
+  commonData?.quoteMode === "itinerary"
+) && (
+  <>
+    <InclusionSelector
+      commonData={commonData}
+      packageData={packageData}
+      setPackageData={setPackageData}
+    />
+
+    <ExclusionSelector
+      commonData={commonData}
+      packageData={packageData}
+      setPackageData={setPackageData}
+    />
+  </>
+)}
+
+<h3
+  style={{
+    marginTop: "20px",
+    marginBottom: "12px"
+  }}
+>
+  Cancellation & Refund Policy
+</h3>
+
+<CancellationPolicyEditor
+    commonData={commonData}
+    setCommonData={setCommonData}
+/>
+
+
+
+<hr style={{ margin: "20px 0" }} />
+
+
+      
 
     </div>
   );

@@ -12,6 +12,7 @@ import { defaultItineraryDay } from "../../data/defaultItineraryDay";
 import ItineraryTemplateLibrary
     from "./ItineraryTemplateLibrary";
 
+import SightseeingRichTextEditor from "../SightseeingRichTextEditor";
 
 
 export default function ItineraryBuilder({
@@ -279,29 +280,62 @@ const sightseeingOptions =
 📝 Day Description
 </div>
 
-  <textarea
-  placeholder="Day Description"
-              value={day.description}
-              onChange={(e) => {
+  <SightseeingRichTextEditor
+  key={`day-description-${index}-${day.day || index}`}
 
-                const updated =
-                  [...(itineraryData.itinerary || [])];
+  value={
+    day.descriptionRichText ||
+    day.description ||
+    ""
+  }
 
-                updated[index].description =
-                  e.target.value;
+  onChange={(html) => {
 
-                setItineraryData({
-                    ...itineraryData,
-                  itinerary: updated
-                });
+    const updated = [
+      ...(itineraryData.itinerary || [])
+    ];
 
-              }}
-              rows={4}
-              style={{
-                width: "100%",
-                padding: "10px"
-              }}
-            />
+    /*
+     * Convert Tiptap HTML to plain text.
+     * Keep day.description for compatibility
+     * with the existing PDF/data logic.
+     */
+    const temp =
+      document.createElement("div");
+
+    temp.innerHTML =
+      html;
+
+    const plainText =
+      temp.innerText
+        .replace(/\r\n/g, "\n");
+
+    updated[index] = {
+      ...updated[index],
+
+      /*
+       * Rich formatted version
+       */
+      descriptionRichText:
+        html,
+
+      /*
+       * Existing plain-text version
+       */
+      description:
+        plainText
+    };
+
+    setItineraryData({
+      ...itineraryData,
+      itinerary: updated
+    });
+
+  }}
+
+  preserveLineBreaks={true}
+
+/>
  
  <label
   style={{
@@ -336,35 +370,61 @@ const sightseeingOptions =
 
 {day.noteEnabled && (
 
-  <textarea
-    placeholder="Enter note for this day..."
+  <SightseeingRichTextEditor
+  key={`day-note-${index}-${day.day || index}`}
 
-    value={day.noteText}
+  value={
+    day.noteRichText ||
+    day.noteText ||
+    ""
+  }
 
-    onChange={(e) => {
+  onChange={(html) => {
 
-      const updated = [
-        ...(itineraryData.itinerary || [])
-      ];
+    const updated = [
+      ...(itineraryData.itinerary || [])
+    ];
 
-      updated[index].noteText =
-        e.target.value;
+    /*
+     * Convert Tiptap HTML to plain text.
+     * Keep noteText for existing PDF/data compatibility.
+     */
+    const temp =
+      document.createElement("div");
 
-      setItineraryData({
-        ...itineraryData,
-        itinerary: updated
-      });
+    temp.innerHTML =
+      html;
 
-    }}
+    const plainText =
+      temp.innerText
+        .replace(/\r\n/g, "\n");
 
-    rows={4}
+    updated[index] = {
+      ...updated[index],
 
-    style={{
-      width: "100%",
-      padding: "10px",
-      marginTop: "8px"
-    }}
-  />
+      /*
+       * Rich formatted version
+       */
+      noteRichText:
+        html,
+
+      /*
+       * Existing plain-text version
+       */
+      noteText:
+        plainText
+    };
+
+    setItineraryData({
+      ...itineraryData,
+      itinerary: updated
+    });
+
+  }}
+
+  preserveLineBreaks={true}
+
+/>
 
 )}
 
@@ -692,7 +752,7 @@ updated[index].mealPlan =
         });
 
       }}
-    />
+      />
     Custom Text
   </label>
 </div>
@@ -1055,47 +1115,66 @@ if (value !== "") {
     }}
 >
 
-    <textarea
+  <SightseeingRichTextEditor
+  key={`sightseeing-description-${item.id}`}
 
-        rows={4}
+  value={
+    item.descriptionRichText ||
+    item.description ||
+    ""
+  }
 
-        value={item.description || ""}
+  onChange={(html) => {
 
-        placeholder="Enter description for this sightseeing..."
+    const updated = [
+      ...(itineraryData.itinerary || [])
+    ];
 
-        onChange={(e) => {
+    /*
+     * Convert the Tiptap HTML to plain text.
+     * Existing PDF/data logic can continue using
+     * item.description.
+     */
+    const temp =
+      document.createElement("div");
 
-            const updated = [
-                ...(itineraryData.itinerary || [])
-            ];
+    temp.innerHTML =
+      html;
 
-            updated[index].selectedSightseeing =
-                updated[index].selectedSightseeing.map(
-                    s =>
-                        s.id === item.id
-                            ? {
-                                  ...s,
-                                  description:
-                                      e.target.value
-                              }
-                            : s
-                );
+    const plainText =
+      temp.innerText
+        .replace(/\r\n/g, "\n");
 
-            setItineraryData({
-                ...itineraryData,
-                itinerary: updated
-            });
+    updated[index].selectedSightseeing =
+      updated[index].selectedSightseeing.map(
+        s =>
+          s.id === item.id
+            ? {
+                ...s,
 
-        }}
+                /*
+                 * Rich version
+                 */
+                descriptionRichText:
+                  html,
 
-        style={{
-            width: "100%",
-            padding: "8px",
-            boxSizing: "border-box",
-            resize: "vertical"
-        }}
+                /*
+                 * Existing plain-text field
+                 */
+                description:
+                  plainText
+              }
+            : s
+      );
 
-    />
+    setItineraryData({
+      ...itineraryData,
+      itinerary: updated
+    });
+
+  }}
+  preserveLineBreaks={true}
+/>
 
 </div>
 
@@ -1140,16 +1219,31 @@ type="button"
 onClick={() => {
 
 const updated =
-[...(itineraryData.itinerary || [])];
+  [...(itineraryData.itinerary || [])];
 
+const removedPlace =
+  updated[index].customSightseeing[i];
+
+// Remove from Custom Sightseeing list
 updated[index].customSightseeing =
-updated[index].customSightseeing.filter(
-(_, idx) => idx !== i
-);
+  updated[index].customSightseeing.filter(
+    (_, idx) => idx !== i
+  );
+
+// Also remove the corresponding manual
+// sightseeing object from Selected Sightseeing
+updated[index].selectedSightseeing =
+  (updated[index].selectedSightseeing || []).filter(
+    item =>
+      !(
+        item.source === "manual" &&
+        item.name === removedPlace
+      )
+  );
 
 setItineraryData({
-...itineraryData,
-itinerary: updated
+  ...itineraryData,
+  itinerary: updated
 });
 
 }}
@@ -1170,40 +1264,55 @@ itinerary: updated
 
 {(day.sightseeingMode || "chips") === "text" && (
 
-<textarea
-    value={day.sightseeingText || ""}
+  <SightseeingRichTextEditor
+    key={`${index}-${day.day || index}`}
 
-    onChange={(e) => {
+    value={
+      day.sightseeingRichText ||
+      day.sightseeingText ||
+      ""
+    }
 
-        const updated = [
-            ...(itineraryData.itinerary || [])
-        ];
+    onChange={(html) => {
 
-        updated[index].sightseeingText =
-            e.target.value;
+      const updated = [
+        ...(itineraryData.itinerary || [])
+      ];
 
-        setItineraryData({
-            ...itineraryData,
-            itinerary: updated
-        });
+      /*
+       * Store the formatted version.
+       */
+      updated[index].sightseeingRichText =
+        html;
 
+      /*
+       * Also keep a plain-text version.
+       *
+       * This preserves compatibility with the
+       * existing PDF/data logic until we update
+       * the PDF renderer.
+       */
+      const temp =
+        document.createElement("div");
+
+      temp.innerHTML =
+        html;
+
+      updated[index].sightseeingText =
+        temp.innerText
+          .replace(/\r\n/g, "\n")
+          .replace(/\r/g, "\n");
+
+      setItineraryData({
+        ...itineraryData,
+        itinerary: updated
+      });
     }}
-
-    rows={5}
-
-    placeholder="Enter custom sightseeing details..."
-
-    style={{
-        width: "100%",
-        padding: "10px",
-        resize: "vertical",
-        boxSizing: "border-box",
-        border: "1px solid #a3a3a3"
-    }}
-
-/>
+    preserveLineBreaks={true}
+  />
 
 )}
+
 
 <h4
   style={{
@@ -1385,16 +1494,47 @@ itinerary: updated
 
 {day.mealMode === "text" && (
 
-<textarea
-    value={day.mealText || ""}
-    onChange={(e) => {
+<SightseeingRichTextEditor
+    key={`meal-text-${index}-${day.day || index}`}
+
+    value={
+        day.mealRichText ||
+        day.mealText ||
+        ""
+    }
+
+    onChange={(html) => {
 
         const updated = [
             ...(itineraryData.itinerary || [])
         ];
 
-        updated[index].mealText =
-            e.target.value;
+        const temp =
+            document.createElement("div");
+
+        temp.innerHTML =
+            html;
+
+        const plainText =
+            temp.innerText
+                .replace(/\r\n/g, "\n")
+                .replace(/\r/g, "\n");
+
+        updated[index] = {
+            ...updated[index],
+
+            /*
+             * Rich formatted version
+             */
+            mealRichText:
+                html,
+
+            /*
+             * Existing compatibility field
+             */
+            mealText:
+                plainText
+        };
 
         setItineraryData({
             ...itineraryData,
@@ -1403,21 +1543,11 @@ itinerary: updated
 
     }}
 
-    rows={4}
-
-    placeholder="Enter custom meal details..."
-
-    style={{
-        width: "100%",
-        padding: "10px",
-        resize: "vertical",
-        boxSizing: "border-box",
-        border: "1px solid #a3a3a3"
-    }}
-
+    preserveLineBreaks={true}
 />
 
 )}
+
 
 <div style={{ marginTop: "10px" }}>
 
@@ -1709,17 +1839,47 @@ itinerary: updated
 
 {(day.transferMode || "chips") === "text" && (
 
-<textarea
-    value={day.transferText || ""}
+<SightseeingRichTextEditor
+    key={`transfer-text-${index}-${day.day || index}`}
 
-    onChange={(e) => {
+    value={
+        day.transferRichText ||
+        day.transferText ||
+        ""
+    }
+
+    onChange={(html) => {
 
         const updated = [
             ...(itineraryData.itinerary || [])
         ];
 
-        updated[index].transferText =
-            e.target.value;
+        const temp =
+            document.createElement("div");
+
+        temp.innerHTML =
+            html;
+
+        const plainText =
+            temp.innerText
+                .replace(/\r\n/g, "\n")
+                .replace(/\r/g, "\n");
+
+        updated[index] = {
+            ...updated[index],
+
+            /*
+             * Rich formatted version
+             */
+            transferRichText:
+                html,
+
+            /*
+             * Existing compatibility field
+             */
+            transferText:
+                plainText
+        };
 
         setItineraryData({
             ...itineraryData,
@@ -1728,18 +1888,7 @@ itinerary: updated
 
     }}
 
-    rows={5}
-
-    placeholder="Enter custom transfer details..."
-
-    style={{
-        width: "100%",
-        padding: "10px",
-        resize: "vertical",
-        boxSizing: "border-box",
-        border: "1px solid #a3a3a3"
-    }}
-
+    preserveLineBreaks={true}
 />
 
 )}

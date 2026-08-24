@@ -1,12 +1,27 @@
+
+
 import React from "react";
 
+import {
+  CURRENCY_OPTIONS,
+  DEFAULT_CURRENCY,
+  getCurrency
+} from "../../config/currencies";
+
 export default function CostCalculator({ commonData, setCommonData }) {
+
   const inputStyle = {
     width: "100%",
     padding: "10px",
     borderRadius: "8px",
     border: "1px solid #d1d5db"
   };
+
+  const selectedCurrency =
+    getCurrency(
+      commonData?.currency ||
+      DEFAULT_CURRENCY
+    );
 
   // reusable field update helper
   const updateField = (key, value, isNumber = true) => {
@@ -40,17 +55,75 @@ export default function CostCalculator({ commonData, setCommonData }) {
     </div>
   );
 
+  
+
+
+
   return (
     <div>
 
-      {/* COST PER PAX */}
-      <label style={{ display: "block", marginBottom: 5, fontWeight: 600 }}>
-        Cost Per Pax (₹)
-      </label>
+     {/* CURRENCY */}
+
+<div
+  style={{
+    marginBottom: "15px"
+  }}
+>
+  <label
+    style={{
+      display: "block",
+      marginBottom: 5,
+      fontWeight: 600
+    }}
+  >
+    Quotation Currency
+  </label>
+
+  <select
+    value={
+      commonData?.currency ||
+      DEFAULT_CURRENCY
+    }
+    onChange={(e) =>
+      setCommonData({
+        ...commonData,
+        currency: e.target.value
+      })
+    }
+    style={{
+      ...inputStyle,
+      cursor: "pointer",
+      background: "#fff"
+    }}
+  >
+    {CURRENCY_OPTIONS.map(
+      (currency) => (
+        <option
+          key={currency.code}
+          value={currency.code}
+        >
+          {currency.label}
+        </option>
+      )
+    )}
+  </select>
+</div>
+
+{/* COST PER PAX */}
+
+<label
+  style={{
+    display: "block",
+    marginBottom: 5,
+    fontWeight: 600
+  }}
+>
+  Cost Per Pax ({selectedCurrency.symbol})
+</label>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
         <Field
-          label="Per Adult Cost (₹)"
+  label={`Per Adult Cost (${selectedCurrency.symbol})`}
           value={commonData?.perAdultCost}
           onChange={(e) =>
             updateField("perAdultCost", e.target.value)
@@ -58,7 +131,7 @@ export default function CostCalculator({ commonData, setCommonData }) {
         />
 
         <Field
-          label="Per Child Cost (₹)"
+  label={`Per Child Cost (${selectedCurrency.symbol})`}
           value={commonData?.perChildCost}
           onChange={(e) =>
             updateField("perChildCost", e.target.value)
@@ -126,7 +199,7 @@ export default function CostCalculator({ commonData, setCommonData }) {
         }}
       >
         <Field
-          label="Exchange Rate (1 USD = ₹)"
+          label={`Exchange Rate (1 USD = ${selectedCurrency.symbol})`}
           value={commonData?.usdRate ?? 86}
           onChange={(e) =>
             updateField("usdRate", e.target.value)

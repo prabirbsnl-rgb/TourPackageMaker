@@ -7,9 +7,14 @@ import {
   RIBBON,
   LAYOUT
 } from "./pdfTheme";
+
+
+
 /**
  * Draw grey ribbon
  */
+
+
 export function drawRibbon(pdf, text, y, x = PAGE.marginLeft) {
   pdf.setFillColor(COLORS.ribbonGrey);
   pdf.rect(x, y, pdf.getTextWidth(text) + 8, 8, "F");
@@ -27,39 +32,68 @@ export function drawRibbon(pdf, text, y, x = PAGE.marginLeft) {
 /**
  * Draw full-width section heading
  */
+
+
+
 export function drawSectionHeading(pdf, title, y) {
 
   // More space after blue divider
- y += SPACING.sectionGap;
-  // Thin grey ribbon
-  pdf.setFillColor(...COLORS.ribbon);
+  y += SPACING.sectionGap;
 
-  console.log("drawSectionHeading:", {
-  title,
-  y,
-  marginLeft: PAGE.marginLeft,
-  pageWidth: PAGE.width,
-  marginRight: PAGE.marginRight,
-  ribbonHeight: RIBBON.height,
-});
+  const radius = 3;
 
-  pdf.rect(
-    PAGE.marginLeft,
-    y,
-    PAGE.width - PAGE.marginLeft - PAGE.marginRight,
-    RIBBON.height,
-    "F"
+  const ribbonWidth =
+    PAGE.width -
+    PAGE.marginLeft -
+    PAGE.marginRight;
+
+  // ==========================
+  // SECTION RIBBON
+  // Same visual construction
+  // as Billing Details
+  // ==========================
+
+  pdf.setFillColor(
+    ...COLORS.sectionHeader
   );
 
-  // Header text
-  pdf.setFont("times", "bold");   // closer to Word
-  pdf.setFontSize(RIBBON.titleFont);         // smaller like Word
-  pdf.setTextColor(0, 0, 0);
+  // Rounded outer shape
+ pdf.roundedRect(
+    PAGE.marginLeft,
+    y,
+    ribbonWidth,
+    RIBBON.height,
+    radius,
+    radius,
+    "F"
+);
+
+pdf.rect(
+    PAGE.marginLeft,
+    y + RIBBON.height - radius,
+    ribbonWidth,
+    radius,
+    "F"
+);
+
+
+  // ==========================
+  // HEADER TEXT
+  // ==========================
+
+  pdf.setFont("times", "bold");
+  pdf.setFontSize(RIBBON.titleFont);
+
+  pdf.setTextColor(
+    255,
+    255,
+    255
+  );
 
   pdf.text(
     title,
-    PAGE.marginLeft +RIBBON.leftPadding,
-    y +  RIBBON.topPadding     // vertically centered in 6 mm ribbon
+    PAGE.marginLeft + RIBBON.leftPadding,
+    y + RIBBON.topPadding
   );
 
   pdf.setTextColor(0, 0, 0);
@@ -68,9 +102,8 @@ export function drawSectionHeading(pdf, title, y) {
   return y + SPACING.ribbonGap;
 }
 
-/**
- * Draw label : value
- */
+
+
 export function drawLabelValue(pdf, label, value, y) {
 
   pdf.setFont("times", "bold");
@@ -111,53 +144,14 @@ export function drawSummaryRow3(
   y
 ) {
 
-  pdf.setFont("times", "bold");
   pdf.setFontSize(10);
 
-  // ---------- COLUMN 1 ----------
-  pdf.text(String(l1 || ""), LAYOUT.col1LabelX, y);
-  pdf.text(":", LAYOUT.col1ColonX, y);
-
-  pdf.setFont("times", "normal");
-  pdf.text(String(v1 || "-"), LAYOUT.col1ValueX, y);
-
-  // ---------- COLUMN 2 ----------
-  pdf.setFont("times", "bold");
-  pdf.text(String(l2 || ""), LAYOUT.col2LabelX, y);
-  pdf.text(":", LAYOUT.col2ColonX, y);
-
-  pdf.setFont("times", "normal");
-  pdf.text(String(v2 || "-"), LAYOUT.col2ValueX, y);
-
-  // ---------- COLUMN 3 ----------
-  pdf.setFont("times", "bold");
-  pdf.text(String(l3 || ""), LAYOUT.col3LabelX, y);
-  pdf.text(":", LAYOUT.col3ColonX, y);
-
-  pdf.setFont("times", "normal");
-
-  let value = String(v3 || "-");
-
-  if (l3 === "Email" && value.length > 26) {
-    value = value.substring(0, 26) + "...";
-  }
-
-  pdf.text(value, LAYOUT.col3ValueX, y);
-
-  return y + (SPACING.rowGapCurrent || SPACING.rowGap);
-}
-
-export function drawSummaryRow2(
-  pdf,
-  l1, v1,
-  l2, v2,
-  y
-) {
+  // =================================
+  // COLUMN 1
+  // =================================
 
   pdf.setFont("times", "bold");
-  pdf.setFontSize(10);
 
-  // ---------- COLUMN 1 ----------
   pdf.text(
     String(l1 || ""),
     LAYOUT.col1LabelX,
@@ -174,11 +168,14 @@ export function drawSummaryRow2(
 
   pdf.text(
     String(v1 || "-"),
-    LAYOUT.col1ValueX,
+    LAYOUT.col1ColonX + 3,
     y
   );
 
-  // ---------- COLUMN 2 ----------
+  // =================================
+  // COLUMN 2
+  // =================================
+
   pdf.setFont("times", "bold");
 
   pdf.text(
@@ -197,12 +194,141 @@ export function drawSummaryRow2(
 
   pdf.text(
     String(v2 || "-"),
-    LAYOUT.col2ValueX,
+    LAYOUT.col2ColonX + 3,
     y
   );
 
-  return y + (SPACING.rowGapCurrent || SPACING.rowGap);
+  // =================================
+  // COLUMN 3
+  // =================================
+
+  pdf.setFont("times", "bold");
+
+  pdf.text(
+    String(l3 || ""),
+    LAYOUT.col3LabelX,
+    y
+  );
+
+  pdf.text(
+    ":",
+    LAYOUT.col3ColonX,
+    y
+  );
+
+  const value =
+  String(v3 || "-");
+
+pdf.setFont("times", "normal");
+
+// ---------------------------------
+// EMAIL — FIT TO AVAILABLE WIDTH
+// ---------------------------------
+
+if (l3 === "Email") {
+
+  const availableWidth =
+    PAGE.width -
+    PAGE.marginRight -
+    (LAYOUT.col3ColonX + 3);
+
+  let fontSize = 10;
+
+  pdf.setFontSize(fontSize);
+
+  while (
+    pdf.getTextWidth(value) >
+      availableWidth &&
+    fontSize > 7.5
+  ) {
+    fontSize -= 0.5;
+    pdf.setFontSize(fontSize);
+  }
+
+} else {
+
+  pdf.setFontSize(10);
 }
+
+pdf.text(
+  value,
+  LAYOUT.col3ColonX + 3,
+  y
+);
+
+  return y +
+    (SPACING.rowGapCurrent || SPACING.rowGap);
+}
+
+
+
+
+export function drawSummaryRow2(
+  pdf,
+  l1, v1,
+  l2, v2,
+  y
+) {
+
+  pdf.setFontSize(10);
+
+  // =================================
+  // COLUMN 1
+  // =================================
+
+  pdf.setFont("times", "bold");
+
+  pdf.text(
+    String(l1 || ""),
+    LAYOUT.col1LabelX,
+    y
+  );
+
+  pdf.text(
+    ":",
+    LAYOUT.col1ColonX,
+    y
+  );
+
+  pdf.setFont("times", "normal");
+
+  pdf.text(
+    String(v1 || "-"),
+    LAYOUT.col1ColonX + 3,
+    y
+  );
+
+  // =================================
+  // COLUMN 2
+  // =================================
+
+  pdf.setFont("times", "bold");
+
+  pdf.text(
+    String(l2 || ""),
+    LAYOUT.col2LabelX,
+    y
+  );
+
+  pdf.text(
+    ":",
+    LAYOUT.col2ColonX,
+    y
+  );
+
+  pdf.setFont("times", "normal");
+
+  pdf.text(
+    String(v2 || "-"),
+    LAYOUT.col2ColonX + 3,
+    y
+  );
+
+  return y +
+    (SPACING.rowGapCurrent || SPACING.rowGap);
+}
+
+
 
 export function buildWrappedDescriptionLines(pdf, text) {
 
@@ -256,6 +382,448 @@ export function buildWrappedDescriptionLines(pdf, text) {
     lineHeight: 4.3
 };
 
+}
+
+export function buildWrappedRichDescriptionLines(
+    pdf,
+    html,
+    firstLineReservedWidth = 0,
+    availableWidth = null
+) {
+
+    pdf.setFont(
+        "times",
+        "normal"
+    );
+
+    pdf.setFontSize(
+        FONT.body
+    );
+
+    const DESCRIPTION_INSET = 4;
+
+    const maxWidth =
+    availableWidth !== null
+        ? availableWidth
+        : PAGE.width -
+          PAGE.marginLeft -
+          PAGE.marginRight -
+          (DESCRIPTION_INSET * 2);
+          
+        const firstLineMaxWidth =
+    maxWidth -
+    firstLineReservedWidth;
+
+    const lineHeight = 4.3;
+
+    /*
+     * -------------------------------------------------------
+     * PARSE Tiptap HTML
+     * -------------------------------------------------------
+     */
+
+    const container =
+        document.createElement("div");
+
+    container.innerHTML =
+        html || "";
+
+    /*
+     * Each run contains text + formatting.
+     */
+    const runs = [];
+
+    const walk = (
+        node,
+        style = {}
+    ) => {
+
+        if (
+            node.nodeType ===
+            Node.TEXT_NODE
+        ) {
+
+            if (
+                node.nodeValue
+            ) {
+
+                runs.push({
+    text:
+        node.nodeValue,
+
+    bold:
+        !!style.bold,
+
+    italic:
+        !!style.italic,
+
+    underline:
+        !!style.underline,
+
+    color:
+        style.color || null
+});
+            }
+
+            return;
+        }
+
+        if (
+            node.nodeType !==
+            Node.ELEMENT_NODE
+        ) {
+            return;
+        }
+
+        const tag =
+            node.tagName.toLowerCase();
+
+        const nextStyle = {
+
+    bold:
+        style.bold ||
+        tag === "strong" ||
+        tag === "b",
+
+    italic:
+        style.italic ||
+        tag === "em" ||
+        tag === "i",
+
+    underline:
+        style.underline ||
+        tag === "u",
+
+    color:
+        node.style?.color ||
+        style.color ||
+        null
+};
+        if (
+            tag === "br"
+        ) {
+
+            runs.push({
+    text: "\n",
+    bold: false,
+    italic: false,
+    underline: false,
+    color: style.color || null
+});
+
+            return;
+        }
+
+        node.childNodes.forEach(
+            child =>
+                walk(
+                    child,
+                    nextStyle
+                )
+        );
+
+       /*
+ * Paragraphs represent explicit
+ * line breaks.
+ */
+if (
+    tag === "p" ||
+    tag === "div"
+) {
+
+    runs.push({
+        text: "\n",
+        bold: false,
+        italic: false,
+        underline: false,
+        color: style.color || null
+    });
+
+}
+
+};
+
+    container.childNodes.forEach(
+        node =>
+            walk(node)
+    );
+
+   
+    /*
+     * -------------------------------------------------------
+     * FONT HELPER
+     * -------------------------------------------------------
+     */
+
+    const setRunFont = (
+        run
+    ) => {
+
+        if (
+            run.bold &&
+            run.italic
+        ) {
+
+            pdf.setFont(
+                "times",
+                "bolditalic"
+            );
+
+        } else if (
+            run.bold
+        ) {
+
+            pdf.setFont(
+                "times",
+                "bold"
+            );
+
+        } else if (
+            run.italic
+        ) {
+
+            pdf.setFont(
+                "times",
+                "italic"
+            );
+
+        } else {
+
+            pdf.setFont(
+                "times",
+                "normal"
+            );
+        }
+
+        pdf.setFontSize(
+            FONT.body
+        );
+    };
+
+    /*
+     * -------------------------------------------------------
+     * BUILD VISUAL LINES
+     * -------------------------------------------------------
+     */
+
+    const lines = [];
+
+    let currentLine = [];
+
+    let currentWidth = 0;
+
+    const pushCurrentLine = () => {
+
+        if (
+            currentLine.length > 0
+        ) {
+
+            lines.push(
+                currentLine
+            );
+
+        } else {
+
+            lines.push([]);
+        }
+
+        currentLine = [];
+
+        currentWidth = 0;
+    };
+
+    for (
+        const run of runs
+    ) {
+
+        /*
+         * Preserve explicit line breaks.
+         */
+        const parts =
+            String(
+                run.text || ""
+            ).split("\n");
+
+        for (
+            let partIndex = 0;
+            partIndex < parts.length;
+            partIndex++
+        ) {
+
+            const part =
+                parts[partIndex];
+
+            /*
+             * Process words while retaining
+             * the formatting run.
+             */
+            const words =
+                part.split(/(\s+)/);
+
+            for (
+                const word of words
+            ) {
+
+                if (!word) {
+                    continue;
+                }
+
+                setRunFont(run);
+
+                const wordWidth =
+                    pdf.getTextWidth(
+                        word
+                    );
+
+                /*
+                 * Whitespace.
+                 */
+                if (
+                    /^\s+$/.test(word)
+                ) {
+
+                    if (
+                        currentLine.length === 0
+                    ) {
+                        continue;
+                    }
+
+                    if (
+                        currentWidth +
+                        wordWidth <=
+                        maxWidth
+                    ) {
+
+                        currentLine.push({
+                            ...run,
+                            text: word
+                        });
+
+                        currentWidth +=
+                            wordWidth;
+                    }
+
+                    continue;
+                }
+
+                /*
+                 * Start a new line if the word
+                 * doesn't fit.
+                 */
+                const currentMaxWidth =
+    lines.length === 0
+        ? firstLineMaxWidth
+        : maxWidth;
+
+if (
+    currentWidth > 0 &&
+    currentWidth +
+    wordWidth >
+    currentMaxWidth
+) {
+    pushCurrentLine();
+}
+
+                /*
+                 * Very long word.
+                 */
+                if (
+                    wordWidth >
+                    maxWidth
+                ) {
+
+                    const chunks =
+                        pdf.splitTextToSize(
+                            word,
+                            maxWidth
+                        );
+
+                    chunks.forEach(
+                        (
+                            chunk,
+                            chunkIndex
+                        ) => {
+
+                            if (
+                                chunkIndex > 0
+                            ) {
+                                pushCurrentLine();
+                            }
+
+                            currentLine.push({
+                                ...run,
+                                text: chunk
+                            });
+
+                            setRunFont(run);
+
+                            currentWidth =
+                                pdf.getTextWidth(
+                                    chunk
+                                );
+                        }
+                    );
+
+                    continue;
+                }
+
+                currentLine.push({
+                    ...run,
+                    text: word
+                });
+
+                currentWidth +=
+                    wordWidth;
+            }
+
+            /*
+             * Explicit newline.
+             */
+            if (
+                partIndex <
+                parts.length - 1
+            ) {
+
+                pushCurrentLine();
+            }
+        }
+    }
+
+    if (
+        currentLine.length > 0
+    ) {
+
+        pushCurrentLine();
+    }
+
+
+    /*
+ * Remove trailing empty visual lines.
+ *
+ * Word/Tiptap content can produce an empty final
+ * line from a trailing paragraph break. It should
+ * not consume Note vertical space.
+ */
+while (
+    lines.length > 0 &&
+    lines[lines.length - 1].length === 0
+) {
+    lines.pop();
+}
+
+    /*
+     * -------------------------------------------------------
+     * RETURN SAME STRUCTURE AS THE EXISTING FUNCTION
+     * -------------------------------------------------------
+     */
+
+    return {
+
+        lines,
+
+        lineHeight
+
+    };
 }
 
 export function buildWrappedPolicyLines(pdf, text) {
@@ -614,7 +1182,8 @@ export function drawHangingLines(
     lines,
     labelX,
     valueX,
-    cursorY
+    cursorY,
+    iconType = "transfer"
 ) {
 
     const wrapped =
@@ -622,16 +1191,35 @@ export function drawHangingLines(
             ? lines
             : [String(lines || "-")];
 
-    pdf.setFont("times", "bold");
-    pdf.setFontSize(10);
+           
 
-    pdf.text(
-        label,
-        labelX,
-        cursorY
-    );
+    pdf.setFont(
+    "times",
+    "bold"
+);
 
-    pdf.setFont("times", "normal");
+pdf.setFontSize(10);
+
+pdf.setTextColor(
+    ...COLORS.contentLabel
+);
+
+pdf.text(
+    label,
+    labelX + 6,
+    cursorY
+);
+
+pdf.setFont(
+    "times",
+    "normal"
+);
+
+pdf.setTextColor(
+    0,
+    0,
+    0
+);
 
     if (wrapped.length === 0) {
         return cursorY + 2;
@@ -880,19 +1468,11 @@ pdf.text(
 
 const ROW_TEXT_Y_OFFSET = 0.8;
 
+
+
 export function drawGreyCostRowCompact(pdf, label, value, y) {
 
-  pdf.setFillColor(238,241,244);
-
-  pdf.rect(
-    PAGE.marginLeft,
-    y - 3,
-    PAGE.width - PAGE.marginLeft - PAGE.marginRight,
-    6,
-    "F"
-  );
-
-  pdf.setFont("times","bold");
+  pdf.setFont("NotoSans", "normal");
   pdf.setFontSize(10);
 
   const colonX = PAGE.marginLeft + 94;
@@ -901,70 +1481,227 @@ export function drawGreyCostRowCompact(pdf, label, value, y) {
   const LABEL_X =
     PAGE.marginLeft + RIBBON.leftPadding;
 
-pdf.text(
-    label,
-    LABEL_X,
-    y + ROW_TEXT_Y_OFFSET
+  // Space available before the fixed colon
+  const LABEL_MAX_WIDTH =
+    colonX - LABEL_X - 4;
+
+  const labelWidth =
+    pdf.getTextWidth(label);
+
+  // --------------------------------
+  // NORMAL SINGLE-LINE ROW
+  // --------------------------------
+
+  if (labelWidth <= LABEL_MAX_WIDTH) {
+
+    pdf.setFillColor(246, 241, 236);
+
+    pdf.rect(
+  PAGE.marginLeft,
+  y - 3,
+  PAGE.width - PAGE.marginLeft - PAGE.marginRight,
+  6,
+  "F"
 );
 
+    // Subtle row divider
+pdf.setDrawColor(220, 230, 224);
+pdf.setLineWidth(0.25);
+
+pdf.line(
+  PAGE.marginLeft,
+  y + 3,
+  PAGE.width - PAGE.marginRight,
+  y + 3
+);
+
+    pdf.setFont("NotoSans", "bold");
+
+    pdf.setFontSize(10);
+
+    pdf.setTextColor(62, 48, 48);
+
+
+    pdf.text(
+      label,
+      LABEL_X,
+      y + ROW_TEXT_Y_OFFSET
+    );
+
+
+    pdf.setFont("NotoSans", "normal");
+
+
+    pdf.text(
+      ":",
+      colonX,
+      y + ROW_TEXT_Y_OFFSET
+    );
+
+    pdf.text(
+      value,
+      valueX,
+      y + ROW_TEXT_Y_OFFSET
+    );
+
+    return y + 7;
+  }
+
+  // --------------------------------
+  // LONG LABEL — TWO-LINE ROW
+  // --------------------------------
+
+  const wrappedLabel =
+    pdf.splitTextToSize(
+      label,
+      LABEL_MAX_WIDTH
+    );
+
+  // Maximum two lines for billing rows
+  const lines =
+    wrappedLabel.slice(0, 2);
+
+  const rowHeight = 12;
+
+ pdf.setFillColor(244, 248, 245);
+
+ pdf.rect(
+  PAGE.marginLeft,
+  y - 3,
+  PAGE.width - PAGE.marginLeft - PAGE.marginRight,
+  rowHeight,
+  "F"
+);
+
+  // Subtle divider below two-line row
+pdf.setDrawColor(220, 230, 224);
+pdf.setLineWidth(0.25);
+
+pdf.line(
+  PAGE.marginLeft,
+  y + rowHeight - 3,
+  PAGE.width - PAGE.marginRight,
+  y + rowHeight - 3
+);
+
+  pdf.setFont("NotoSans", "bold");
+pdf.setFontSize(10);
+pdf.setTextColor(38, 58, 53);
+
+
+  const line1Y = y + 1;
+  const line2Y = y + 5.5;
+  const centerY = y + 3.25;
+
+  pdf.text(
+    lines[0],
+    LABEL_X,
+    line1Y
+  );
+
+  if (lines[1]) {
+    pdf.text(
+      lines[1],
+      LABEL_X,
+      line2Y
+    );
+  }
+
+  pdf.setFont("NotoSans", "normal");
+
+  // Colon and amount remain in the SAME fixed columns
   pdf.text(
     ":",
     colonX,
-    y + ROW_TEXT_Y_OFFSET
-);
+    centerY
+  );
+
   pdf.text(
     value,
     valueX,
-    y + ROW_TEXT_Y_OFFSET
-);
+    centerY
+  );
 
-  return y + 7;
-
+  return y + rowHeight + 1;
 }
+
+
 
 
 export function drawBlueCostRowCompact(pdf, label, value, y) {
 
-  pdf.setFillColor(220,238,255);
+  // ==========================
+  // PREMIUM TOTAL ROW
+  // ==========================
+
+  pdf.setFillColor(237, 224, 217);
 
   pdf.rect(
-    PAGE.marginLeft,
-    y - 3,
-    PAGE.width - PAGE.marginLeft - PAGE.marginRight,
-    6,
-    "F"
-  );
+  PAGE.marginLeft,
+  y - 3,
+  PAGE.width - PAGE.marginLeft - PAGE.marginRight,
+  6,
+  "F"
+);
 
-  pdf.setFont("times","bold");
-  pdf.setFontSize(11);
+  // ==========================
+  // TYPOGRAPHY
+  // ==========================
 
-  const colonX = PAGE.marginLeft + 94;
-  const valueX = PAGE.marginLeft + 99;
+ 
+  pdf.setFontSize(10.5);
+
+  pdf.setTextColor(122, 46, 62);
+
+  const colonX =
+    PAGE.marginLeft + 94;
+
+  const valueX =
+    PAGE.marginLeft + 99;
 
   const LABEL_X =
     PAGE.marginLeft + RIBBON.leftPadding;
 
+  // ==========================
+// LABEL — BOLD
+// ==========================
+
+pdf.setFont("times", "bold");
+pdf.setFontSize(10.5);
+pdf.setTextColor(40, 96, 82);
+
 pdf.text(
-    label,
-    LABEL_X,
-    y + ROW_TEXT_Y_OFFSET
+  label,
+  LABEL_X,
+  y + ROW_TEXT_Y_OFFSET
 );
 
-  pdf.text(
-    ":",
-    colonX,
-    y + ROW_TEXT_Y_OFFSET
+ // ==========================
+// COLON + VALUE — Noto Sans
+// ==========================
+
+pdf.setFont("NotoSans", "normal");
+pdf.setFontSize(10.5);
+
+pdf.text(
+  ":",
+  colonX,
+  y + ROW_TEXT_Y_OFFSET
 );
 
-  pdf.text(
-    value,
-    valueX,
-    y + ROW_TEXT_Y_OFFSET
+// Total amount
+pdf.setTextColor(107, 38, 54);
+
+
+pdf.text(
+  value,
+  valueX,
+  y + ROW_TEXT_Y_OFFSET
 );
 
   return y + 7;
-
 }
+
 
 export function sanitizePdfText(text) {
 
@@ -1110,10 +1847,18 @@ export function drawBillingCard(
     const radius = 3;
 
     // ==========================
-    // BODY BACKGROUND (no border)
+    // PREMIUM EMERALD PALETTE
     // ==========================
 
-    pdf.setFillColor(248,250,252);
+    const BURGUNDY = [107,38,54];
+const IVORY = [252, 248, 243];
+const BORDER = [226, 214, 208];
+
+    // ==========================
+    // BODY BACKGROUND
+    // ==========================
+
+   pdf.setFillColor(...IVORY);
 
     pdf.roundedRect(
         x,
@@ -1129,23 +1874,25 @@ export function drawBillingCard(
     // HEADER BACKGROUND
     // ==========================
 
-    pdf.setFillColor(...COLORS.ribbon);
+  pdf.setFillColor(...BURGUNDY);
 
     pdf.roundedRect(
-    x,
-    y,
-    width,
-    RIBBON.height + radius,
-    radius,
-    radius,
-    "F"
-);
+        x,
+        y,
+        width,
+        RIBBON.height + radius,
+        radius,
+        radius,
+        "F"
+    );
 
+
+   
     // ==========================
-    // BORDER LAST
+    // BORDER
     // ==========================
 
-    pdf.setDrawColor(220,226,235);
+    pdf.setDrawColor(...BORDER);
 
     pdf.roundedRect(
         x,
@@ -1157,20 +1904,22 @@ export function drawBillingCard(
         "S"
     );
 
+  
+
+
     // ==========================
     // TITLE
     // ==========================
 
-    pdf.setFont("times","bold");
+    pdf.setFont("times", "bold");
     pdf.setFontSize(RIBBON.titleFont);
-    pdf.setTextColor(0,0,0);
+    pdf.setTextColor(255, 255, 255);
 
     const TITLE_Y_OFFSET = 1.5;
 
     pdf.text(
-    title,
-    x + RIBBON.leftPadding,
-    y + RIBBON.topPadding + TITLE_Y_OFFSET
-);
-
+        title,
+        x + RIBBON.leftPadding,
+        y + RIBBON.topPadding + TITLE_Y_OFFSET
+    );
 }

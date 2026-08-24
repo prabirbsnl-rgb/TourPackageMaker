@@ -122,6 +122,8 @@ export default function TourPackageMaker() {
    Maldives: 'https://images.unsplash.com/photo-1573843981267-be1999ff37cd?q=80&w=1600&auto=format&fit=crop',
     Vietnam: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?auto=format&fit=crop&w=1400&q=90'
   };
+
+  
   const [offerBadge, setOfferBadge] = useState('');
   const [destination, setDestination] = useState('Kerala');
   
