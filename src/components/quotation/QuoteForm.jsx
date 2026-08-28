@@ -76,13 +76,29 @@ const [expandedPolicyId, setExpandedPolicyId] =
     const [showItineraryTemplateLibrary, setShowItineraryTemplateLibrary] =
     useState(false);
 
-    
+    const [showPdfSectionAdder, setShowPdfSectionAdder] =
+    useState(false);
+
+   const [newPdfSectionName, setNewPdfSectionName] =
+    useState("");
    
     const [loadedTemplateItinerary, setLoadedTemplateItinerary] =
     useState(null);
 
     const [loadedTemplateCommonData, setLoadedTemplateCommonData] =
     useState(null);
+
+    const [activeHotelCell, setActiveHotelCell] = useState(null);
+
+    const [activeHotelEditor, setActiveHotelEditor] = useState(null);
+
+    const [showHotelColorPalette, setShowHotelColorPalette] =
+     useState(false);
+
+
+
+
+
 
     useEffect(() => {
 
@@ -394,6 +410,30 @@ function movePolicyDown(policyId) {
     border: "1px solid #d1d5db"
   };
 
+
+   // =========================================================
+  // PDF THEME — DEFAULT SECTION COLORS
+  // =========================================================
+
+  const DEFAULT_PDF_SECTION_COLORS = {
+
+    tourSummary: "#17334F",
+
+    detailedTourItinerary: "#17334F",
+
+    hotelUsed: "#5C3391",
+
+    billing: "#6B2636",
+
+    inclusions: "#2446B5",
+
+    exclusions: "#46556B",
+
+    policy: "#17334F"
+
+  };
+
+  
   
 
 return (
@@ -648,17 +688,1319 @@ flexShrink: 1
         </div>
 
 
+{/* =========================================================
+    PDF THEME
+========================================================= */}
+
+<div
+  style={{
+    marginTop: "14px",
+    marginBottom: "18px",
+    padding: "12px 14px",
+    background: "#ffffff",
+    border: "1px solid #cbd5e1",
+    borderRadius: "10px",
+    boxShadow: "0 2px 7px rgba(30, 41, 59, 0.05)",
+    boxSizing: "border-box",
+    width: "100%"
+  }}
+>
+
+  {/* =========================
+      HEADER
+  ========================= */}
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingBottom: "9px",
+      marginBottom: "10px",
+      borderBottom: "1px solid #e2e8f0"
+    }}
+  >
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "7px"
+      }}
+    >
+
+      <span
+        style={{
+          fontSize: "17px"
+        }}
+      >
+        🎨
+      </span>
+
+      <span
+        style={{
+          fontSize: "15px",
+          fontWeight: 800,
+          color: "#334155"
+        }}
+      >
+        PDF THEME
+      </span>
+
+    </div>
+
+
+    {/* THEME SELECTOR */}
+
+    <select
+      value={
+        commonData?.pdfTheme?.name ||
+        "Default"
+      }
+      onChange={(e) => {
+
+  const selectedTheme =
+    e.target.value;
+
+  setCommonData({
+
+    ...commonData,
+
+    pdfTheme: {
+
+      ...commonData.pdfTheme,
+
+      name:
+        selectedTheme,
+
+      sections:
+        Object.fromEntries(
+
+          Object.entries(
+            DEFAULT_PDF_SECTION_COLORS
+          ).map(
+            ([key, color]) => [
+
+              key,
+
+              {
+                enabled:
+                  commonData?.pdfTheme
+                    ?.sections?.[key]
+                    ?.enabled !== false,
+
+                color
+              }
+
+            ]
+          )
+
+        )
+
+    }
+
+  });
+
+}}
+      style={{
+        height: "32px",
+        padding: "4px 30px 4px 9px",
+        border: "1px solid #cbd5e1",
+        borderRadius: "6px",
+        background: "#fff",
+        fontSize: "13px",
+        fontWeight: 600,
+        color: "#334155",
+        cursor: "pointer"
+      }}
+    >
+
+      <option value="Default">
+        Default
+      </option>
+
+      <option value="Custom">
+        Custom
+      </option>
+
+    </select>
+
+  </div>
+
+
+  {/* =========================
+      SECTION COLORS
+  ========================= */}
+
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "repeat(auto-fit, minmax(180px, 1fr))",
+      gap: "8px"
+    }}
+  >
+
+    {/* TOUR SUMMARY */}
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "8px",
+        padding: "7px 9px",
+        border: "1px solid #e2e8f0",
+        borderRadius: "7px",
+        background: "#f8fafc"
+      }}
+    >
+
+      <span
+        style={{
+          fontSize: "12px",
+          fontWeight: 600,
+          color: "#334155"
+        }}
+      >
+        🌍 Tour Summary
+      </span>
+
+      <input
+        type="color"
+
+        value={
+  commonData?.pdfTheme?.name === "Default"
+    ? DEFAULT_PDF_SECTION_COLORS.tourSummary
+    : (
+        commonData?.pdfTheme?.sections
+          ?.tourSummary?.color ||
+        DEFAULT_PDF_SECTION_COLORS.tourSummary
+      )
+}
+        onChange={(e) => {
+
+          setCommonData({
+            ...commonData,
+
+            pdfTheme: {
+              ...commonData.pdfTheme,
+
+              name: "Custom",
+
+              sections: {
+                ...commonData.pdfTheme.sections,
+
+                tourSummary: {
+                  ...commonData.pdfTheme.sections.tourSummary,
+                  color: e.target.value
+                }
+              }
+            }
+
+          });
+
+        }}
+        style={{
+          width: "30px",
+          height: "25px",
+          padding: "1px",
+          border: "1px solid #cbd5e1",
+          borderRadius: "5px",
+          cursor: "pointer",
+          background: "#fff"
+        }}
+      />
+
+    </div>
+
+
+    {/* ITINERARY */}
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "8px",
+        padding: "7px 9px",
+        border: "1px solid #e2e8f0",
+        borderRadius: "7px",
+        background: "#f8fafc"
+      }}
+    >
+
+      <span
+        style={{
+          fontSize: "12px",
+          fontWeight: 600,
+          color: "#334155"
+        }}
+      >
+        🗺️ Detailed Tour Summary
+      </span>
+
+      <input
+        type="color"
+
+        value={
+  commonData?.pdfTheme?.name === "Default"
+    ? DEFAULT_PDF_SECTION_COLORS.detailedTourItinerary
+    : (
+        commonData?.pdfTheme?.sections
+  ?.detailedTourItinerary?.color ||
+        DEFAULT_PDF_SECTION_COLORS.detailedTourItinerary
+      )
+}
+        onChange={(e) => {
+
+          setCommonData({
+            ...commonData,
+
+            pdfTheme: {
+              ...commonData.pdfTheme,
+
+              name: "Custom",
+
+              sections: {
+                ...commonData.pdfTheme.sections,
+
+               detailedTourItinerary: {
+  ...commonData.pdfTheme.sections.detailedTourItinerary,
+  color: e.target.value
+}
+              }
+            }
+
+          });
+
+        }}
+        style={{
+          width: "30px",
+          height: "25px",
+          padding: "1px",
+          border: "1px solid #cbd5e1",
+          borderRadius: "5px",
+          cursor: "pointer"
+        }}
+      />
+
+    </div>
+
+
+    {/* DAY HEADER */}
+
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "8px",
+    padding: "7px 9px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "7px",
+    background: "#f8fafc"
+  }}
+>
+  <span
+    style={{
+      fontSize: "12px",
+      fontWeight: 600,
+      color: "#334155"
+    }}
+  >
+    🗓️ Day Header
+  </span>
+
+  <input
+    type="color"
+    value={
+      commonData?.pdfTheme?.sections
+        ?.dayHeader?.color ||
+      "#2F8F91"
+    }
+    onChange={(e) => {
+
+      setCommonData({
+        ...commonData,
+
+        pdfTheme: {
+          ...commonData.pdfTheme,
+
+          name: "Custom",
+
+          sections: {
+            ...commonData.pdfTheme.sections,
+
+            dayHeader: {
+              ...commonData.pdfTheme.sections?.dayHeader,
+              color: e.target.value
+            }
+          }
+        }
+
+      });
+
+    }}
+    style={{
+      width: "30px",
+      height: "25px",
+      padding: "1px",
+      border: "1px solid #cbd5e1",
+      borderRadius: "5px",
+      cursor: "pointer"
+    }}
+  />
+</div>
+
+
+    {/* HOTEL USED */}
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "8px",
+        padding: "7px 9px",
+        border: "1px solid #e2e8f0",
+        borderRadius: "7px",
+        background: "#f8fafc"
+      }}
+    >
+
+      <span
+        style={{
+          fontSize: "12px",
+          fontWeight: 600,
+          color: "#334155"
+        }}
+      >
+        🏨 Hotel Used
+      </span>
+
+      <input
+        type="color"
+
+        value={
+  commonData?.pdfTheme?.name === "Default"
+    ? DEFAULT_PDF_SECTION_COLORS.hotelUsed
+    : (
+        commonData?.pdfTheme?.sections
+          ?.hotelUsed?.color ||
+        DEFAULT_PDF_SECTION_COLORS.hotelUsed
+      )
+}
+        onChange={(e) => {
+
+          setCommonData({
+            ...commonData,
+
+            pdfTheme: {
+              ...commonData.pdfTheme,
+
+              name: "Custom",
+
+              sections: {
+                ...commonData.pdfTheme.sections,
+
+                hotelUsed: {
+                  ...commonData.pdfTheme.sections.hotelUsed,
+                  color: e.target.value
+                }
+              }
+            }
+
+          });
+
+        }}
+        style={{
+          width: "30px",
+          height: "25px",
+          padding: "1px",
+          border: "1px solid #cbd5e1",
+          borderRadius: "5px",
+          cursor: "pointer"
+        }}
+      />
+
+    </div>
+
+
+    {/* BILLING */}
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "8px",
+        padding: "7px 9px",
+        border: "1px solid #e2e8f0",
+        borderRadius: "7px",
+        background: "#f8fafc"
+      }}
+    >
+
+      <span
+        style={{
+          fontSize: "12px",
+          fontWeight: 600,
+          color: "#334155"
+        }}
+      >
+        💰 Billing
+      </span>
+
+      <input
+        type="color"
+        value={
+  commonData?.pdfTheme?.name === "Default"
+    ? DEFAULT_PDF_SECTION_COLORS.billing
+    : (
+        commonData?.pdfTheme?.sections
+          ?.billing?.color ||
+        DEFAULT_PDF_SECTION_COLORS.billing
+      )
+}
+        onChange={(e) => {
+
+          setCommonData({
+            ...commonData,
+
+            pdfTheme: {
+              ...commonData.pdfTheme,
+
+              name: "Custom",
+
+              sections: {
+                ...commonData.pdfTheme.sections,
+
+                billing: {
+                  ...commonData.pdfTheme.sections.billing,
+                  color: e.target.value
+                }
+              }
+            }
+
+          });
+
+        }}
+        style={{
+          width: "30px",
+          height: "25px",
+          padding: "1px",
+          border: "1px solid #cbd5e1",
+          borderRadius: "5px",
+          cursor: "pointer"
+        }}
+      />
+
+    </div>
+
+
+    {/* INCLUSIONS */}
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "8px",
+        padding: "7px 9px",
+        border: "1px solid #e2e8f0",
+        borderRadius: "7px",
+        background: "#f8fafc"
+      }}
+    >
+
+      <span
+        style={{
+          fontSize: "12px",
+          fontWeight: 600,
+          color: "#334155"
+        }}
+      >
+        ✅ Inclusions
+      </span>
+
+      <input
+        type="color"
+
+        value={
+  commonData?.pdfTheme?.name === "Default"
+    ? DEFAULT_PDF_SECTION_COLORS.inclusions
+    : (
+        commonData?.pdfTheme?.sections
+          ?.inclusions?.color ||
+        DEFAULT_PDF_SECTION_COLORS.inclusions
+      )
+}
+        onChange={(e) => {
+
+          setCommonData({
+            ...commonData,
+
+            pdfTheme: {
+              ...commonData.pdfTheme,
+
+              name: "Custom",
+
+              sections: {
+                ...commonData.pdfTheme.sections,
+
+                inclusions: {
+                  ...commonData.pdfTheme.sections.inclusions,
+                  color: e.target.value
+                }
+              }
+            }
+
+          });
+
+        }}
+        style={{
+          width: "30px",
+          height: "25px",
+          padding: "1px",
+          border: "1px solid #cbd5e1",
+          borderRadius: "5px",
+          cursor: "pointer"
+        }}
+      />
+
+    </div>
+
+
+    {/* EXCLUSIONS */}
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "8px",
+        padding: "7px 9px",
+        border: "1px solid #e2e8f0",
+        borderRadius: "7px",
+        background: "#f8fafc"
+      }}
+    >
+
+      <span
+        style={{
+          fontSize: "12px",
+          fontWeight: 600,
+          color: "#334155"
+        }}
+      >
+        ❌ Exclusions
+      </span>
+
+      <input
+        type="color"
+
+        value={
+  commonData?.pdfTheme?.name === "Default"
+    ? DEFAULT_PDF_SECTION_COLORS.exclusions
+    : (
+        commonData?.pdfTheme?.sections
+          ?.exclusions?.color ||
+        DEFAULT_PDF_SECTION_COLORS.exclusions
+      )
+}
+        onChange={(e) => {
+
+          setCommonData({
+            ...commonData,
+
+            pdfTheme: {
+              ...commonData.pdfTheme,
+
+              name: "Custom",
+
+              sections: {
+                ...commonData.pdfTheme.sections,
+
+                exclusions: {
+                  ...commonData.pdfTheme.sections.exclusions,
+                  color: e.target.value
+                }
+              }
+            }
+
+          });
+
+        }}
+        style={{
+          width: "30px",
+          height: "25px",
+          padding: "1px",
+          border: "1px solid #cbd5e1",
+          borderRadius: "5px",
+          cursor: "pointer"
+        }}
+      />
+
+    </div>
+
+
+    {/* POLICY */}
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "8px",
+        padding: "7px 9px",
+        border: "1px solid #e2e8f0",
+        borderRadius: "7px",
+        background: "#f8fafc"
+      }}
+    >
+
+      <span
+        style={{
+          fontSize: "12px",
+          fontWeight: 600,
+          color: "#334155"
+        }}
+      >
+        📜 Policy
+      </span>
+
+      <input
+        type="color"
+
+        value={
+  commonData?.pdfTheme?.name === "Default"
+    ? DEFAULT_PDF_SECTION_COLORS.policy
+    : (
+        commonData?.pdfTheme?.sections
+          ?.policy?.color ||
+        DEFAULT_PDF_SECTION_COLORS.policy
+      )
+}
+
+        onChange={(e) => {
+
+          setCommonData({
+            ...commonData,
+
+            pdfTheme: {
+              ...commonData.pdfTheme,
+
+              name: "Custom",
+
+              sections: {
+                ...commonData.pdfTheme.sections,
+
+                policy: {
+                  ...commonData.pdfTheme.sections.policy,
+                  color: e.target.value
+                }
+              }
+            }
+
+          });
+
+        }}
+        style={{
+          width: "30px",
+          height: "25px",
+          padding: "1px",
+          border: "1px solid #cbd5e1",
+          borderRadius: "5px",
+          cursor: "pointer"
+        }}
+      />
+
+    </div>
+
+  </div>
+
+
+{/* =========================================================
+    CUSTOM PDF SECTIONS
+========================================================= */}
+
+{Object.entries(
+  commonData?.pdfTheme?.sections || {}
+)
+  .filter(
+    ([, section]) =>
+      section?.custom === true
+  )
+  .map(
+    ([sectionKey, section]) => (
+
+      <div
+        key={sectionKey}
+        style={{
+          background: "#f8fafc",
+          border: "1px solid #dbe3ec",
+          borderRadius: "8px",
+          padding: "10px 12px",
+          boxSizing: "border-box",
+          width: "100%"
+        }}
+      >
+
+        {/* =================================================
+            CUSTOM SECTION HEADER ROW
+        ================================================= */}
+
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "10px"
+          }}
+        >
+
+          {/* -----------------------------------------------
+              SECTION NAME
+          ----------------------------------------------- */}
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "7px",
+              minWidth: 0,
+              flex: 1
+            }}
+          >
+
+            <span
+              style={{
+                fontSize: "12px",
+                color: "#334155",
+                fontWeight: 600,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              }}
+            >
+              📄{" "}
+              {section.label || sectionKey}
+            </span>
+
+          </div>
+
+
+          {/* -----------------------------------------------
+              COLOR + DELETE
+          ----------------------------------------------- */}
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: "5px",
+              flexShrink: 0
+            }}
+          >
+
+            {/* COLOR PICKER */}
+
+            <input
+              type="color"
+              value={
+                section.color ||
+                "#64748B"
+              }
+              onChange={(e) => {
+
+                setCommonData({
+
+                  ...commonData,
+
+                  pdfTheme: {
+
+                    ...(commonData.pdfTheme || {}),
+
+                    name: "Custom",
+
+                    sections: {
+
+                      ...(commonData
+                        .pdfTheme
+                        ?.sections || {}),
+
+                      [sectionKey]: {
+
+                        ...section,
+
+                        color:
+                          e.target.value
+
+                      }
+
+                    }
+
+                  }
+
+                });
+
+              }}
+              style={{
+                width: "30px",
+                height: "25px",
+                padding: "1px",
+                border:
+                  "1px solid #cbd5e1",
+                borderRadius: "5px",
+                cursor: "pointer",
+                display: "block"
+              }}
+            />
+
+
+            {/* DELETE BUTTON */}
+
+            <button
+              type="button"
+              onClick={() => {
+
+                const confirmed =
+                  window.confirm(
+                    `Remove "${section.label || sectionKey}" from PDF Theme?`
+                  );
+
+                if (!confirmed) {
+                  return;
+                }
+
+                const updatedSections = {
+                  ...(commonData?.pdfTheme?.sections || {})
+                };
+
+                delete updatedSections[
+                  sectionKey
+                ];
+
+                setCommonData({
+
+                  ...commonData,
+
+                  pdfTheme: {
+
+                    ...(commonData.pdfTheme || {}),
+
+                    name: "Custom",
+
+                    sections:
+                      updatedSections
+
+                  }
+
+                });
+
+              }}
+              title="Remove section"
+              style={{
+                width: "24px",
+                height: "24px",
+                padding: 0,
+                border:
+                  "1px solid #fecaca",
+                borderRadius: "5px",
+                background: "#fff",
+                color: "#dc2626",
+                fontSize: "15px",
+                fontWeight: 700,
+                lineHeight: "20px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              ×
+            </button>
+
+          </div>
+
+        </div>
+
+
+        {/* =================================================
+            CUSTOM SECTION CONTENT
+        ================================================= */}
+
+        <SightseeingRichTextEditor
+  key={`pdf-custom-section-${sectionKey}`}
+  value={
+    section.content || ""
+  }
+  onChange={(html) => {
+
+    setCommonData({
+
+      ...commonData,
+
+      pdfTheme: {
+
+        ...(commonData.pdfTheme || {}),
+
+        name: "Custom",
+
+        sections: {
+
+          ...(commonData
+            .pdfTheme
+            ?.sections || {}),
+
+          [sectionKey]: {
+
+            ...section,
+
+            content:
+              html
+
+          }
+
+        }
+
+      }
+
+    });
+
+  }}
+
+  preserveLineBreaks={true}
+
+  compact={true}
+/>
+
+      </div>
+
+    )
+  )}
+
+
+ {/* =========================
+    ADD SECTION
+========================= */}
+
+<div
+  style={{
+    marginTop: "10px"
+  }}
+>
+
+  {/* ADD BUTTON */}
+
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "flex-end"
+    }}
+  >
+
+    <button
+      type="button"
+      onClick={() => {
+
+        setShowPdfSectionAdder(
+          !showPdfSectionAdder
+        );
+
+        setNewPdfSectionName("");
+
+      }}
+      style={{
+        border: "1px dashed #94a3b8",
+        background: "#f8fafc",
+        color: "#334155",
+        borderRadius: "6px",
+        padding: "6px 11px",
+        fontSize: "12px",
+        fontWeight: 700,
+        cursor: "pointer"
+      }}
+    >
+      ＋ Add Section
+    </button>
+
+  </div>
+
+
+  {/* ADD SECTION FORM */}
+
+  {showPdfSectionAdder && (
+
+    <div
+      style={{
+        marginTop: "8px",
+        padding: "9px 10px",
+        border:
+          "1px solid #cbd5e1",
+        borderRadius: "8px",
+        background: "#f8fafc",
+        display: "flex",
+        alignItems: "center",
+        gap: "7px"
+      }}
+    >
+
+      <input
+        type="text"
+        value={
+          newPdfSectionName
+        }
+        onChange={(e) =>
+          setNewPdfSectionName(
+            e.target.value
+          )
+        }
+        placeholder="Enter section name"
+        autoFocus
+        style={{
+          flex: 1,
+          height: "31px",
+          padding:
+            "5px 9px",
+          border:
+            "1px solid #cbd5e1",
+          borderRadius: "6px",
+          fontSize: "12px",
+          color: "#334155",
+          outline: "none"
+        }}
+      />
+
+
+      <button
+        type="button"
+        onClick={() => {
+
+          const sectionName =
+            newPdfSectionName
+              .trim();
+
+          if (!sectionName) {
+            return;
+          }
+
+          const sectionKey =
+            sectionName
+              .toLowerCase()
+              .replace(
+                /[^a-z0-9]+/g,
+                "_"
+              )
+              .replace(
+                /^_+|_+$/g,
+                ""
+              );
+
+          if (!sectionKey) {
+            return;
+          }
+
+          const existingSections =
+            commonData
+              ?.pdfTheme
+              ?.sections || {};
+
+          if (
+            existingSections[
+              sectionKey
+            ]
+          ) {
+
+            alert(
+              "A PDF section with this name already exists."
+            );
+
+            return;
+          }
+
+          setCommonData({
+
+            ...commonData,
+
+            pdfTheme: {
+
+              ...(commonData.pdfTheme || {}),
+
+              name: "Custom",
+
+              sections: {
+
+                ...existingSections,
+
+                [sectionKey]: {
+
+  label:
+    sectionName,
+
+  color:
+    "#64748B",
+
+  custom: true,
+
+  content:
+    ""
+
+}
+
+              }
+
+            }
+
+          });
+
+          setNewPdfSectionName(
+            ""
+          );
+
+          setShowPdfSectionAdder(
+            false
+          );
+
+        }}
+        style={{
+          height: "31px",
+          padding:
+            "5px 12px",
+          border: "none",
+          borderRadius: "6px",
+          background:
+            "#334155",
+          color: "#fff",
+          fontSize: "12px",
+          fontWeight: 700,
+          cursor: "pointer"
+        }}
+      >
+        Add
+      </button>
+
+
+      <button
+        type="button"
+        onClick={() => {
+
+          setShowPdfSectionAdder(
+            false
+          );
+
+          setNewPdfSectionName(
+            ""
+          );
+
+        }}
+        style={{
+          height: "31px",
+          padding:
+            "5px 9px",
+          border:
+            "1px solid #cbd5e1",
+          borderRadius: "6px",
+          background: "#fff",
+          color: "#64748b",
+          fontSize: "12px",
+          fontWeight: 700,
+          cursor: "pointer"
+        }}
+      >
+        Cancel
+      </button>
+
+    </div>
+
+  )}
+
+</div>
+
+</div>
 
 
 
 
+ {/* =========================================================
+    TOUR SUMMARY
+========================================================= */}
+
+<div
+  style={{
+    marginTop: "14px",
+    marginBottom: "26px",
+    padding: "14px 16px",
+    background: "#f8fbff",
+    border: "1px solid #bfdbfe",
+    borderBottom: "4px solid #1e3a8a",
+    borderRadius: "12px",
+    boxShadow: "0 2px 8px rgba(30, 64, 96, 0.06)",
+    boxSizing: "border-box",
+    width: "100%"
+  }}
+>
+
+  {/* =========================
+      TOUR SUMMARY HEADER
+  ========================= */}
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      paddingBottom: "9px",
+      marginBottom: "12px",
+      borderBottom: "2px solid #dbeafe"
+    }}
+  >
+
+    <span
+      style={{
+        fontSize: "18px",
+        lineHeight: 1
+      }}
+    >
+      🌍
+    </span>
+
+    <span
+      style={{
+        fontSize: "16px",
+        fontWeight: 800,
+        color: "#1e3a8a",
+        letterSpacing: "0.2px"
+      }}
+    >
+      TOUR SUMMARY
+    </span>
+
+    <span
+      style={{
+        fontSize: "12px",
+        color: "#64748b",
+        fontWeight: 500
+      }}
+    >
+      Client & Trip Information
+    </span>
+
+  </div>
 
 
-  
-
-       {/* CLIENT DETAILS */}
-      <h3>📋Client Details</h3>
-
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "minmax(220px, 1fr) minmax(170px, 0.75fr) minmax(280px, 1.25fr)",
+    gap: "10px",
+    marginBottom: "10px"
+  }}
+>
       <input
         placeholder="Client Name"
         value={commonData?.clientName}
@@ -668,7 +2010,11 @@ flexShrink: 1
   clientName: e.target.value
 })
         }
-        style={inputStyle}
+        style={{
+  ...inputStyle,
+  marginBottom: 0,
+  boxSizing: "border-box"
+}}
       />
 
       <input
@@ -680,7 +2026,11 @@ flexShrink: 1
             mobile: e.target.value
           })
         }
-        style={inputStyle}
+        style={{
+  ...inputStyle,
+  marginBottom: 0,
+  boxSizing: "border-box"
+}}
       />
 
       <input
@@ -692,368 +2042,550 @@ flexShrink: 1
             email: e.target.value
           })
         }
-        style={inputStyle}
+        style={{
+  ...inputStyle,
+  marginBottom: 0,
+  boxSizing: "border-box"
+}}
       />
-
-      {/* TOUR DETAILS */}
-     <h3>
-  🌍 Tour Details
-</h3>
-
-      <select
-  value={commonData?.destination || ""}
-  onChange={(e) => {
-
-  setCommonData({
-    ...commonData,
-    destination: e.target.value,
-    customDestination: "",   // Clear custom destination
-    city: "",
-  });
+</div>
 
 
 
+{/* =====================================================
+    DESTINATION + CUSTOM DESTINATION + TRAVEL DATES
+===================================================== */}
 
-  setPackageData({
-    ...packageData,
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "minmax(220px, 1fr) minmax(230px, 1fr) minmax(150px, 0.7fr) minmax(150px, 0.7fr)",
+    gap: "8px",
+    marginBottom: "10px",
+    alignItems: "center"
+  }}
+>
 
-    selectedHotels: [],
-   
-    sightseeing: [],
-    customSightseeing: [],
+  {/* DESTINATION */}
 
-    transfers: [],
-    customTransfers: [],
+  <select
+    value={commonData?.destination || ""}
+    onChange={(e) => {
 
-    meals: [],
-    customMeals: [],
+      setCommonData({
+        ...commonData,
+        destination: e.target.value,
+        customDestination: "",
+        city: ""
+      });
 
-    visaServices: [],
-    customVisaServices: []
-  });
+      setPackageData({
+        ...packageData,
 
-  setItineraryData({
-    ...itineraryData,
-    itinerary: [
-      {
-        day: 1,
-        title: "",
-         city: "",
-        description: "",
-
-        hotelSource: "database",
-
-        hotel: "",
-        customHotel: "",
-        hotelDisplayCategory: "",
-
-        hotelCategory: "",
-        roomType: "",
-        mealPlan: "",
+        selectedHotels: [],
 
         sightseeing: [],
+        customSightseeing: [],
+
+        transfers: [],
+        customTransfers: [],
+
         meals: [],
-        transfers: []
-      }
-    ]
-  });
+        customMeals: [],
 
-}}
-  style={inputStyle}
->
-  <option value="">Select Destination</option>
+        visaServices: [],
+        customVisaServices: []
+      });
 
-  <optgroup label="Domestic">
-  <option value="Kashmir">Kashmir</option>
-  <option value="Kerala">Kerala</option>
-  <option value="Goa">Goa</option>
-  <option value="Rajasthan">Rajasthan</option>
-  <option value="Sikkim">Sikkim</option>
-  <option value="Andaman">Andaman</option>
-  <option value="Ladakh">Ladakh</option>
-  <option value="Madhya Pradesh">Madhya Pradesh</option>
-</optgroup>
+      setItineraryData({
+        ...itineraryData,
+        itinerary: [
+          {
+            day: 1,
+            title: "",
+            city: "",
+            description: "",
 
-  <optgroup label="International">
-    <option value="Sri Lanka">Sri Lanka</option>
-    <option value="Thailand">Thailand</option>
-    <option value="Dubai">Dubai</option>
-    <option value="Singapore">Singapore</option>
-    <option value="Malaysia">Malaysia</option>
-    <option value="Bali">Bali</option>
-    <option value="Vietnam">Vietnam</option>
-    <option value="Maldives">Maldives</option>
-  </optgroup>
-</select>
+            hotelSource: "database",
 
-<input
-  type="text"
-  placeholder="Custom Destination (Optional)"
- value={commonData?.customDestination || ""}
+            hotel: "",
+            customHotel: "",
+            hotelDisplayCategory: "",
 
-onChange={(e) =>
-  setCommonData({
-    ...commonData,
-    customDestination: e.target.value,
-    destination: "",        // Reset dropdown to "Select Destination"
-    city: "",
-  })
-}
-  style={{
-    width: "100%",
-    marginTop: "10px",
-    padding: "10px 12px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "14px",
-    boxSizing: "border-box",
-  }}
-/>
+            hotelCategory: "",
+            roomType: "",
+            mealPlan: "",
 
+            sightseeing: [],
+            meals: [],
+            transfers: []
+          }
+        ]
+      });
 
-      <div style={{ marginBottom: "15px" }}>
-
-  <label
+    }}
     style={{
-      display: "block",
-      marginBottom: "6px",
-      fontWeight: "600"
+      ...inputStyle,
+      marginBottom: 0,
+      boxSizing: "border-box",
+      width: "100%"
     }}
   >
-    📅 Travel Dates
-  </label>
+
+    <option value="">
+      Select Destination
+    </option>
+
+    <optgroup label="Domestic">
+      <option value="Kashmir">Kashmir</option>
+      <option value="Kerala">Kerala</option>
+      <option value="Goa">Goa</option>
+      <option value="Rajasthan">Rajasthan</option>
+      <option value="Sikkim">Sikkim</option>
+      <option value="Andaman">Andaman</option>
+      <option value="Ladakh">Ladakh</option>
+      <option value="Madhya Pradesh">
+        Madhya Pradesh
+      </option>
+    </optgroup>
+
+    <optgroup label="International">
+      <option value="Sri Lanka">Sri Lanka</option>
+      <option value="Thailand">Thailand</option>
+      <option value="Dubai">Dubai</option>
+      <option value="Singapore">Singapore</option>
+      <option value="Malaysia">Malaysia</option>
+      <option value="Bali">Bali</option>
+      <option value="Vietnam">Vietnam</option>
+      <option value="Maldives">Maldives</option>
+    </optgroup>
+
+  </select>
+
+
+  {/* CUSTOM DESTINATION */}
+
+  <input
+    type="text"
+    placeholder="Custom Destination (Optional)"
+    value={
+      commonData?.customDestination || ""
+    }
+    onChange={(e) =>
+      setCommonData({
+        ...commonData,
+        customDestination:
+          e.target.value,
+        destination: "",
+        city: ""
+      })
+    }
+    style={{
+      ...inputStyle,
+      marginBottom: 0,
+      boxSizing: "border-box",
+      width: "100%"
+    }}
+  />
+
+
+  {/* TRAVEL FROM */}
 
   <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "5px",
+    minWidth: 0
+  }}
+>
+
+  <span
     style={{
-      display: "flex",
-      gap: "10px",
-      alignItems: "center"
+      fontSize: "12px",
+      fontWeight: 700,
+      color: "#374151",
+      whiteSpace: "nowrap"
     }}
   >
+    From
+  </span>
 
-    <DatePicker
-  value={commonData?.travelFrom || ""}
-  placeholder="From date"
-  onChange={(travelFrom) => {
+  <DatePicker
+      value={
+        commonData?.travelFrom || ""
+      }
+      placeholder="From"
+      onChange={(travelFrom) => {
 
-    setCommonData({
-      ...commonData,
-      travelFrom
-    });
+        setCommonData({
+          ...commonData,
+          travelFrom
+        });
 
+      }}
+    />
+
+  </div>
+
+
+  {/* TRAVEL TO */}
+
+  <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "5px",
+    minWidth: 0
   }}
-/>
+>
 
-    <span>→</span>
+  <span
+    style={{
+      fontSize: "12px",
+      color: "#64748b",
+      fontWeight: 700,
+      whiteSpace: "nowrap"
+    }}
+  >
+    →
+  </span>
 
-    <DatePicker
-  value={commonData?.travelTo || ""}
-  placeholder="To date"
-  minDate={commonData?.travelFrom || ""}
-  initialViewDate={
-    commonData?.travelFrom ||
-    commonData?.travelTo ||
-    ""
-  }
-  onChange={(travelTo) => {
+  <span
+    style={{
+      fontSize: "12px",
+      fontWeight: 700,
+      color: "#374151",
+      whiteSpace: "nowrap"
+    }}
+  >
+    To
+  </span>
 
-    let totalDays = "";
-    let totalNights = "";
+  <DatePicker
+      value={
+        commonData?.travelTo || ""
+      }
+      placeholder="To"
+      minDate={
+        commonData?.travelFrom || ""
+      }
+      initialViewDate={
+        commonData?.travelFrom ||
+        commonData?.travelTo ||
+        ""
+      }
+      onChange={(travelTo) => {
 
-    if (
-      commonData.travelFrom &&
-      travelTo
-    ) {
+        let totalDays = "";
+        let totalNights = "";
 
-      const from =
-        new Date(
-          commonData.travelFrom
+        if (
+          commonData.travelFrom &&
+          travelTo
+        ) {
+
+          const from =
+            new Date(
+              commonData.travelFrom
+            );
+
+          const to =
+            new Date(travelTo);
+
+          const diffDays =
+            Math.ceil(
+              (to - from) /
+              (1000 * 60 * 60 * 24)
+            ) + 1;
+
+          totalDays =
+            diffDays;
+
+          totalNights =
+            Math.max(
+              diffDays - 1,
+              0
+            );
+        }
+
+        const updatedCommonData = {
+          ...commonData,
+          travelTo,
+          totalDays,
+          totalNights
+        };
+
+        setCommonData(
+          updatedCommonData
         );
 
-      const to =
-        new Date(travelTo);
-
-      const diffDays =
-        Math.ceil(
-          (to - from) /
-          (1000 * 60 * 60 * 24)
-        ) + 1;
-
-      totalDays = diffDays;
-
-      totalNights =
-        Math.max(
-          diffDays - 1,
-          0
+        applyItineraryTemplate(
+          updatedCommonData
         );
-    }
 
-    const updatedCommonData = {
-      ...commonData,
-      travelTo,
-      totalDays,
-      totalNights
-    };
-
-    setCommonData(
-      updatedCommonData
-    );
-
-    applyItineraryTemplate(
-      updatedCommonData
-    );
-
-  }}
-/>
+      }}
+    />
 
   </div>
 
 </div>
 
-<h3 style={{ marginTop: "20px" }}>
-  🕒 Tour Duration
-</h3>
+
+     
+  
+
+   <div
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "minmax(210px, 1.15fr) minmax(125px, 0.55fr) minmax(125px, 0.55fr) minmax(300px, 1.7fr)",
+    gap: "10px",
+    alignItems: "center",
+    marginBottom: "0"
+  }}
+>
+
+  {/* =========================
+    DURATION
+========================= */}
 
 <div
   style={{
-    padding: "12px",
-    border: "1px solid #d1d5db",
-    borderRadius: "8px",
-    background: "#f9fafb",
-    fontWeight: "600",
-    textAlign: "center"
-  }}
->
-  {commonData?.totalDays || 0}
-  {" "}
-  Days
-  {" "}
-  /
-  {" "}
-  {commonData?.totalNights || 0}
-  {" "}
-  Nights
-</div>
-     <div
-  style={{
     display: "flex",
-    gap: "10px",
-    marginBottom: "15px"
+    alignItems: "center",
+    gap: "7px",
+    padding: "7px 10px",
+    border: "1px solid #d1d5db",
+    borderRadius: "7px",
+    background: "#fff",
+    boxSizing: "border-box",
+    minHeight: "42px",
+    whiteSpace: "nowrap"
   }}
 >
-   <div style={{ flex: 1 }}>
-    <label
-      style={{
-        display: "block",
-        marginBottom: "4px",
-        fontSize: "14px",
-        fontWeight: "600"
-      }}
-    >
-      Adult Pax
-    </label>
 
-  <input
-    type="number"
-    value={commonData?.adults}
-    onChange={(e) =>
-      setCommonData({
-        ...commonData,
-        adults: e.target.value
-      })
-    }
-     style={inputStyle}
-    />
-    </div>
-    <div style={{ flex: 1 }}>
-    <label
-      style={{
-        display: "block",
-        marginBottom: "4px",
-        fontSize: "14px",
-        fontWeight: "600"
-      }}
-    >
-      Child Pax
-    </label>
+  <span
+    style={{
+      fontSize: "13px",
+      fontWeight: 700,
+      color: "#374151"
+    }}
+  >
+    🕒 Duration
+  </span>
 
-  <input
-    type="number"
-    value={commonData?.children}
-    onChange={(e) =>
-      setCommonData({
-        ...commonData,
-        children: e.target.value
-      })
-    }
-    style={inputStyle}
-    />
-     </div>
+  <strong
+    style={{
+      color: "#1e3a8a",
+      fontSize: "14px"
+    }}
+  >
+    {commonData?.totalDays || 0}
+  </strong>
+
+  <span
+    style={{
+      fontSize: "13px"
+    }}
+  >
+    Days
+  </span>
+
+  <span
+    style={{
+      color: "#94a3b8"
+    }}
+  >
+    /
+  </span>
+
+  <strong
+    style={{
+      color: "#1e3a8a",
+      fontSize: "14px"
+    }}
+  >
+    {commonData?.totalNights || 0}
+  </strong>
+
+  <span
+    style={{
+      fontSize: "13px"
+    }}
+  >
+    Nights
+  </span>
 
 </div>
-      
 
-      {(
+
+  {/* =========================
+      ADULT PAX
+  ========================= */}
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "7px"
+    }}
+  >
+
+    <label
+      style={{
+        fontSize: "14px",
+        fontWeight: "600",
+        whiteSpace: "nowrap"
+      }}
+    >
+      Adult
+    </label>
+
+    <input
+      type="number"
+      value={commonData?.adults || ""}
+      onChange={(e) =>
+        setCommonData({
+          ...commonData,
+          adults: e.target.value
+        })
+      }
+      style={{
+        ...inputStyle,
+        marginBottom: 0,
+        width: "72px",
+        boxSizing: "border-box"
+      }}
+    />
+
+  </div>
+
+
+  {/* =========================
+      CHILD PAX
+  ========================= */}
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "7px"
+    }}
+  >
+
+    <label
+      style={{
+        fontSize: "14px",
+        fontWeight: "600",
+        whiteSpace: "nowrap"
+      }}
+    >
+      Child
+    </label>
+
+    <input
+      type="number"
+      value={commonData?.children || ""}
+      onChange={(e) =>
+        setCommonData({
+          ...commonData,
+          children: e.target.value
+        })
+      }
+      style={{
+        ...inputStyle,
+        marginBottom: 0,
+        width: "72px",
+        boxSizing: "border-box"
+      }}
+    />
+
+  </div>
+
+
+  {/* =========================
+      ACCOMMODATION
+  ========================= */}
+
+  {(
     commonData?.quoteMode === "package" ||
     commonData?.quoteMode === "itinerary"
-) && (
-  <>
+  ) && (
     <input
-  type="text"
-  placeholder="Accommodation"
-  value={packageData.accommodation || ""}
-  onChange={(e) =>
-    setPackageData({
-      ...packageData,
-      accommodation: e.target.value
-    })
-  }
-  style={inputStyle}
-/>
+      type="text"
+      placeholder="Accommodation"
+      value={packageData.accommodation || ""}
+      onChange={(e) =>
+        setPackageData({
+          ...packageData,
+          accommodation: e.target.value
+        })
+      }
+      style={{
+        ...inputStyle,
+        marginBottom: 0,
+        boxSizing: "border-box"
+      }}
+    />
+  )}
+
+</div>
+
+
+{/* =========================================================
+    END TOUR SUMMARY
+========================================================= */}
+
+</div>
 
 {commonData?.quoteMode === "package" && (
-  <>    
+  <>
     <SightseeingSelector
-  commonData={commonData}
+      commonData={commonData}
+      packageData={packageData}
+      setPackageData={setPackageData}
+    />
 
-  packageData={packageData}
-  setPackageData={setPackageData}
-/>
+    <TransferSelector
+      commonData={commonData}
+      packageData={packageData}
+      setPackageData={setPackageData}
+    />
 
-<TransferSelector
-  commonData={commonData}
+    <MealSelector
+      commonData={commonData}
+      packageData={packageData}
+      setPackageData={setPackageData}
+    />
 
-  packageData={packageData}
-  setPackageData={setPackageData}
-/>
-
-
-<MealSelector
-  commonData={commonData}
-
-  packageData={packageData}
-  setPackageData={setPackageData}
-/>
-
-<VisaSelector
- commonData={commonData}
-
-  packageData={packageData}
-  setPackageData={setPackageData}
-/>
-</>
-)}
+    <VisaSelector
+      commonData={commonData}
+      packageData={packageData}
+      setPackageData={setPackageData}
+    />
   </>
 )}
 
-
 {commonData?.quoteMode === "itinerary" && (
-  <ItineraryBuilder
-    commonData={commonData}
-    packageData={packageData}
-    itineraryData={itineraryData}
-    setItineraryData={setItineraryData}
-  />
+  <>
+    <div
+      style={{
+        height: "1px",
+        background: "#cbd5e1",
+        margin:
+          "0 0 18px 0"
+      }}
+    />
+
+    <ItineraryBuilder
+      commonData={commonData}
+      packageData={packageData}
+      itineraryData={itineraryData}
+      setItineraryData={setItineraryData}
+    />
+  </>
 )}
 
 <ItineraryTemplateLibrary
@@ -1193,71 +2725,420 @@ importingTemplateRef.current = false;
 
 <div
   style={{
-    marginTop: "20px",
-    marginBottom: "20px"
+    marginTop: "30px",
+    marginBottom: "12px",
+    border: "1px solid #dbe3ea",
+    borderRadius: "10px",
+    padding: "12px 14px",
+    background: "#f8fafc",
+    boxSizing: "border-box",
+    borderTop: "3px solid #334155",
+    borderBottom: "4px solid #334155"
   }}
 >
 
-  {/* ---------------------------------------------------
-      HEADER + PDF VISIBILITY
-  --------------------------------------------------- */}
+ {/* ---------------------------------------------------
+    HEADER + SHARED TOOLBAR + PDF VISIBILITY
+--------------------------------------------------- */}
 
-  <div
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    marginBottom: "8px",
+    minHeight: "26px"
+  }}
+>
+
+  {/* HOTEL USED HEADING */}
+
+  <h3
     style={{
+      margin: 0,
+      fontSize: "18px",
+      fontWeight: 800,
+      color: "#1e3a8a",
+      letterSpacing: "0.2px",
+      whiteSpace: "nowrap"
+    }}
+  >
+    🏨 HOTEL USED
+  </h3>
+
+
+  {/* VERTICAL DIVIDER + SHARED TOOLBAR */}
+
+  {(commonData?.hotelUsed || []).length > 0 && (
+
+    <>
+      <div
+  style={{
+    width: "2px",
+    height: "22px",
+    background: "#64748b",
+    marginLeft: "12px",
+    marginRight: "8px"
+  }}
+/>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "2px",
+          padding: "2px 3px",
+          background: "#eef2f7",
+          border: "1px solid #cbd5e1",
+          borderRadius: "5px"
+        }}
+      >
+
+        {/* BOLD */}
+
+        <button
+          type="button"
+          title="Bold"
+          disabled={!activeHotelEditor}
+          onMouseDown={(e) =>
+            e.preventDefault()
+          }
+          onClick={() => {
+
+            activeHotelEditor
+              ?.chain()
+              .focus()
+              .toggleBold()
+              .run();
+
+          }}
+          style={{
+            width: "20px",
+            height: "20px",
+            minWidth: "20px",
+            padding: "0",
+            border: "1px solid #cbd5e1",
+            borderRadius: "4px",
+            background: "#ffffff",
+            color: "#334155",
+            fontSize: "9px",
+            fontWeight: 800,
+            cursor: activeHotelEditor
+              ? "pointer"
+              : "not-allowed",
+            opacity: activeHotelEditor
+              ? 1
+              : 0.5
+          }}
+        >
+          B
+        </button>
+
+
+        {/* ITALIC */}
+
+        <button
+          type="button"
+          title="Italic"
+          disabled={!activeHotelEditor}
+          onMouseDown={(e) =>
+            e.preventDefault()
+          }
+          onClick={() => {
+
+            activeHotelEditor
+              ?.chain()
+              .focus()
+              .toggleItalic()
+              .run();
+
+          }}
+          style={{
+            width: "20px",
+            height: "20px",
+            minWidth: "20px",
+            padding: "0",
+            border: "1px solid #cbd5e1",
+            borderRadius: "4px",
+            background: "#ffffff",
+            color: "#334155",
+            fontSize: "9px",
+            fontStyle: "italic",
+            cursor: activeHotelEditor
+              ? "pointer"
+              : "not-allowed",
+            opacity: activeHotelEditor
+              ? 1
+              : 0.5
+          }}
+        >
+          I
+        </button>
+
+
+        {/* UNDERLINE */}
+
+        <button
+          type="button"
+          title="Underline"
+          disabled={!activeHotelEditor}
+          onMouseDown={(e) =>
+            e.preventDefault()
+          }
+          onClick={() => {
+
+            activeHotelEditor
+              ?.chain()
+              .focus()
+              .toggleUnderline()
+              .run();
+
+          }}
+          style={{
+            width: "20px",
+            height: "20px",
+            minWidth: "20px",
+            padding: "0",
+            border: "1px solid #cbd5e1",
+            borderRadius: "4px",
+            background: "#ffffff",
+            color: "#334155",
+            fontSize: "9px",
+            textDecoration: "underline",
+            cursor: activeHotelEditor
+              ? "pointer"
+              : "not-allowed",
+            opacity: activeHotelEditor
+              ? 1
+              : 0.5
+          }}
+        >
+          U
+        </button>
+
+
+        {/* TEXT COLOR */}
+
+<div
+  style={{
+    position: "relative"
+  }}
+>
+
+  <button
+    type="button"
+    title="Text Color"
+    disabled={!activeHotelEditor}
+    onMouseDown={(e) =>
+      e.preventDefault()
+    }
+    onClick={() => {
+
+      if (!activeHotelEditor)
+        return;
+
+      setShowHotelColorPalette(
+        !showHotelColorPalette
+      );
+
+    }}
+    style={{
+  width: "20px",
+  height: "20px",
+  minWidth: "20px",
+  padding: "0",
+  border: "1px solid #cbd5e1",
+  borderRadius: "4px",
+  background: "#ffffff",
+  color: "#000000",
+  fontSize: "9px",
+  fontWeight: 800,
+  lineHeight: "1",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "0",
+  boxSizing: "border-box",
+  cursor: activeHotelEditor
+    ? "pointer"
+    : "not-allowed",
+  opacity: activeHotelEditor
+    ? 1
+    : 0.5
+}}
+  >
+    A
+
+    <span
+  style={{
+    display: "block",
+    width: "10px",
+    height: "2px",
+    background: "#111827",
+    marginTop: "1px",
+    borderRadius: "2px"
+  }}
+>
+</span>
+
+  </button>
+
+
+  {showHotelColorPalette && (
+
+    <div
+      style={{
+        position: "absolute",
+        top: "100%",
+        right: 0,
+        marginTop: "4px",
+        padding: "5px",
+        background: "#ffffff",
+        border: "1px solid #cbd5e1",
+        borderRadius: "5px",
+        display: "flex",
+        gap: "4px",
+        zIndex: 1000,
+        boxShadow:
+          "0 2px 8px rgba(0,0,0,0.15)"
+      }}
+    >
+
+      {[
+        "#000000",
+        "#4b5563",
+        "#dc2626",
+        "#2563eb",
+        "#16a34a",
+        "#ea580c"
+      ].map((color) => (
+
+        <button
+          key={color}
+          type="button"
+
+          onMouseDown={(e) => {
+
+            e.preventDefault();
+
+            activeHotelEditor
+              ?.chain()
+              .focus()
+              .setColor(color)
+              .run();
+
+            setShowHotelColorPalette(
+              false
+            );
+
+          }}
+
+          style={{
+            width: "18px",
+            height: "18px",
+            minWidth: "18px",
+            padding: 0,
+            border:
+              "1px solid #c7c7c7",
+            borderRadius: "50%",
+            background: color,
+            cursor: "pointer"
+          }}
+
+          title={color}
+        />
+
+      ))}
+
+    </div>
+
+  )}
+
+</div>
+      </div>
+
+    </>
+  )}
+
+
+  {/* SHOW IN PDF */}
+
+  <label
+    style={{
+      marginLeft: "auto",
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: "12px"
+      gap: "7px",
+      fontSize: "14px",
+      fontWeight: "600",
+      cursor: "pointer",
+      whiteSpace: "nowrap"
     }}
   >
 
-    <h3
-      style={{
-        margin: 0
+    <input
+      type="checkbox"
+
+      checked={
+        commonData?.hotelUsedEnabled ||
+        false
+      }
+
+      onChange={(e) => {
+
+        setCommonData({
+
+          ...commonData,
+
+          hotelUsedEnabled:
+            e.target.checked
+
+        });
+
       }}
-    >
-      🏨 HOTEL USED
-    </h3>
+    />
+
+    Show in PDF
+
+  </label>
+
+</div>
 
 
-    <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "7px",
-        fontSize: "14px",
-        fontWeight: "600",
-        cursor: "pointer"
-      }}
-    >
+{/* ---------------------------------------------------
+    HOTEL TABLE HEADER — ONCE
+--------------------------------------------------- */}
 
-      <input
-        type="checkbox"
+{(commonData?.hotelUsed || []).length > 0 && (
 
-        checked={
-          commonData?.hotelUsedEnabled ||
-          false
-        }
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "145px 1fr 1.25fr 1fr",
+      gap: "8px",
+      marginBottom: "5px",
+      paddingBottom: "5px",
+      alignItems: "center",
+      borderBottom: "1px solid #cbd5e1",
+      fontSize: "11px",
+      fontWeight: 800,
+      color: "#334155",
+      letterSpacing: "0.2px"
+    }}
+  >
 
-        onChange={(e) => {
+    <div>Nights</div>
 
-          setCommonData({
+    <div>City</div>
 
-            ...commonData,
+    <div>Hotel Name</div>
 
-            hotelUsedEnabled:
-              e.target.checked
-
-          });
-
-        }}
-      />
-
-      Show in PDF
-
-    </label>
+    <div>Room</div>
 
   </div>
+
+)}
 
 
   {/* ---------------------------------------------------
@@ -1265,7 +3146,7 @@ importingTemplateRef.current = false;
   --------------------------------------------------- */}
 
   {(commonData?.hotelUsed || []).map(
-    (hotel) => {
+  (hotel, hotelRowIndex) => {
 
       const updateHotelField = (
         richField,
@@ -1314,13 +3195,21 @@ importingTemplateRef.current = false;
         <div
   key={hotel.id}
   style={{
-    display: "grid",
-    gridTemplateColumns:
-      "145px 1fr 1.25fr 1fr",
-    gap: "8px",
-    marginBottom: "14px",
-    alignItems: "start"
-  }}
+  display: "grid",
+  gridTemplateColumns:
+    "145px 1fr 1.25fr 1fr",
+  gap: "8px",
+  marginBottom: "4px",
+  padding: "6px 7px",
+  alignItems: "start",
+  background:
+    hotelRowIndex % 2 === 0
+      ? "#f8fafc"
+      : "#eef2f7",
+  borderBottom: "1px solid #dbe3ea",
+  borderRadius: "5px",
+  boxSizing: "border-box"
+}}
 >
 
           {/* =========================================
@@ -1329,15 +3218,7 @@ importingTemplateRef.current = false;
 
           <div>
 
-            <div
-              style={{
-                fontSize: "12px",
-                fontWeight: "600",
-                marginBottom: "4px"
-              }}
-            >
-              Nights
-            </div>
+            
 
             <SightseeingRichTextEditor
 
@@ -1360,7 +3241,22 @@ importingTemplateRef.current = false;
               }}
 
               preserveLineBreaks={true}
+
               compact={true}
+
+              onFocus={(editor) => {
+  setActiveHotelCell({
+    hotelId: hotel.id,
+    field: "nights"
+  });
+
+  setActiveHotelEditor(editor);
+}}
+
+active={
+  activeHotelCell?.hotelId === hotel.id &&
+  activeHotelCell?.field === "nights"
+}
             />
 
           </div>
@@ -1372,15 +3268,7 @@ importingTemplateRef.current = false;
 
           <div>
 
-            <div
-              style={{
-                fontSize: "12px",
-                fontWeight: "600",
-                marginBottom: "4px"
-              }}
-            >
-              City
-            </div>
+            
 
             <SightseeingRichTextEditor
 
@@ -1403,7 +3291,22 @@ importingTemplateRef.current = false;
               }}
 
               preserveLineBreaks={true}
+
               compact={true}
+
+             onFocus={(editor) => {
+  setActiveHotelCell({
+    hotelId: hotel.id,
+    field: "city"
+  });
+
+  setActiveHotelEditor(editor);
+}}
+
+active={
+  activeHotelCell?.hotelId === hotel.id &&
+  activeHotelCell?.field === "city"
+}
             />
 
           </div>
@@ -1415,15 +3318,7 @@ importingTemplateRef.current = false;
 
           <div>
 
-            <div
-              style={{
-                fontSize: "12px",
-                fontWeight: "600",
-                marginBottom: "4px"
-              }}
-            >
-              Hotel Name
-            </div>
+           
 
             <SightseeingRichTextEditor
 
@@ -1446,7 +3341,22 @@ importingTemplateRef.current = false;
               }}
 
               preserveLineBreaks={true}
+
               compact={true}
+
+              onFocus={(editor) => {
+  setActiveHotelCell({
+    hotelId: hotel.id,
+    field: "hotelName"
+  });
+
+  setActiveHotelEditor(editor);
+}}
+
+active={
+  activeHotelCell?.hotelId === hotel.id &&
+  activeHotelCell?.field === "hotelName"
+}
             />
 
           </div>
@@ -1458,15 +3368,7 @@ importingTemplateRef.current = false;
 
           <div>
 
-            <div
-              style={{
-                fontSize: "12px",
-                fontWeight: "600",
-                marginBottom: "4px"
-              }}
-            >
-              Room
-            </div>
+           
 
             <SightseeingRichTextEditor
 
@@ -1489,7 +3391,22 @@ importingTemplateRef.current = false;
               }}
 
               preserveLineBreaks={true}
+
               compact={true}
+
+             onFocus={(editor) => {
+  setActiveHotelCell({
+    hotelId: hotel.id,
+    field: "room"
+  });
+
+  setActiveHotelEditor(editor);
+}}
+
+active={
+  activeHotelCell?.hotelId === hotel.id &&
+  activeHotelCell?.field === "room"
+}
             />
 
           </div>
@@ -1511,12 +3428,13 @@ importingTemplateRef.current = false;
 
 <div
   style={{
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "10px",
-    marginTop: "4px"
-  }}
+  display: "flex",
+  justifyContent: "flex-start",
+  alignItems: "center",
+  gap: "7px",
+  marginTop: "7px",
+  padding: "0"
+}}
 >
 
   {/* ADD HOTEL */}
@@ -1553,9 +3471,17 @@ importingTemplateRef.current = false;
 
     }}
     style={{
-      padding: "8px 14px",
-      cursor: "pointer"
-    }}
+  padding: "5px 11px",
+  border: "1px solid #6366A8",
+  borderRadius: "6px",
+  background: "#6366A8",
+  color: "#ffffff",
+  fontSize: "11px",
+  fontWeight: 700,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+  lineHeight: "1"
+}}
   >
     + Add Hotel
   </button>
@@ -1588,29 +3514,24 @@ importingTemplateRef.current = false;
       (commonData?.hotelUsed || []).length === 0
     }
     style={{
-      padding: "8px 14px",
-
-      cursor:
-        (commonData?.hotelUsed || []).length === 0
-          ? "not-allowed"
-          : "pointer",
-
-      opacity:
-        (commonData?.hotelUsed || []).length === 0
-          ? 0.5
-          : 1,
-
-      border:
-        "1px solid #dc2626",
-
-      color: "#dc2626",
-
-      background: "#fff",
-
-      borderRadius: "4px",
-
-      fontWeight: "500"
-    }}
+  padding: "5px 11px",
+  border: "1px solid #ef4444",
+  borderRadius: "6px",
+  background: "#ffffff",
+  color: "#ef4444",
+  fontSize: "11px",
+  fontWeight: 700,
+  cursor:
+    (commonData?.hotelUsed || []).length === 0
+      ? "not-allowed"
+      : "pointer",
+  whiteSpace: "nowrap",
+  lineHeight: "1",
+  opacity:
+    (commonData?.hotelUsed || []).length === 0
+      ? 0.5
+      : 1
+}}
   >
     − Delete Row
   </button>
@@ -1619,268 +3540,516 @@ importingTemplateRef.current = false;
 </div>
 
 
-{/* COSTING */}
-<h3>💰Costing</h3>
-
-<CostCalculator
-  commonData={commonData}
-  setCommonData={setCommonData}
-/>
-
-{/* PACKAGE COST DISPLAY DESCRIPTION */}
+{/* =====================================================
+    COSTING — MOTHER CARD
+===================================================== */}
 
 <div
   style={{
-    marginTop: "12px",
-    marginBottom: "15px",
-    padding: "12px",
+    marginTop: "30px",
+    marginBottom: "20px",
+    border: "1px solid #dbe3ea",
+    borderRadius: "10px",
+    padding: "12px 14px",
     background: "#f8fafc",
-    border: "1px solid #cbd5e1",
-    borderRadius: "8px"
+    boxSizing: "border-box",
+    borderTop: "3px solid #334155",
+    borderBottom: "4px solid #334155"
   }}
 >
 
-  <label
+  {/* ---------------------------------------------------
+      COSTING HEADER
+  --------------------------------------------------- */}
+
+  <h3
     style={{
-      display: "block",
-      fontWeight: "bold",
-      marginBottom: "6px"
+      margin: "0 0 10px 0",
+      fontSize: "18px",
+      fontWeight: 800,
+      color: "#1e3a8a",
+      letterSpacing: "0.2px",
+      textAlign: "left"
     }}
   >
-    Package Cost Description
-  </label>
+    💰 BILLING
+  </h3>
 
-  <input
-    type="text"
-    value={
-      commonData?.packageCostDescription || ""
-    }
-    onChange={(e) =>
-      setCommonData({
-        ...commonData,
-        packageCostDescription:
-          e.target.value
-      })
-    }
-    placeholder="@ ₹34,999 / Pax"
-    style={{
-      ...inputStyle,
-      width: "100%",
-      boxSizing: "border-box"
-    }}
-  />
+
+  <CostCalculator
+  commonData={commonData}
+  packageData={packageData}
+  itineraryData={itineraryData}
+  setCommonData={setCommonData}
+/>
+
+
+{/* =====================================================
+    VEHICLE COSTING
+===================================================== */}
+
+<div
+  style={{
+    marginTop: "18px",
+    paddingTop: "8px",
+    borderTop: "1px solid #cbd5e1"
+  }}
+>
+
+ {/* ---------------------------------------------------
+    VEHICLE PACKAGE OPTIONS HEADER
+--------------------------------------------------- */}
+
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    marginBottom: "8px"
+  }}
+>
+
+  {/* VEHICLE PACKAGE OPTIONS */}
 
   <div
     style={{
-      marginTop: "5px",
-      fontSize: "12px",
-      color: "#64748b"
+      display: "flex",
+      alignItems: "center",
+      gap: "7px"
     }}
   >
-    Enter exactly how the package cost should be
-    described in the quotation. Example:
-    {" "}
-    <strong>
-      @ ₹34,999 / Pax, including GST & driver
-      allowances etc.
-    </strong>
+
+    <span
+      style={{
+        fontSize: "18px",
+        lineHeight: "20px"
+      }}
+    >
+      🚙
+    </span>
+
+    <h4
+      style={{
+        margin: 0,
+        fontSize: "15px",
+        lineHeight: "20px",
+        fontWeight: 800,
+        color: "#0f9f9a"
+      }}
+    >
+      Vehicle Package Options
+    </h4>
+
   </div>
+
+
+  {/* DIVIDER */}
+
+  <div
+    style={{
+      width: "1px",
+      height: "18px",
+      background: "#b6d9d7"
+    }}
+  />
+
+
+  {/* VEHICLE MODE TOGGLE */}
+
+  <label
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      fontSize: "12px",
+      color: "#52658a",
+      whiteSpace: "nowrap",
+      cursor: "pointer"
+    }}
+  >
+
+    <input
+      type="checkbox"
+      checked={
+        commonData?.useVehicleCosting ||
+        false
+      }
+      onChange={(e) =>
+        setCommonData({
+          ...commonData,
+          useVehicleCosting:
+            e.target.checked
+        })
+      }
+    />
+
+    Use Vehicle Based Costing
+
+  </label>
 
 </div>
 
-{/* VEHICLE COSTING */}
 
-<h3>🚗 Vehicle Costing</h3>
+  {/* ---------------------------------------------------
+      VEHICLE PACKAGE OPTIONS
+  --------------------------------------------------- */}
 
-<label
+  {commonData?.useVehicleCosting && (
+    <>
+
+       {/* TABLE HEADER */}
+
+      {(commonData?.vehicleCosts || []).length > 0 && (
+
+        <div
+          style={{
+            display: "grid",
+           gridTemplateColumns:
+           "1fr 0.8fr 1.6fr 32px",
+            gap: "10px",
+            alignItems: "center",
+            marginBottom: "4px",
+            padding: "0 4px"
+          }}
+        >
+
+          <div
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "#64748b"
+            }}
+          >
+            Vehicle Name
+          </div>
+
+          <div
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "#64748b"
+            }}
+          >
+           Package Amount
+          </div>
+
+          <div
   style={{
-    display: "block",
-    marginBottom: "10px"
+    fontSize: "11px",
+    fontWeight: 700,
+    color: "#64748b"
   }}
 >
-  <input
-    type="checkbox"
-    checked={commonData?.useVehicleCosting || false}
-    onChange={(e) =>
-      setCommonData({
-        ...commonData,
-        useVehicleCosting: e.target.checked,
+  Package Description
+</div>
 
-        ...(e.target.checked
-  ? {}
-  : {
-      vehicleCosts: [
-        {
-          id: Date.now(),
-          vehicle: "",
-          cost: ""
-        }
-      ]
-    })
-      })
-    }
-  />
-  {" "}
-  Use Vehicle Based Costing
-</label>
 
-{commonData?.useVehicleCosting && (
-  <>
-  <h4 style={{ marginBottom: "12px" }}>
-      Vehicle Package Costs
-    </h4>
-    {(commonData.vehicleCosts || []).map((vehicle) => (
-      <div
-        key={vehicle.id}
-        style={{
-          display: "flex",
-          gap: "10px",
-          marginBottom: "10px",
-          alignItems: "center"
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Vehicle Name"
-          value={vehicle.vehicle}
-          onChange={(e) => {
-            setCommonData({
-              ...commonData,
-              vehicleCosts: commonData.vehicleCosts.map(v =>
-                v.id === vehicle.id
-                  ? { ...v, vehicle: e.target.value }
-                  : v
-              )
-            });
-          }}
-          style={{
-            ...inputStyle,
-            flex: 2
-          }}
-        />
+          <div />
 
-        <input
-          type="number"
-          placeholder="Package Cost"
-          value={vehicle.cost}
-          onChange={(e) => {
-            setCommonData({
-              ...commonData,
-              vehicleCosts: commonData.vehicleCosts.map(v =>
-                v.id === vehicle.id
-                  ? { ...v, cost: e.target.value }
-                  : v
-              )
-            });
-          }}
-          style={{
-            ...inputStyle,
-            flex: 1
-          }}
-        />
+        </div>
+
+      )}
+
+
+      {/* VEHICLE ROWS */}
+
+      {(commonData?.vehicleCosts || []).map(
+        (vehicle) => (
+
+          <div
+            key={vehicle.id}
+           style={{
+  display: "grid",
+ gridTemplateColumns:
+  "1fr 0.8fr 1.6fr 32px",
+  gap: "8px",
+  alignItems: "center",
+  marginBottom: "5px"
+}}
+          >
+
+            {/* VEHICLE NAME */}
+
+            <input
+              type="text"
+              placeholder="Vehicle Name"
+              value={
+                vehicle.vehicle || ""
+              }
+              onChange={(e) => {
+
+                setCommonData({
+                  ...commonData,
+
+                  vehicleCosts:
+                    commonData.vehicleCosts.map(
+                      (v) =>
+                        v.id === vehicle.id
+                          ? {
+                              ...v,
+                              vehicle:
+                                e.target.value
+                            }
+                          : v
+                    )
+                });
+
+              }}
+              style={{
+                ...inputStyle,
+                height: "32px",
+                boxSizing: "border-box",
+                fontSize: "12px"
+              }}
+            />
+
+
+            {/* FINAL PACKAGE PRICE */}
+
+            <input
+              type="number"
+              placeholder="Package Cost"
+              value={
+                vehicle.cost ?? ""
+              }
+              onChange={(e) => {
+
+                setCommonData({
+                  ...commonData,
+
+                  vehicleCosts:
+                    commonData.vehicleCosts.map(
+                      (v) =>
+                        v.id === vehicle.id
+                          ? {
+                              ...v,
+                              cost:
+                                e.target.value
+                            }
+                          : v
+                    )
+                });
+
+              }}
+              style={{
+                ...inputStyle,
+                height: "32px",
+                boxSizing: "border-box",
+                fontSize: "12px",
+                fontWeight: 700,
+                border:
+                  "1px solid #1e3a8a"
+              }}
+            />
+
+{/* PACKAGE DESCRIPTION */}
+
+<input
+  type="text"
+  placeholder="Package Description"
+  value={
+    vehicle.description || ""
+  }
+  onChange={(e) => {
+
+    setCommonData({
+      ...commonData,
+
+      vehicleCosts:
+        commonData.vehicleCosts.map(
+          (v) =>
+            v.id === vehicle.id
+              ? {
+                  ...v,
+                  description:
+                    e.target.value
+                }
+              : v
+        )
+    });
+
+  }}
+  style={{
+    ...inputStyle,
+    height: "32px",
+    boxSizing: "border-box",
+    fontSize: "12px",
+    borderRadius: "7px"
+  }}
+/>
+
+            {/* DELETE */}
+
+            <button
+              type="button"
+              title="Delete Vehicle"
+              onClick={() =>
+                setCommonData({
+                  ...commonData,
+
+                  vehicleCosts:
+                    commonData.vehicleCosts.filter(
+                      (v) =>
+                        v.id !== vehicle.id
+                    )
+                })
+              }
+              style={{
+                width: "32px",
+                height: "28px",
+                padding: 0,
+                border:
+                  "1px solid #fca5a5",
+                borderRadius: "5px",
+                background: "#fff",
+                color: "#ef4444",
+                cursor: "pointer",
+                fontSize: "14px"
+              }}
+            >
+              ✕
+            </button>
+
+          </div>
+
+        )
+      )}
+
+
+      {/* ADD VEHICLE */}
+
+     <div
+  style={{
+    display: "flex",
+    justifyContent: "flex-start",
+    marginTop: "4px",
+    paddingLeft: "0"
+  }}
+>
 
         <button
           type="button"
           onClick={() =>
             setCommonData({
               ...commonData,
-              vehicleCosts:
-                commonData.vehicleCosts.filter(
-                  v => v.id !== vehicle.id
-                )
+
+              vehicleCosts: [
+                ...(commonData.vehicleCosts || []),
+
+                {
+  id: Date.now(),
+  vehicle: "",
+  cost: "",
+  description: ""
+}
+              ]
             })
           }
+         style={{
+  padding: "5px 13px",
+  border: "1px solid #0f9f9a",
+  borderRadius: "999px",
+  background: "#e6fffb",
+  color: "#087f7b",
+  cursor: "pointer",
+  fontSize: "11px",
+  fontWeight: 700,
+  lineHeight: "16px"
+}}
         >
-          ❌
+          ➕ Add Vehicle
         </button>
+
       </div>
-    ))}
 
-    <button
-      type="button"
-      onClick={() =>
-        setCommonData({
-          ...commonData,
-          vehicleCosts: [
-            ...commonData.vehicleCosts,
-            {
-              id: Date.now(),
-              vehicle: "",
-              cost: ""
-            }
-          ]
-        })
-      }
-    >
-      ➕ Add Vehicle
-    </button>
-  </>
-)}
+    </>
+  )}
 
-<div
-  style={{
-    marginTop: "15px",
-    padding: "15px",
-    background: "#ecfdf5",
-    borderRadius: "10px",
-    border: "1px solid #10b981"
-  }}
->
-  <h3 style={{ marginTop: 0 }}>
-    Profit Summary
-  </h3>
-
-  <p>
-  Estimated Profit:
-  <strong>
-    {" "}
-    ₹
-    {(
-      (
-        Number(commonData?.perAdultCost || 0) *
-        Number(commonData?.adults || 0) +
-        Number(commonData?.perChildCost || 0) *
-        Number(commonData?.children || 0)
-      ) *
-      Number(commonData?.markupPercent || 0) /
-      100
-    ).toLocaleString()}
-  </strong>
-</p>
 </div>
+</div>
+
 
 {(
   commonData?.quoteMode === "package" ||
   commonData?.quoteMode === "itinerary"
 ) && (
   <>
-    <InclusionSelector
-      commonData={commonData}
-      packageData={packageData}
-      setPackageData={setPackageData}
-    />
+    {/* =====================================================
+    INCLUSIONS / EXCLUSIONS
+===================================================== */}
 
-    <ExclusionSelector
-      commonData={commonData}
-      packageData={packageData}
-      setPackageData={setPackageData}
-    />
+<div
+  style={{
+  marginTop: "40px",
+  border: "1px solid #cbd5e1",
+  borderTop: "2px solid #b276c9",
+  borderBottom: "3px solid #b276c9",
+  borderRadius: "10px",
+  background: "#ffffff",
+  overflow: "hidden",
+  boxSizing: "border-box"
+}}
+>
+
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr"
+    }}
+  >
+
+    {/* INCLUSIONS */}
+
+    <div
+      style={{
+        minWidth: 0,
+        borderRight: "1px solid #d8d1dc"
+      }}
+    >
+      <InclusionSelector
+        commonData={commonData}
+        packageData={packageData}
+        setPackageData={setPackageData}
+      />
+    </div>
+
+
+    {/* EXCLUSIONS */}
+
+    <div
+      style={{
+        minWidth: 0
+      }}
+    >
+      <ExclusionSelector
+        commonData={commonData}
+        packageData={packageData}
+        setPackageData={setPackageData}
+      />
+    </div>
+
+  </div>
+
+</div>
   </>
 )}
 
-<h3
+{/* =====================================================
+    CANCELLATION & REFUND POLICY
+===================================================== */}
+
+<div
   style={{
-    marginTop: "20px",
-    marginBottom: "12px"
+    marginTop: "45px"
   }}
 >
-  Cancellation & Refund Policy
-</h3>
 
-<CancellationPolicyEditor
+  <CancellationPolicyEditor
     commonData={commonData}
     setCommonData={setCommonData}
-/>
+  />
+
+</div>
 
 
 

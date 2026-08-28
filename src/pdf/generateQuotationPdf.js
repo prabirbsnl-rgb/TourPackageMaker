@@ -110,6 +110,229 @@ function shortQuotationNo(qtn) {
 }
 
 
+// =========================================================
+// PDF THEME COLOR HELPER
+// =========================================================
+
+function hexToRgb(hex) {
+
+  if (
+    typeof hex !== "string" ||
+    !/^#[0-9A-Fa-f]{6}$/.test(hex)
+  ) {
+    return [
+      22,
+      52,
+      78
+    ];
+  }
+
+  const cleanHex =
+    hex.substring(1);
+
+  return [
+    parseInt(
+      cleanHex.substring(0, 2),
+      16
+    ),
+
+    parseInt(
+      cleanHex.substring(2, 4),
+      16
+    ),
+
+    parseInt(
+      cleanHex.substring(4, 6),
+      16
+    )
+  ];
+}
+
+
+// =========================================================
+// HOTEL USED — DERIVED COLOR FAMILY
+// =========================================================
+
+function getHotelUsedColorFamily(
+  baseColor
+) {
+
+  const [
+    r,
+    g,
+    b
+  ] = baseColor;
+
+  // -------------------------------------------------------
+  // Mix the base color toward white
+  // -------------------------------------------------------
+
+  const mixWithWhite = (
+    amount
+  ) => [
+
+    Math.round(
+      r +
+      (255 - r) * amount
+    ),
+
+    Math.round(
+      g +
+      (255 - g) * amount
+    ),
+
+    Math.round(
+      b +
+      (255 - b) * amount
+    )
+
+  ];
+
+
+  // -------------------------------------------------------
+  // Darken the base color
+  // -------------------------------------------------------
+
+  const darken = (
+    amount
+  ) => [
+
+    Math.round(
+      r * (1 - amount)
+    ),
+
+    Math.round(
+      g * (1 - amount)
+    ),
+
+    Math.round(
+      b * (1 - amount)
+    )
+
+  ];
+
+
+  return {
+
+    // Main section ribbon
+    section: [
+      r,
+      g,
+      b
+    ],
+
+    // Table header — lighter version
+    tableHeader:
+      mixWithWhite(0.72),
+
+    // Header text — darker version
+    headerText:
+      darken(0.42),
+
+    // Column divider
+    divider:
+      mixWithWhite(0.38),
+
+    // Alternating row
+    rowBand:
+      mixWithWhite(0.90)
+
+  };
+
+}
+
+
+// =========================================================
+// BILLING — DERIVED COLOR FAMILY
+// =========================================================
+
+function getBillingColorFamily(
+  baseColor
+) {
+
+  const [
+    r,
+    g,
+    b
+  ] = baseColor;
+
+  const mixWithWhite = (
+    amount
+  ) => [
+
+    Math.round(
+      r +
+      (255 - r) * amount
+    ),
+
+    Math.round(
+      g +
+      (255 - g) * amount
+    ),
+
+    Math.round(
+      b +
+      (255 - b) * amount
+    )
+
+  ];
+
+  const darken = (
+    amount
+  ) => [
+
+    Math.round(
+      r * (1 - amount)
+    ),
+
+    Math.round(
+      g * (1 - amount)
+    ),
+
+    Math.round(
+      b * (1 - amount)
+    )
+
+  ];
+
+  return {
+
+    // Main Billing header
+    header:
+      baseColor,
+
+    // Normal billing row
+    background:
+      mixWithWhite(0.86),
+
+    // Alternate billing row
+    backgroundAlt:
+      mixWithWhite(0.93),
+
+    // Row divider
+    border:
+      mixWithWhite(0.45),
+
+    // Billing row text
+    text:
+      darken(0.55),
+
+    // Slightly darker supporting text
+    label:
+      darken(0.40),
+
+    // Card border
+    cardBorder:
+      mixWithWhite(0.30),
+
+    // Left accent
+    accent:
+      darken(0.18)
+
+  };
+
+}
+
 async function loadImage(url) {
   return new Promise((resolve, reject) => {
 
@@ -788,6 +1011,83 @@ pdf.setLineWidth(
 
 export async function generateQuotationPdf(quoteData) {
 
+      // =========================================================
+  // PDF THEME
+  // Default = current stable PDF appearance
+  // Custom = colors saved with this quotation
+  // =========================================================
+
+  const savedPdfTheme =
+    quoteData?.pdfTheme || null;
+
+  const isCustomPdfTheme =
+    savedPdfTheme?.name === "Custom";
+
+  const DEFAULT_SECTION_COLORS = {
+
+    tourSummary: "#17334F",
+
+    detailedTourItinerary: "#17334F",
+
+    hotelUsed: "#5C3391",
+
+    billing: "#6B2636",
+
+    inclusions: "#2446B5",
+
+    exclusions: "#46556B",
+
+    policy: "#17334F"
+
+  };
+
+  const PDF_SECTION_COLORS = {
+
+    ...DEFAULT_SECTION_COLORS,
+
+    ...(isCustomPdfTheme
+      ? {
+          tourSummary:
+            savedPdfTheme?.sections
+              ?.tourSummary?.color ||
+            DEFAULT_SECTION_COLORS.tourSummary,
+
+          detailedTourItinerary:
+  savedPdfTheme?.sections
+    ?.detailedTourItinerary?.color ||
+  DEFAULT_SECTION_COLORS
+    .detailedTourItinerary,
+
+          hotelUsed:
+            savedPdfTheme?.sections
+              ?.hotelUsed?.color ||
+            DEFAULT_SECTION_COLORS.hotelUsed,
+
+          billing:
+            savedPdfTheme?.sections
+              ?.billing?.color ||
+            DEFAULT_SECTION_COLORS.billing,
+
+          inclusions:
+            savedPdfTheme?.sections
+              ?.inclusions?.color ||
+            DEFAULT_SECTION_COLORS.inclusions,
+
+          exclusions:
+            savedPdfTheme?.sections
+              ?.exclusions?.color ||
+            DEFAULT_SECTION_COLORS.exclusions,
+
+          policy:
+            savedPdfTheme?.sections
+              ?.policy?.color ||
+            DEFAULT_SECTION_COLORS.policy
+        }
+      : {})
+
+  };
+
+  
   
   const pdf = new jsPDF({
     
@@ -908,7 +1208,8 @@ if (quoteData.quoteMode === "itinerary") {
     cursorY,
     ensureSpace,
     pageState,
-    CONTENT_BOTTOM_Y
+    CONTENT_BOTTOM_Y,
+    PDF_SECTION_COLORS
 );
 
 } else {
@@ -922,40 +1223,12 @@ if (quoteData.quoteMode === "itinerary") {
 
 }
 
-// ---------- START POLICY ON A FRESH PAGE IF TOO LITTLE SPACE ----------
+// ---------- CANCELLATION POLICY ----------
 
-console.log(
-    "BEFORE POLICY PAGE DECISION:",
-    {
-        page:
-            pdf.getCurrentPageInfo().pageNumber,
-        cursorY,
-        remainingSpace:
-            PAGE.height -
-            PAGE.marginBottom -
-            cursorY,
-        minimumRequired:
-            MIN_POLICY_SECTION_START_SPACE
-    }
-);
-
-const remainingSpace =
-    PAGE.height -
-    PAGE.marginBottom -
-    cursorY;
-
-if (
-    remainingSpace <
-    MIN_POLICY_SECTION_START_SPACE
-) {
-
-    cursorY =
-        addBrandedPage();
-
-}
-
+cursorY += 8;
 
 // ---------- COMMON CANCELLATION POLICY ----------
+
 cursorY = drawCancellationRefundPolicy(
     pdf,
     quoteData,
@@ -967,9 +1240,12 @@ cursorY = drawCancellationRefundPolicy(
             quoteData,
             y,
             ensureSpace
-        )
+        ),
+    hexToRgb(
+        quoteData?.pdfTheme?.sections?.policy?.color ||
+        "#1E3A8A"
+    )
 );
-
 
 console.log(
     "AFTER POLICY:",
@@ -1502,18 +1778,23 @@ function drawTourSummary(
   pdf,
   quoteData,
   cursorY,
-  ensureSpace
+  ensureSpace,
+  sectionColor
 ) {
 
   // Make sure there is room for the summary block
   ensureSpace(45);
 
+
   // ---------- TOUR SUMMARY ----------
+
   cursorY = drawSectionHeading(
-    pdf,
-    "TOUR SUMMARY",
-    cursorY
+  pdf,
+  "TOUR SUMMARY",
+  cursorY,
+  sectionColor
 );
+
 pdf.setTextColor(0, 0, 0);
 pdf.setFont("times", "normal");
 pdf.setFontSize(10);
@@ -1707,8 +1988,55 @@ function drawItineraryInclusionExclusion(
   pdf,
   quoteData,
   cursorY,
-  ensureSpace
+  ensureSpace,
+  inclusionColor,
+  exclusionColor
 ) {
+
+      // =========================================================
+  // THEME COLORS
+  // =========================================================
+
+  const inclusionBase =
+    Array.isArray(inclusionColor)
+      ? inclusionColor
+      : [30, 64, 175];
+
+  const exclusionBase =
+    Array.isArray(exclusionColor)
+      ? exclusionColor
+      : [71, 85, 105];
+
+  const mixWithWhite = (
+    color,
+    amount
+  ) => [
+    Math.round(
+      color[0] +
+      (255 - color[0]) * amount
+    ),
+    Math.round(
+      color[1] +
+      (255 - color[1]) * amount
+    ),
+    Math.round(
+      color[2] +
+      (255 - color[2]) * amount
+    )
+  ];
+
+  const inclusionBorder =
+    mixWithWhite(
+      inclusionBase,
+      0.45
+    );
+
+  const exclusionBorder =
+    mixWithWhite(
+      exclusionBase,
+      0.45
+    );
+
   // =========================================================
   // ITINERARY MODE ONLY
   // INCLUSION + EXCLUSION TWO-COLUMN BLOCK
@@ -2040,14 +2368,12 @@ const drawRibbons = (y) => {
     // ---------------------------------------------------------
 
     pdf.setFillColor(
-        30,
-        64,
-        175
-    );
+    ...inclusionBase
+);
 
     pdf.setDrawColor(
-        ...COLORS.dayRibbonBorder
-    );
+    ...inclusionBorder
+);
 
     pdf.setLineWidth(
         0.35
@@ -2070,10 +2396,8 @@ const drawRibbons = (y) => {
     // ---------------------------------------------------------
 
     pdf.setFillColor(
-        71,
-        85,
-        105
-    );
+    ...exclusionBase
+);
 
     pdf.roundedRect(
         splitX,
@@ -2108,11 +2432,9 @@ const drawRibbons = (y) => {
     // ---------------------------------------------------------
 
     // Left half
-    pdf.setFillColor(
-        30,
-        64,
-        175
-    );
+   pdf.setFillColor(
+    ...inclusionBase
+);
 
     pdf.rect(
         leftX,
@@ -2124,10 +2446,8 @@ const drawRibbons = (y) => {
 
     // Right half
     pdf.setFillColor(
-        71,
-        85,
-        105
-    );
+    ...exclusionBase
+);
 
     pdf.rect(
         splitX,
@@ -2137,51 +2457,70 @@ const drawRibbons = (y) => {
         "F"
     );
 
+// ---------------------------------------------------------
+// THEMED RIBBON BORDERS
+// ---------------------------------------------------------
 
-    // ---------------------------------------------------------
-    // OUTER BORDER
-    // ---------------------------------------------------------
+pdf.setLineWidth(0.35);
 
-    pdf.setDrawColor(
-        ...COLORS.dayRibbonBorder
-    );
+// LEFT — INCLUSIONS
+pdf.setDrawColor(
+    ...inclusionBorder
+);
 
-    pdf.setLineWidth(
-        0.35
-    );
+// Top-left
+pdf.line(
+    leftX + ribbonRadius,
+    y,
+    splitX,
+    y
+);
 
-    // Top border
-    pdf.line(
-        leftX + ribbonRadius,
-        y,
-        leftX + totalRibbonWidth - ribbonRadius,
-        y
-    );
+// Left edge
+pdf.line(
+    leftX,
+    y + ribbonRadius,
+    leftX,
+    y + ribbonHeight
+);
 
-    // Left border
-    pdf.line(
-        leftX,
-        y + ribbonRadius,
-        leftX,
-        y + ribbonHeight
-    );
+// Bottom-left
+pdf.line(
+    leftX,
+    y + ribbonHeight,
+    splitX,
+    y + ribbonHeight
+);
 
-    // Right border
-    pdf.line(
-        leftX + totalRibbonWidth,
-        y + ribbonRadius,
-        leftX + totalRibbonWidth,
-        y + ribbonHeight
-    );
 
-    // Bottom border
-    pdf.line(
-        leftX,
-        y + ribbonHeight,
-        leftX + totalRibbonWidth,
-        y + ribbonHeight
-    );
+// RIGHT — EXCLUSIONS
+pdf.setDrawColor(
+    ...exclusionBorder
+);
 
+// Top-right
+pdf.line(
+    splitX,
+    y,
+    leftX + totalRibbonWidth - ribbonRadius,
+    y
+);
+
+// Right edge
+pdf.line(
+    leftX + totalRibbonWidth,
+    y + ribbonRadius,
+    leftX + totalRibbonWidth,
+    y + ribbonHeight
+);
+
+// Bottom-right
+pdf.line(
+    splitX,
+    y + ribbonHeight,
+    leftX + totalRibbonWidth,
+    y + ribbonHeight
+);
 
     // ---------------------------------------------------------
     // CENTER DIVIDER
@@ -2213,6 +2552,7 @@ const drawRibbons = (y) => {
     );
 
 
+    
     // ---------------------------------------------------------
     // RIBBON TEXT
     // ---------------------------------------------------------
@@ -2317,14 +2657,7 @@ const drawRibbons = (y) => {
   let ribbonY =
     cursorY;
 
-
-
-
-drawRibbons(
-    ribbonY
-);
-
-  let currentY =
+let currentY =
     ribbonY +
     ribbonHeight +
     contentTopGap;
@@ -2409,6 +2742,21 @@ pdf.setFillColor(
     ...cardFill
 );
 
+// ---------------------------------------------------------
+// CARD BODY — NEUTRAL FILL + ROUNDED OUTER SHAPE
+// ---------------------------------------------------------
+
+const cardHeight =
+    cardBottom -
+    cardSegmentStartY;
+
+// Fill the complete rounded card first.
+// This restores the rounded bottom corners.
+
+pdf.setFillColor(
+    ...cardFill
+);
+
 pdf.setDrawColor(
     ...cardBorder
 );
@@ -2421,17 +2769,75 @@ pdf.roundedRect(
     leftX,
     cardSegmentStartY,
     pageWidth,
-    cardBottom -
-        cardSegmentStartY,
+    cardHeight,
     cardRadius,
     cardRadius,
     "FD"
 );
 
+// ---------------------------------------------------------
+// CARD BORDER — SPLIT THEME WITH ROUNDED CORNERS
+// ---------------------------------------------------------
+
+pdf.setLineWidth(0.35);
+
+
+// =========================================================
+// LEFT SIDE — INCLUSIONS
+// =========================================================
+
+pdf.setDrawColor(
+    ...inclusionBorder
+);
+
+// Left vertical
+pdf.line(
+    leftX,
+    cardSegmentStartY + cardRadius,
+    leftX,
+    cardBottom - cardRadius
+);
+
+// Bottom-left horizontal
+pdf.line(
+    leftX + cardRadius,
+    cardBottom,
+    dividerX,
+    cardBottom
+);
+
+
+// =========================================================
+// RIGHT SIDE — EXCLUSIONS
+// =========================================================
+
+pdf.setDrawColor(
+    ...exclusionBorder
+);
+
+// Right vertical
+pdf.line(
+    leftX + pageWidth,
+    cardSegmentStartY + cardRadius,
+    leftX + pageWidth,
+    cardBottom - cardRadius
+);
+
+// Bottom-right horizontal
+pdf.line(
+    dividerX,
+    cardBottom,
+    leftX + pageWidth - cardRadius,
+    cardBottom
+);
+
+// ---------------------------------------------------------
+// RIBBON — MUST BE DRAWN LAST
+// ---------------------------------------------------------
+
 drawRibbons(
     ribbonY
 );
-
 
 
     // ---------------------------------------------------------
@@ -2788,15 +3194,23 @@ drawDivider(
 function drawDayWiseHeader(
   pdf,
   cursorY,
-  ensureSpace
+  ensureSpace,
+  sectionColor
 ) {
+
   ensureSpace(18);
 
-  cursorY = drawSectionHeading(
-    pdf,
-    "DETAILED TOUR ITINERARY",
-    cursorY
-  );
+  console.log(
+  "DETAILED ITINERARY RGB:",
+  sectionColor
+);
+
+ cursorY = drawSectionHeading(
+  pdf,
+  "DETAILED TOUR ITINERARY",
+  cursorY,
+  sectionColor
+);
 
   return cursorY;
 }
@@ -2808,8 +3222,44 @@ function drawDayWiseHeader(
     day,
     dayDate,
     cursorY,
-    ensureSpace
+    ensureSpace,
+    dayColor
 ) {
+
+    // =========================================================
+// DAY HEADER THEME
+// =========================================================
+
+const baseDayColor =
+    Array.isArray(dayColor)
+        ? dayColor
+        : [47, 143, 145];
+
+const darkenColor = (
+    color,
+    amount
+) => [
+
+    Math.round(
+        color[0] * (1 - amount)
+    ),
+
+    Math.round(
+        color[1] * (1 - amount)
+    ),
+
+    Math.round(
+        color[2] * (1 - amount)
+    )
+
+];
+
+const dayAccentColor =
+    darkenColor(
+        baseDayColor,
+        0.18
+    );
+
 
     const left = 15;
 
@@ -2847,7 +3297,7 @@ function drawDayWiseHeader(
      */
 
    pdf.setFillColor(
-    ...COLORS.dayRibbon
+    ...baseDayColor
 );
 
 pdf.setDrawColor(
@@ -3221,16 +3671,23 @@ function drawCostSummary(
   pdf,
   quoteData,
   cursorY,
-  ensureSpace
+  ensureSpace,
+  sectionColor
 ) {
+
+    console.log(
+  "BILLING SECTION COLOR:",
+  sectionColor
+);
 
   ensureSpace(70);
 
   cursorY = drawSectionHeading(
-    pdf,
-    " BILLING DETAILS",
-    cursorY
-  );
+  pdf,
+  " BILLING DETAILS",
+  cursorY,
+  sectionColor
+);
 
   pdf.setFont("times","normal");
   pdf.setFontSize(10);
@@ -3447,21 +3904,29 @@ function drawCostSummaryCompact(
   pdf,
   quoteData,
   cursorY,
-  ensureSpace
+  ensureSpace,
+  sectionColor
 ) {
+
+    const billingColors =
+  getBillingColorFamily(
+    sectionColor || [107, 38, 54]
+  );
 
   // Save starting position
   const startY = cursorY;
 
   // Measure only
+
   const measuredY =
-    drawCostSummaryCompactInternal(
-      pdf,
-      quoteData,
-      cursorY,
-      ensureSpace,
-      true
-    );
+  drawCostSummaryCompactInternal(
+    pdf,
+    quoteData,
+    cursorY,
+    ensureSpace,
+    true,
+    billingColors
+  );
 
   // Calculate required height
   const CARD_PADDING = 4;
@@ -3489,18 +3954,20 @@ drawBillingCard(
     PAGE.width -
         PAGE.marginLeft -
         PAGE.marginRight,
-    cardHeight
+    cardHeight,
+    sectionColor
 );
 
   // Draw for real
 const finalY =
-    drawCostSummaryCompactInternal(
-        pdf,
-        quoteData,
-        cursorY,
-        ensureSpace,
-        false
-    );
+  drawCostSummaryCompactInternal(
+    pdf,
+    quoteData,
+    cursorY,
+    ensureSpace,
+    false,
+    billingColors
+  );
 
 // ==========================
 // BILLING CHAMPAGNE ACCENT
@@ -3546,13 +4013,14 @@ function drawCostSummaryCompactInternal(
   quoteData,
   cursorY,
   ensureSpace,
-  measureOnly = false
+  measureOnly = false,
+  billingColors
 ) {
 
  
 
   // Header already drawn by drawBillingCard()
-cursorY += SPACING.ribbonGap;
+cursorY += SPACING.ribbonGap + 3;
 
 pdf.setFont("times", "normal");
 pdf.setFontSize(10);
@@ -3594,14 +4062,9 @@ if (
 
   validVehicleCosts.forEach(vehicle => {
 
-      const cost = Number(vehicle.cost || 0);
+      const total =
+  Number(vehicle.cost || 0);
 
-      const gst =
-        quoteData.applyGst
-          ? cost * Number(quoteData.gstPercent || 0) / 100
-          : 0;
-
-      const total = cost + gst;
 
       if (measureOnly) {
 
@@ -3612,39 +4075,75 @@ if (
       cursorY = drawGreyCostRowCompact(
         pdf,
         `Package Cost With (${vehicle.vehicle})`,
-        `${currencySymbol} ${cost.toLocaleString()}`,
+       `${currencySymbol} ${total.toLocaleString()}`,
         cursorY
       );
       }
 
-      if (quoteData.applyGst) {
+      
 
-        if (measureOnly) {
 
-    cursorY += 7;
-
-} else {
-        cursorY = drawGreyCostRowCompact(
-          pdf,
-          `GST (${quoteData.gstPercent}%)`,
-          `${currencySymbol} ${gst.toLocaleString()}`,
-          cursorY
-        );
-}
-      }
 if (measureOnly) {
 
     cursorY += 7;
 
 } else {
-      cursorY = drawBlueCostRowCompact(
-        pdf,
-        "TOTAL AMOUNT PAYABLE",
-`${currencySymbol} ${total.toLocaleString()}`,
-        cursorY
-      );
+     const packageCostDescription =
+  String(
+    vehicle.description || ""
+  ).trim();
+
+const payableLabel =
+  packageCostDescription
+    ? `TOTAL AMOUNT PAYABLE (${packageCostDescription})`
+    : "TOTAL AMOUNT PAYABLE";
+
+cursorY = drawBlueCostRowCompact(
+  pdf,
+  payableLabel,
+  `${currencySymbol} ${total.toLocaleString()}`,
+  cursorY
+);
 }
-      cursorY += 3;
+           cursorY += 3;
+
+
+      // ---------------------------------------------------
+      // SUBTLE SEPARATOR BETWEEN VEHICLE OPTIONS
+      // ---------------------------------------------------
+
+      if (
+        vehicle !==
+        validVehicleCosts[
+          validVehicleCosts.length - 1
+        ]
+      ) {
+
+        if (!measureOnly) {
+
+          pdf.setDrawColor(
+            210,
+            210,
+            210
+          );
+
+          pdf.setLineWidth(0.2);
+
+          pdf.line(
+            PAGE.marginLeft + 4,
+            cursorY - 1,
+            PAGE.width -
+              PAGE.marginRight -
+              4,
+            cursorY - 1
+          );
+
+        }
+
+        cursorY += 2;
+
+      }
+
 
     });
 
@@ -3704,11 +4203,12 @@ if (measureOnly) {
 } else {
 
   cursorY = drawGreyCostRowCompact(
-    pdf,
-    packageCostLabel,
-    `${currencySymbol} ${subtotal.toLocaleString()}`,
-    cursorY
-  );
+  pdf,
+  packageCostLabel,
+  `${currencySymbol} ${subtotal.toLocaleString()}`,
+  cursorY,
+  billingColors
+);
 }
 
 if (quoteData.applyGst) {
@@ -3720,11 +4220,12 @@ if (quoteData.applyGst) {
 } else {
 
   cursorY = drawGreyCostRowCompact(
-    pdf,
-    `GST (${quoteData.gstPercent}%)`,
-   `${currencySymbol} ${gstAmount.toLocaleString()}`,
-    cursorY
-  );
+  pdf,
+  `GST (${quoteData.gstPercent}%)`,
+  `${currencySymbol} ${gstAmount.toLocaleString()}`,
+  cursorY,
+  billingColors
+);
 }
 }
 if (measureOnly) {
@@ -3752,10 +4253,11 @@ if (quoteData.showUsd) {
 } else {
 
   cursorY = drawGreyCostRowCompact(
-    pdf,
-    "USD Equivalent",
-    `$${usd.toFixed(2)}`,
-    cursorY
+  pdf,
+  "USD Equivalent",
+  `$${usd.toFixed(2)}`,
+  cursorY,
+  billingColors
 );
 }
 }
@@ -3773,50 +4275,81 @@ function drawSinglePolicy(
     ensureSpace,
     measureOnly = false
 ) {
-    if (!policy.text?.trim()) return cursorY;
 
-    const title = sanitizePdfText(policy.title || "");
+    if (!policy.text?.trim()) {
+        return cursorY;
+    }
 
-    const wrapped = buildWrappedPolicyLines(
-        pdf,
-        policy.text || ""
-    );
+    const title =
+        sanitizePdfText(
+            policy.title || ""
+        );
+
+    const wrapped =
+        buildWrappedPolicyLines(
+            pdf,
+            policy.text || ""
+        );
 
     const visibleLineCount =
-    wrapped.lines.filter(line => line !== null).length;
+        wrapped.lines.filter(
+            line => line !== null
+        ).length;
 
-const estimatedHeight =
-    12 +
-    visibleLineCount * wrapped.lineHeight +
-    6;
+    const estimatedHeight =
+        12 +
+        visibleLineCount *
+            wrapped.lineHeight +
+        6;
 
-if (measureOnly) {
-    return estimatedHeight;
-}
+    // ---------------------------------------------
+    // MEASUREMENT MODE
+    // ---------------------------------------------
 
+    if (measureOnly) {
+        return estimatedHeight;
+    }
+
+    
     cursorY = ensureSpace(
-        cursorY,
-        estimatedHeight
+    cursorY,
+    estimatedHeight
+);
+    // ---------------------------------------------
+    // POLICY TITLE
+    // ---------------------------------------------
+
+    pdf.setFont(
+        "helvetica",
+        "bold"
     );
 
-    pdf.setFont("helvetica", "bold");
     pdf.setFontSize(9);
+
+    const POLICY_CONTENT_X =
+        PAGE.marginLeft + 3;
 
     pdf.text(
         `${title}:`,
-        PAGE.marginLeft,
+        POLICY_CONTENT_X,
         cursorY
     );
 
     cursorY += 5;
 
-    cursorY = drawWrappedLines(
-        pdf,
-        wrapped.lines,
-        0,
-        PAGE.marginLeft + DESCRIPTION_INSET,
-        cursorY
-    );
+    // ---------------------------------------------
+    // POLICY BODY
+    // ---------------------------------------------
+
+    cursorY =
+        drawWrappedLines(
+            pdf,
+            wrapped.lines,
+            0,
+            PAGE.marginLeft +
+                DESCRIPTION_INSET,
+            cursorY
+        );
 
     cursorY += 4;
 
@@ -3824,12 +4357,14 @@ if (measureOnly) {
 }
 
 
+
 function drawCancellationRefundPolicy(
     pdf,
     quoteData,
     cursorY,
     ensureSpace,
-     drawClosing
+    drawClosing,
+    policyColor
 ) {
 
     const policies =
@@ -3855,40 +4390,40 @@ if (isFreshPage) {
     cursorY += 20;
 }
 
+// =====================================================
+// KEEP POLICY HEADING + FIRST POLICY TOGETHER
+// =====================================================
+
+const firstPolicy =
+    visiblePolicies[0];
+
+const firstPolicyHeight =
+    drawSinglePolicy(
+        pdf,
+        firstPolicy,
+        cursorY,
+        ensureSpace,
+        true
+    );
+
+// Heading + gap + complete first policy
+const POLICY_OPENING_HEIGHT =
+    20 +
+    5 +
+    firstPolicyHeight;
+
 cursorY = ensureSpace(
     cursorY,
-    20
+    POLICY_OPENING_HEIGHT
 );
 
 
-    console.log(
-    "POLICY HEADING:",
-    "page:",
-    pdf.getCurrentPageInfo().pageNumber,
-    "cursorY:",
-    cursorY
+   cursorY = drawSectionHeading(
+    pdf,
+    "CANCELLATION & REFUND POLICY",
+    cursorY,
+    policyColor
 );
-
-console.log(
-    "POLICY BEFORE HEADING:",
-    {
-        page:
-            pdf.getCurrentPageInfo().pageNumber,
-        cursorY,
-        remaining:
-            PAGE.height -
-            PAGE.marginBottom -
-            cursorY
-    }
-);
-
-
-    cursorY = drawSectionHeading(
-        pdf,
-        "CANCELLATION & REFUND POLICY",
-        cursorY,
-        ensureSpace
-    );
 
     console.log(
     "POLICY AFTER HEADING:",
@@ -3926,24 +4461,24 @@ if (isLast) {
         PAGE.marginBottom -
         cursorY;
 
-    if (remaining < policyHeight + footerHeight) {
+    if (
+        remaining <
+        policyHeight + footerHeight
+    ) {
 
-    pdf.addPage();
+        pdf.addPage();
 
-cursorY = PAGE.marginTop + 12;
+        cursorY =
+            PAGE.marginTop + 12;
+    }
 }
 
-}
-    
-
- cursorY = drawSinglePolicy(
-        pdf,
-        policy,
-        cursorY,
-        ensureSpace
-         
-      );
-
+cursorY = drawSinglePolicy(
+    pdf,
+    policy,
+    cursorY,
+    ensureSpace
+);
 }
 
 
@@ -3951,6 +4486,138 @@ cursorY = PAGE.marginTop + 12;
 
 return cursorY;
 }
+
+
+function drawCustomPdfSection(
+    pdf,
+    section,
+    cursorY,
+    ensureSpace
+) {
+
+    if (!section) {
+        return cursorY;
+    }
+
+    const title =
+        String(
+            section.label || ""
+        ).trim();
+
+    const content =
+        String(
+            section.content || ""
+        ).trim();
+
+    if (!title && !content) {
+        return cursorY;
+    }
+
+    /*
+     * ---------------------------------------------------------
+     * SECTION COLOR
+     * ---------------------------------------------------------
+     */
+
+    const sectionColor =
+        section.color ||
+        "#64748B";
+
+    /*
+     * ---------------------------------------------------------
+     * SPACE BEFORE SECTION
+     * ---------------------------------------------------------
+     */
+
+    const isFreshPage =
+        cursorY <=
+        PAGE.marginTop + 12 + 0.1;
+
+    if (isFreshPage) {
+
+        cursorY += 8;
+
+    } else {
+
+        cursorY += 20;
+    }
+
+    /*
+     * ---------------------------------------------------------
+     * SECTION HEADING
+     * ---------------------------------------------------------
+     */
+
+    cursorY =
+        ensureSpace(
+            cursorY,
+            20
+        );
+
+    cursorY =
+        drawSectionHeading(
+            pdf,
+            title,
+            cursorY,
+            hexToRgb(
+                sectionColor
+            )
+        );
+
+    cursorY += 5;
+
+    /*
+     * ---------------------------------------------------------
+     * RICH-TEXT CONTENT
+     * ---------------------------------------------------------
+     */
+
+    if (content) {
+
+        const contentLines =
+            buildWrappedRichDescriptionLines(
+                pdf,
+                content,
+                0,
+                PAGE.width -
+                    PAGE.marginLeft -
+                    PAGE.marginRight -
+                    4
+            );
+
+        const lines =
+            contentLines.lines;
+
+        const lineHeight =
+            contentLines.lineHeight;
+
+        for (
+            let i = 0;
+            i < lines.length;
+            i++
+        ) {
+
+            cursorY =
+                ensureSpace(
+                    cursorY,
+                    lineHeight
+                );
+
+            drawRichDescriptionPreviewLine(
+                pdf,
+                lines[i],
+                PAGE.marginLeft + 2,
+                cursorY
+            );
+
+            cursorY +=
+                lineHeight;
+        }
+    }
+
+    return cursorY;
+}
+
 
 function drawCommonFooter(
   pdf,
@@ -4015,11 +4682,13 @@ function drawContentIcon(
     type,
     x,
     y,
-    size = 5
+    size = 5,
+     iconColor
 ) {
 
     const color =
-        COLORS.contentIcon;
+    iconColor ||
+    COLORS.contentIcon;
 
     pdf.setDrawColor(
         ...color
@@ -4335,15 +5004,14 @@ function drawCityHotelMeals(
     day,
     cursorY,
     ensureSpace,
-    isLastDay = false
+    isLastDay = false,
+    dayAccentColor
 ) {
 
     const left = LAYOUT.col1LabelX;
 
 
-    
-
-    /*
+     /*
      * CITY
      * ----
      * Custom City takes priority over selected City.
@@ -4677,12 +5345,13 @@ if (hasCity || hasHotel) {
     if (hasCity && hasHotel) {
 
         drawContentIcon(
-            pdf,
-            "city",
-            cityLabelX,
-            cursorY - 4.5,
-            5
-        );
+    pdf,
+    "city",
+    left,
+    cursorY - 4.5,
+    5,
+    dayAccentColor
+);
 
         pdf.setFont(
             "times",
@@ -4690,8 +5359,8 @@ if (hasCity || hasHotel) {
         );
 
         pdf.setTextColor(
-            ...COLORS.contentLabel
-        );
+    ...(dayAccentColor || COLORS.contentLabel)
+);
 
         pdf.text(
             cityLabel,
@@ -4723,7 +5392,8 @@ if (hasCity || hasHotel) {
             "hotel",
             hotelLabelX,
             cursorY - 4.5,
-            5
+            5,
+            dayAccentColor
         );
 
         pdf.setFont(
@@ -4732,8 +5402,8 @@ if (hasCity || hasHotel) {
         );
 
         pdf.setTextColor(
-            ...COLORS.contentLabel
-        );
+    ...(dayAccentColor || COLORS.contentLabel)
+);
 
         pdf.text(
             hotelLabel,
@@ -4767,7 +5437,8 @@ if (hasCity || hasHotel) {
             "city",
             cityLabelX,
             cursorY - 4.5,
-            5
+            5,
+            dayAccentColor
         );
 
         pdf.setFont(
@@ -4776,8 +5447,8 @@ if (hasCity || hasHotel) {
         );
 
         pdf.setTextColor(
-            ...COLORS.contentLabel
-        );
+    ...(dayAccentColor || COLORS.contentLabel)
+);
 
         pdf.text(
             cityLabel,
@@ -4817,7 +5488,8 @@ if (hasCity || hasHotel) {
             "hotel",
             cityLabelX,
             cursorY - 4.5,
-            5
+            5,
+            dayAccentColor
         );
 
         pdf.setFont(
@@ -4825,9 +5497,9 @@ if (hasCity || hasHotel) {
             "bold"
         );
 
-        pdf.setTextColor(
-            ...COLORS.contentLabel
-        );
+       pdf.setTextColor(
+    ...(dayAccentColor || COLORS.contentLabel)
+);
 
         pdf.text(
             hotelLabel,
@@ -4958,7 +5630,8 @@ const mealAvailableWidth =
             "meal",
             left,
             cursorY - 4.5,
-            5
+            5,
+            dayAccentColor
         );
 
         /*
@@ -4972,8 +5645,8 @@ const mealAvailableWidth =
         pdf.setFontSize(10);
 
         pdf.setTextColor(
-            ...COLORS.contentLabel
-        );
+    ...(dayAccentColor || COLORS.contentLabel)
+);
 
         pdf.text(
             mealLabel,
@@ -5018,7 +5691,8 @@ const mealAvailableWidth =
         );
 
         cursorY +=
-            2;
+    mealLineHeight +
+    2;
 
     }
 
@@ -5056,7 +5730,8 @@ const mealAvailableWidth =
             "meal",
             left,
             cursorY - 4.5,
-            5
+            5,
+            dayAccentColor
         );
 
         pdf.setFont(
@@ -5065,8 +5740,8 @@ const mealAvailableWidth =
         );
 
         pdf.setTextColor(
-            ...COLORS.contentLabel
-        );
+    ...(dayAccentColor || COLORS.contentLabel)
+);
 
         pdf.text(
             mealLabel,
@@ -5726,7 +6401,8 @@ pdf.setTextColor(
     pdf,
     day,
     cursorY,
-    ensureSpace
+    ensureSpace,
+    dayAccentColor
 ) {
 
     const left = LAYOUT.col1LabelX;
@@ -5753,8 +6429,10 @@ const cardRight =
     "sightseeing",
     left,
     cursorY - 4.5,
-    5
+    5,
+    dayAccentColor
 );
+
 
 pdf.setFont(
     "times",
@@ -5764,7 +6442,7 @@ pdf.setFont(
 pdf.setFontSize(10);
 
 pdf.setTextColor(
-    ...COLORS.contentLabel
+    ...(dayAccentColor || COLORS.contentLabel)
 );
 
 pdf.text(
@@ -5977,7 +6655,8 @@ const hasDescription =
     "sightseeing",
     left,
     cursorY - 4.5,
-    5
+    5,
+    dayAccentColor
 );
 
 pdf.setFont(
@@ -5988,7 +6667,7 @@ pdf.setFont(
 pdf.setFontSize(10);
 
 pdf.setTextColor(
-    ...COLORS.contentLabel
+    ...(dayAccentColor || COLORS.contentLabel)
 );
 
 pdf.text(
@@ -6085,7 +6764,7 @@ pdf.setFont(
 pdf.setFontSize(10);
 
 pdf.setTextColor(
-    ...COLORS.contentLabel
+    ...(dayAccentColor || COLORS.contentLabel)
 );
 
 pdf.text(
@@ -6285,7 +6964,8 @@ cursorY += 5;
     pdf,
     day,
     cursorY,
-    ensureSpace
+    ensureSpace,
+    dayAccentColor
 ) {
 
     const left =
@@ -6407,7 +7087,8 @@ cursorY += 5;
             "transfer",
             left,
             cursorY - 4.0,
-            4
+            4,
+            dayAccentColor
         );
 
 
@@ -6423,8 +7104,8 @@ cursorY += 5;
         pdf.setFontSize(10);
 
         pdf.setTextColor(
-            ...COLORS.contentLabel
-        );
+    ...(dayAccentColor || COLORS.contentLabel)
+);
 
         pdf.text(
             transferLabel,
@@ -6495,7 +7176,8 @@ cursorY += 5;
             "transfer",
             left,
             cursorY - 4.0,
-            4
+            4,
+            dayAccentColor
         );
 
         pdf.setFont(
@@ -6522,15 +7204,17 @@ cursorY += 5;
             );
 
         return {
-            cursorY:
-                drawHangingLines(
-                    pdf,
-                    "Transfers:",
-                    lines,
-                    left,
-                    VALUE_X,
-                    cursorY
-                ),
+           cursorY:
+    drawHangingLines(
+        pdf,
+        "Transfers:",
+        lines,
+        left,
+        VALUE_X,
+        cursorY,
+        "transfer",
+        dayAccentColor
+    ),
 
             remainingLines: [],
             textX: left
@@ -6549,7 +7233,8 @@ cursorY += 5;
         "transfer",
         left,
         cursorY - 4.0,
-        4
+        4,
+        dayAccentColor
     );
 
     pdf.setFont(
@@ -6579,14 +7264,16 @@ cursorY += 5;
 
     return {
         cursorY:
-            drawHangingLines(
-                pdf,
-                "Transfers:",
-                lines,
-                left,
-                VALUE_X,
-                cursorY
-            ),
+    drawHangingLines(
+        pdf,
+        "Transfers:",
+        lines,
+        left,
+        VALUE_X,
+        cursorY,
+        "transfer",
+        dayAccentColor
+    ),
 
         remainingLines: [],
         textX: left
@@ -6666,12 +7353,17 @@ function drawHotelUsed(
     // PREMIUM SECTION COLOR
     // =====================================================
 
- const sectionColor = [
-    91,
-    52,
-    145
-];
+ const sectionColor =
+    hexToRgb(
+        quoteData?.pdfTheme?.sections
+            ?.hotelUsed?.color ||
+        "#5C3391"
+    );
 
+    const hotelUsedColors =
+    getHotelUsedColorFamily(
+        sectionColor
+    );
 
     // =====================================================
     // COLUMN WIDTHS
@@ -6891,9 +7583,7 @@ function drawHotelUsed(
 // =====================================================
 
 pdf.setFillColor(
-    232,
-    220,
-    244
+    ...hotelUsedColors.tableHeader
 );
 
 pdf.setDrawColor(
@@ -6925,11 +7615,8 @@ pdf.setFontSize(
 );
 
 pdf.setTextColor(
-    65,
-    35,
-    95
+    ...hotelUsedColors.headerText
 );
-
 
 const headers = [
     "Nights",
@@ -6976,9 +7663,7 @@ headers.forEach(
                 colWidths[index];
 
             pdf.setDrawColor(
-    170,
-    150,
-    190
+    ...hotelUsedColors.divider
 );
 
 pdf.setLineWidth(
@@ -7045,10 +7730,8 @@ if (
 ) {
 
     pdf.setFillColor(
-        245,
-        239,
-        250
-    );
+    ...hotelUsedColors.rowBand
+);
 
 } else {
 
@@ -7179,7 +7862,10 @@ cursorY = drawCostSummary(
     pdf,
     quoteData,
     cursorY,
-    ensureSpace
+    ensureSpace,
+    hexToRgb(
+        pdfSectionColors.billing
+    )
 );
 cursorY = drawImportantNotes(
     pdf,
@@ -7451,22 +8137,34 @@ async function drawItineraryContent(
     cursorY,
     ensureSpace,
     pageState,
-    contentBottomY
+    contentBottomY,
+    pdfSectionColors
 ) {
 
   cursorY = drawTourSummary(
-  pdf,
-  quoteData,
-  cursorY,
-  ensureSpace
+    pdf,
+    quoteData,
+    cursorY,
+    ensureSpace,
+    pdfSectionColors.tourSummary
 );
 
 
+console.log(
+  "DETAILED ITINERARY THEME COLOR:",
+  pdfSectionColors?.detailedTourItinerary
+);
 
- cursorY = drawDayWiseHeader(
+
+ cursorY =
+  drawDayWiseHeader(
     pdf,
     cursorY,
-    ensureSpace
+    ensureSpace,
+    hexToRgb(
+      pdfSectionColors
+        .detailedTourItinerary
+    )
   );
 
  
@@ -7842,17 +8540,32 @@ cursorY = await drawDayHeader(
     day,
     dayDate,
     cursorY,
-    ensureSpace
+    ensureSpace,
+    hexToRgb(
+        quoteData?.pdfTheme?.sections?.dayHeader?.color ||
+        "#2F8F91"
+    )
 );
     
+// =========================================================
+// DAY CONTENT ACCENT COLOR
+// Derived from the Day Header color
+// =========================================================
 
-    
-    
-    
+const dayHeaderColor =
+    hexToRgb(
+        quoteData?.pdfTheme?.sections?.dayHeader?.color ||
+        "#2F8F91"
+    );
+
+const dayAccentColor = [
+    Math.round(dayHeaderColor[0] * 0.82),
+    Math.round(dayHeaderColor[1] * 0.82),
+    Math.round(dayHeaderColor[2] * 0.82)
+];
 
 
-
-// ---------- draw first two lines ----------
+    // ---------- draw first two lines ----------
 
 const firstTwo =
     preview.lines.slice(0, 2);
@@ -8274,8 +8987,10 @@ cursorY = drawCityHotelMeals(
     day,
     cursorY,
     ensureSpace,
-    index === itinerary.length - 1
+    index === itinerary.length - 1,
+    dayAccentColor
 );
+
 
 // ---------- spacing: City / Hotel / Meal → Sightseeing ----------
 
@@ -8306,7 +9021,8 @@ cursorY = drawSightseeing(
     pdf,
     day,
     cursorY,
-    ensureSpace
+    ensureSpace,
+    dayAccentColor
 );
 
 // ---------- spacing: Sightseeing → Transfers ----------
@@ -8325,7 +9041,8 @@ const transferResult =
         pdf,
         day,
         cursorY,
-        ensureSpace
+        ensureSpace,
+        dayAccentColor
     );
 
 cursorY = transferResult.cursorY;
@@ -8373,11 +9090,14 @@ cursorY += 8;
 
 cursorY =
     drawHotelUsed(
-        pdf,
-        quoteData,
-        cursorY,
-        ensureSpace
-    );
+    pdf,
+    quoteData,
+    cursorY,
+    ensureSpace,
+    hexToRgb(
+        pdfSectionColors.hotelUsed
+    )
+);
 
 
 // =========================================================
@@ -8388,7 +9108,10 @@ cursorY = drawCostSummaryCompact(
     pdf,
     quoteData,
     cursorY,
-    ensureSpace
+    ensureSpace,
+    hexToRgb(
+        pdfSectionColors.billing
+    )
 );
 
 
@@ -8401,7 +9124,13 @@ cursorY = drawItineraryInclusionExclusion(
     pdf,
     quoteData,
     cursorY,
-    ensureSpace
+    ensureSpace,
+    hexToRgb(
+        pdfSectionColors.inclusions
+    ),
+    hexToRgb(
+        pdfSectionColors.exclusions
+    )
 );
 
 

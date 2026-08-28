@@ -88,6 +88,51 @@ const defaultCommonData = {
 
 
     // =====================================================
+// PDF THEME
+// =====================================================
+
+pdfTheme: {
+  name: "Default",
+
+  sections: {
+    tourSummary: {
+      enabled: true,
+      color: "#17334F"
+    },
+
+    itinerary: {
+      enabled: true,
+      color: "#17334F"
+    },
+
+    hotelUsed: {
+      enabled: true,
+      color: "#5C3391"
+    },
+
+    billing: {
+      enabled: true,
+      color: "#6B2636"
+    },
+    
+inclusions: {
+  enabled: true,
+  color: "#2446B5"
+},
+
+exclusions: {
+  enabled: true,
+  color: "#46556B"
+},
+
+    policy: {
+      enabled: true,
+      color: "#17334F"
+    }
+  }
+},
+
+    // =====================================================
 // HOTEL USED
 // =====================================================
 
@@ -667,6 +712,17 @@ const handleGeneratePdf = async (
         commonData?.hotelUsed,
 
     // =====================================================
+
+
+     // =====================================================
+    // PDF THEME
+    // =====================================================
+
+    pdfTheme:
+        commonData?.pdfTheme,
+
+    // =====================================================
+
 
     applyGst:
         commonData.applyGst,

@@ -34,6 +34,19 @@ const [openTransferSelector, setOpenTransferSelector] =
   const [openSightseeingSelector, setOpenSightseeingSelector] =
   useState({});
 
+  const [openDayDescription, setOpenDayDescription] =
+  useState({});
+
+  const [openDayNote, setOpenDayNote] =
+  useState({});
+
+  const [openDaySightseeing, setOpenDaySightseeing] =
+  useState({});
+
+
+
+
+
   const addDay = () => {
 
 console.log("====== ADD DAY CLICKED ======");
@@ -130,10 +143,42 @@ const removeDay = (index) => {
   return (
 
     
-    <div style={{ marginTop: "20px" }}>
+    <div
+  style={{
+    marginTop: "20px",
+    width: "100%"
+  }}
+>
 
-      <h3>🗓 Day Wise Itinerary</h3>
+  {/* =========================================================
+      DAY WISE ITINERARY SECTION HEADER
+  ========================================================= */}
 
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      padding: "0 0 10px 0",
+      marginBottom: "14px",
+      borderBottom: "3px solid #1e3a8a",
+      color: "#1e3a8a",
+      fontSize: "20px",
+      fontWeight: 800
+    }}
+  >
+    <span
+      style={{
+        fontSize: "18px"
+      }}
+    >
+      🗺️
+    </span>
+
+    <span>
+      Day Wise Itinerary
+    </span>
+  </div>
       
       {(itineraryData.itinerary || []).map(
   (day, index) => {
@@ -170,718 +215,70 @@ const sightseeingOptions =
     return (
 
          <div
-            key={index}
-            style={{
-              border: "1px solid #ddd",
-              padding: "15px",
-              marginBottom: "15px",
-              borderRadius: "10px"
-            }}
-          >
+  key={index}
+  style={{
+    border: "1px solid #d6dce5",
+    padding: "10px 12px",
+    marginBottom: "10px",
+    borderRadius: "8px",
+    background: "#ffffff",
+    boxSizing: "border-box",
+    borderBottom: "4px solid #1e3a8a"
+  }}
+>
 
-            <div
+<div
   style={{
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "10px"
+    minHeight: "30px",
+    marginBottom: "8px"
   }}
 >
 
-  <h4>
-    Day {day.day}
-  </h4>
+  {/* DAY NUMBER + EDITABLE TITLE */}
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      flex: 1
+    }}
+  >
 
- 
-
-  <div>
-
-    <button
-      type="button"
-      onClick={() =>
-        moveDayUp(index)
-      }
-    >
-      ↑
-    </button>
-
-    <button
-      type="button"
-      onClick={() =>
-        moveDayDown(index)
-      }
-      style={{
-        marginLeft: "5px"
-      }}
-    >
-      ↓
-    </button>
-
-    <button
-      type="button"
-      onClick={() =>
-        removeDay(index)
-      }
-      style={{
-        marginLeft: "5px",
-        color: "red"
-      }}
-    >
-      Delete
-    </button>
-
-  </div>
-
-</div>
-
- 
-
-            <input
-  type="text"
-  placeholder="Day Title"
-  value={day.title}
-
-  onChange={(e) => {
-
-    const updated =
-        [...(itineraryData.itinerary || [])];
-
-    updated[index].title =
-        e.target.value;
-
-    const updatedItineraryData = {
-        ...itineraryData,
-        itinerary: updated
-    };
-
-    
-
-    setItineraryData(
-        updatedItineraryData
-    );
-
-}}
-
+   <h4
   style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "10px"
-  }}
-/>
-
-<div
-  style={{
-    fontWeight: 700,
-    marginTop: 10,
-    marginBottom: 6,
-    color: "#374151"
-  }}
->
-📝 Day Description
-</div>
-
-  <SightseeingRichTextEditor
-  key={`day-description-${index}-${day.day || index}`}
-
-  value={
-    day.descriptionRichText ||
-    day.description ||
-    ""
-  }
-
-  onChange={(html) => {
-
-    const updated = [
-      ...(itineraryData.itinerary || [])
-    ];
-
-    /*
-     * Convert Tiptap HTML to plain text.
-     * Keep day.description for compatibility
-     * with the existing PDF/data logic.
-     */
-    const temp =
-      document.createElement("div");
-
-    temp.innerHTML =
-      html;
-
-    const plainText =
-      temp.innerText
-        .replace(/\r\n/g, "\n");
-
-    updated[index] = {
-      ...updated[index],
-
-      /*
-       * Rich formatted version
-       */
-      descriptionRichText:
-        html,
-
-      /*
-       * Existing plain-text version
-       */
-      description:
-        plainText
-    };
-
-    setItineraryData({
-      ...itineraryData,
-      itinerary: updated
-    });
-
-  }}
-
-  preserveLineBreaks={true}
-
-/>
- 
- <label
-  style={{
-    display: "flex",
+    margin: 0,
+    padding: "7px 18px",
+    borderRadius: "999px",
+    background: "#6b214f",
+    color: "#ffffff",
+    fontSize: "15px",
+    fontWeight: 800,
+    lineHeight: "1.2",
+    whiteSpace: "nowrap",
+    display: "inline-flex",
     alignItems: "center",
-    gap: "8px",
-    marginTop: "12px"
+    justifyContent: "center",
+    minWidth: "58px",
+    boxShadow: "0 1px 3px rgba(107, 33, 79, 0.20)"
   }}
 >
-  <input
-    type="checkbox"
-    checked={day.noteEnabled}
-    onChange={(e) => {
-
-      const updated = [
-        ...(itineraryData.itinerary || [])
-      ];
-
-      updated[index].noteEnabled =
-        e.target.checked;
-
-      setItineraryData({
-        ...itineraryData,
-        itinerary: updated
-      });
-
-    }}
-  />
-
-  <span>Show Note</span>
-</label>
-
-{day.noteEnabled && (
-
-  <SightseeingRichTextEditor
-  key={`day-note-${index}-${day.day || index}`}
-
-  value={
-    day.noteRichText ||
-    day.noteText ||
-    ""
-  }
-
-  onChange={(html) => {
-
-    const updated = [
-      ...(itineraryData.itinerary || [])
-    ];
-
-    /*
-     * Convert Tiptap HTML to plain text.
-     * Keep noteText for existing PDF/data compatibility.
-     */
-    const temp =
-      document.createElement("div");
-
-    temp.innerHTML =
-      html;
-
-    const plainText =
-      temp.innerText
-        .replace(/\r\n/g, "\n");
-
-    updated[index] = {
-      ...updated[index],
-
-      /*
-       * Rich formatted version
-       */
-      noteRichText:
-        html,
-
-      /*
-       * Existing plain-text version
-       */
-      noteText:
-        plainText
-    };
-
-    setItineraryData({
-      ...itineraryData,
-      itinerary: updated
-    });
-
-  }}
-
-  preserveLineBreaks={true}
-
-/>
-
-)}
-
-{/* DAY CITY */}
-
-<select
-    value={day.city || ""}
-    onChange={(e) => {
-
-        const updated =
-            [...(itineraryData.itinerary || [])];
-
-        updated[index] = {
-            ...updated[index],
-
-            city: e.target.value,
-            customCity: "",
-
-            hotel: "",
-            roomType: "",
-            mealPlan: ""
-        };
-
-        console.log(
-    "CITY AFTER CHANGE:",
-    updated[index]
-);
-
-        setItineraryData({
-            ...itineraryData,
-            itinerary: updated
-        });
-
-    }}
-    style={{
-        width: "100%",
-        padding: "10px",
-        marginBottom: "10px"
-    }}
->
-    <option value="">
-        Select City
-    </option>
-
-    {cities.map((city) => (
-        <option
-            key={city}
-            value={city}
-        >
-            {city}
-        </option>
-    ))}
-</select>
-
-<input
-  type="text"
-  placeholder="Or enter custom city"
-  value={day.customCity || ""}
-  onChange={(e) => {
-
-    const updated =
-      [...(itineraryData.itinerary || [])];
-
-    updated[index].customCity =
-      e.target.value;
-
-    setItineraryData({
-      ...itineraryData,
-      itinerary: updated
-    });
-
-  }}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "10px"
-  }}
-/>
-
-<h5>Hotel Type</h5>
-
-
-<select
-  value={day.hotelSource || "database"}
-  onChange={(e) => {
-
-    const updated =
-      [...(itineraryData.itinerary || [])];
-
-    updated[index].hotelSource =
-  e.target.value;
-
-updated[index].hotel = "";
-updated[index].customHotel = "";
-updated[index].roomType = "";
-updated[index].mealPlan = "";
-
-    setItineraryData({
-      ...itineraryData,
-      itinerary: updated
-    });
-
-  }}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "10px"
-  }}
->
-  <option value="database">
-    Hotel Database
-  </option>
-
-  <option value="custom">
-    Custom Hotel
-  </option>
-</select>
-
-
-
-{day.hotelSource !== "custom" && (
-
-<select
-  value={day.hotel}
-
-onChange={(e) => {
-
-    const selectedHotel =
-      e.target.value;
-
-    const updated =
-      [...(itineraryData.itinerary || [])];
-    updated[index].hotel =
-      selectedHotel;
-
-    const hotelObj =
-  itineraryHotels.find(
-    (hotel) =>
-      hotel.hotelName === selectedHotel
-  );
-
-updated[index].roomType =
-  hotelObj?.roomType || "";
-
-updated[index].mealPlan =
-  hotelObj?.mealPlan || "";
-    setItineraryData({
-  ...itineraryData,
-  itinerary: updated
-});
-
-  }}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "10px"
-  }}
->
-
-  <option value="">
-    Select Hotel
-  </option>
-
-  {filteredHotels.map((hotel) => (
-
-  <option
-    key={hotel.hotelName}
-    value={hotel.hotelName}
-  >
-    {hotel.hotelName}
-  </option>
-
-))}
-
-</select>
-)}
-{/* OPTIONAL HOTEL CATEGORY */}
-
-<input
-  type="text"
-   placeholder="e.g. 3 Star, 4 Star, Deluxe Camp"
-  value={day.hotelCategoryLabel || ""}
-  onChange={(e) => {
-
-    const updated =
-      [...(itineraryData.itinerary || [])];
-
-    updated[index].hotelCategoryLabel =
-      e.target.value;
-
-    setItineraryData({
-      ...itineraryData,
-      itinerary: updated
-    });
-
-  }}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "10px"
-  }}
-/>
-
-{day.hotelSource === "custom" && (
-
-<div
-  style={{
-    display: "flex",
-    gap: "10px",
-    marginBottom: "10px"
-  }}
->
-
-  <input
-    type="text"
-    placeholder="Enter custom hotel name"
-    value={day.customHotel || ""}
-    onChange={(e) => {
-
-      const updated =
-        [...(itineraryData.itinerary || [])];
-
-      updated[index].customHotel =
-        e.target.value;
-
-      setItineraryData({
-        ...itineraryData,
-        itinerary: updated
-      });
-
-    }}
-    style={{
-      flex: 1,
-      padding: "10px"
-    }}
-  />
-
-  <button
-    type="button"
-    onClick={() => {
-
-      const updated =
-        [...(itineraryData.itinerary || [])];
-
-      updated[index].customHotel = "";
-
-      setItineraryData({
-        ...itineraryData,
-        itinerary: updated
-      });
-
-    }}
-   style={{
-  background: "#ffffff",
-  color: "#ef4444",
-  border: "1px solid #ef4444",
-  borderRadius: "6px",
-  padding: "10px 14px",
-  cursor: "pointer",
-  fontWeight: "700"
-}}
-  >
-    ❌
-  </button>
-
-</div>
-
-)}
-
-<h4
-  style={{
-    margin: "18px 0 8px 0",
-    color: "#1f2937",
-    fontWeight: 700
-  }}
->
-🎯 Sightseeing
+  Day {day.day}
 </h4>
 
-<div
-  style={{
-    display: "flex",
-    gap: 15,
-    marginBottom: 8
-  }}
->
-  <label>
     <input
-      type="radio"
-      checked={(day.sightseeingMode || "chips") === "chips"
-      }
-      onChange={() => {
-
-        const updated = [
-          ...(itineraryData.itinerary || [])
-        ];
-
-        updated[index].sightseeingMode = "chips";
-
-        setItineraryData({
-          ...itineraryData,
-          itinerary: updated
-        });
-
-      }}
-    />
-    Chips
-  </label>
-
-  <label>
-    <input
-      type="radio"
-      checked={(day.sightseeingMode || "chips") === "text"}
-      onChange={() => {
-
-        const updated = [
-          ...(itineraryData.itinerary || [])
-        ];
-
-        updated[index].sightseeingMode = "text";
-
-        setItineraryData({
-          ...itineraryData,
-          itinerary: updated
-        });
-
-      }}
-      />
-    Custom Text
-  </label>
-</div>
-
-{(day.sightseeingMode || "chips") === "chips" && (
-
-<div
-  style={{
-    width: "100%",
-    marginBottom: "10px"
-  }}
->
-  
-  <div
-    onClick={() =>
-      setOpenSightseeingSelector({
-        ...openSightseeingSelector,
-        [index]:
-          !openSightseeingSelector[index]
-      })
-    }
-    style={{
-      width: "100%",
-      padding: "10px 12px",
-      border: "1px solid #a3a3a3",
-      background: "#fff",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      cursor: "pointer",
-      boxSizing: "border-box"
-    }}
-  >
-    <span>
-  {(day.sightseeing || []).length > 0
-    ? `Sightseeing Selected (${day.sightseeing.length})`
-    : "Select Sightseeing"}
-</span>
-
-    <span
-      style={{
-        fontSize: "16px"
-      }}
-    >
-      ▼
-    </span>
-  </div>
-
-  {openSightseeingSelector[index] && (
-
-    <div
-      style={{
-        padding: "10px",
-        border: "1px solid #a3a3a3",
-        borderTop: "none"
-      }}
-    >
-{sightseeingOptions.map((spot) => (
-
-  <label
-    key={spot}
-    style={{
-      display: "block",
-      marginBottom: "5px"
-    }}
-  >
-    <input
-      type="checkbox"
-      checked={
-        day.sightseeing?.includes(spot) || false
-      }
+      type="text"
+      placeholder="Day Title"
+      value={day.title || ""}
       onChange={(e) => {
 
         const updated =
           [...(itineraryData.itinerary || [])];
 
-        const current =
-          updated[index].sightseeing || [];
-
-          const selected =
-    updated[index].selectedSightseeing || [];
-
-        updated[index].sightseeing =
-          e.target.checked
-            ? [...current, spot]
-            : current.filter(
-                (s) => s !== spot
-              );
-
-               // ---------- NEW OBJECT ARRAY ----------
-
-    if (e.target.checked) {
-
-        const exists =
-            selected.some(
-                (item) =>
-                    item.name === spot
-            );
-
-        if (!exists) {
-
-            updated[index].selectedSightseeing = [
-
-    ...selected,
-
-    {
-        id: Date.now() + Math.random(),
-        name: spot,
-        source: "chip",
-        description: "",
-        expanded: false
-    }
-
-];
-
-        }
-
-    } else {
-
-        updated[index].selectedSightseeing =
-            selected.filter(
-                (item) =>
-                    item.name !== spot
-            );
-
-    }
-
-    // --------------------------------------
-
+        updated[index].title =
+          e.target.value;
 
         setItineraryData({
           ...itineraryData,
@@ -889,120 +286,1510 @@ updated[index].mealPlan =
         });
 
       }}
+      style={{
+        flex: 1,
+        padding: "6px 9px",
+        fontSize: "13px",
+        boxSizing: "border-box",
+        border: "1px solid #cbd5e1",
+        borderRadius: "5px",
+        minWidth: 0
+      }}
     />
 
-    {" "}
-    {spot}
+  </div>
 
-  </label>
 
-))}
- </div>
-
-)}
-     
-
-{/* CUSTOM SIGHTSEEING */}
-
-<div style={{ marginTop: "10px" }}>
-
-<input
-  type="text"
-  placeholder="Custom Sightseeing"
-  value={day.customSightseeingInput || ""}
-  onChange={(e) => {
-
-    const updated =
-      [...(itineraryData.itinerary || [])];
-
-    updated[index].customSightseeingInput =
-      e.target.value;
-
-    setItineraryData({
-      ...itineraryData,
-      itinerary: updated
-    });
-
-  }}
+  {/* DAY CONTROLS */}
+  <div
   style={{
-    width: "75%",
-    padding: "8px"
-  }}
-/>
-
-<button
-  type="button"
-  style={{
-    marginLeft: "8px"
-  }}
-  onClick={() => {
-
-    if (!day.customSightseeingInput?.trim())
-      return;
-
-    const updated =
-      [...(itineraryData.itinerary || [])];
-
-    updated[index].customSightseeing = [
-
-      ...(updated[index].customSightseeing || []),
-
-      updated[index].customSightseeingInput.trim()
-
-    ];
-
-    // ---------- NEW CODE ----------
-
-const value =
-  updated[index].customSightseeingInput.trim();
-
-if (value !== "") {
-
-  const selected =
-    updated[index].selectedSightseeing || [];
-
-  const exists =
-    selected.some(
-      item => item.name === value
-    );
-
-  if (!exists) {
-
-    updated[index].selectedSightseeing = [
-
-    ...selected,
-
-    {
-        id: Date.now() + Math.random(),
-        name: value,
-        source: "manual",
-        description: "",
-        expanded: false
-    }
-
-];
-
-  }
-
-}
-
-// ---------- END NEW CODE ----------
-
-    updated[index].customSightseeingInput = "";
-
-    setItineraryData({
-      ...itineraryData,
-      itinerary: updated
-    });
-
+    display: "flex",
+    alignItems: "center",
+    gap: "5px"
   }}
 >
-➕ Add
-</button>
+
+  {/* =========================
+      MOVE DAY UP
+  ========================= */}
+  <button
+    type="button"
+    onClick={() =>
+      moveDayUp(index)
+    }
+    title="Move Day Up"
+    style={{
+      width: "28px",
+      height: "28px",
+      padding: 0,
+      border: "1px solid #94a3b8",
+      borderRadius: "5px",
+      background: "#f8fafc",
+      color: "#1e3a8a",
+      fontSize: "17px",
+      fontWeight: 800,
+      lineHeight: "26px",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}
+  >
+    ↑
+  </button>
+
+
+  {/* =========================
+      MOVE DAY DOWN
+  ========================= */}
+  <button
+    type="button"
+    onClick={() =>
+      moveDayDown(index)
+    }
+    title="Move Day Down"
+    style={{
+      width: "28px",
+      height: "28px",
+      padding: 0,
+      border: "1px solid #94a3b8",
+      borderRadius: "5px",
+      background: "#f8fafc",
+      color: "#1e3a8a",
+      fontSize: "17px",
+      fontWeight: 800,
+      lineHeight: "26px",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}
+  >
+    ↓
+  </button>
+
+
+  {/* =========================
+      DELETE DAY
+  ========================= */}
+  <button
+    type="button"
+    onClick={() =>
+      removeDay(index)
+    }
+    title="Delete Day"
+    style={{
+      height: "28px",
+      padding: "0 12px",
+      border: "1px solid #e11d48",
+      borderRadius: "999px",
+      background: "#e11d48",
+      color: "#ffffff",
+      fontSize: "11px",
+      fontWeight: 800,
+      cursor: "pointer",
+      whiteSpace: "nowrap",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}
+  >
+    Delete
+  </button>
 
 </div>
 
-{(day.selectedSightseeing || []).length > 0 && (
+</div>
+            
+
+   
+
+{/* =========================================================
+    DAY DESCRIPTION — COMPACT
+========================================================= */}
+
+<div
+  style={{
+    marginTop: "6px",
+    marginBottom: "6px",
+    padding: "7px 9px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "6px",
+    background: "#f8fafc"
+  }}
+>
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: "10px"
+    }}
+  >
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "7px",
+        minWidth: 0,
+        flex: 1
+      }}
+    >
+
+      <span
+        style={{
+          fontSize: "13px",
+          fontWeight: 700,
+          color: "#374151",
+          whiteSpace: "nowrap"
+        }}
+      >
+        📝 Day Description
+      </span>
+
+      {!openDayDescription[index] && (
+        <span
+          style={{
+            fontSize: "12px",
+            color: "#64748b",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+          }}
+        >
+          {day.description?.trim()
+            ? day.description.trim()
+            : "No description added"}
+        </span>
+      )}
+
+    </div>
+
+    <button
+      type="button"
+      onClick={() => {
+
+        setOpenDayDescription({
+          ...openDayDescription,
+          [index]:
+            !openDayDescription[index]
+        });
+
+      }}
+      style={{
+        padding: "4px 9px",
+        fontSize: "11px",
+        fontWeight: 700,
+        border: "1px solid #cbd5e1",
+        borderRadius: "5px",
+        background: "#ffffff",
+        color: "#1e3a8a",
+        cursor: "pointer",
+        whiteSpace: "nowrap"
+      }}
+    >
+      {openDayDescription[index]
+        ? "Close"
+        : "Edit"}
+    </button>
+
+  </div>
+
+
+  {/* =======================================================
+      RICH TEXT EDITOR — ONLY WHEN EDITING
+  ======================================================= */}
+
+  {openDayDescription[index] && (
+
+    <div
+      style={{
+        marginTop: "7px"
+      }}
+    >
+
+      <SightseeingRichTextEditor
+
+        key={`day-description-${index}-${day.day || index}`}
+
+        value={
+          day.descriptionRichText ||
+          day.description ||
+          ""
+        }
+
+        onChange={(html) => {
+
+          const updated = [
+            ...(itineraryData.itinerary || [])
+          ];
+
+          /*
+           * Convert Tiptap HTML to plain text.
+           * Keep day.description for compatibility
+           * with the existing PDF/data logic.
+           */
+
+          const temp =
+            document.createElement("div");
+
+          temp.innerHTML =
+            html;
+
+          const plainText =
+            temp.innerText
+              .replace(/\r\n/g, "\n");
+
+          updated[index] = {
+            ...updated[index],
+
+            descriptionRichText:
+              html,
+
+            description:
+              plainText
+          };
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+
+        preserveLineBreaks={true}
+
+      />
+
+    </div>
+
+  )}
+
+</div>
+
+
+ 
+ {/* =========================================================
+    OPTIONAL NOTE — COMPACT
+========================================================= */}
+
+<div
+  style={{
+    marginTop: "6px",
+    marginBottom: "6px"
+  }}
+>
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: "10px",
+      padding: "6px 9px",
+      border: "1px solid #e2e8f0",
+      borderRadius: "6px",
+      background: "#ffffff"
+    }}
+  >
+
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "7px",
+        fontSize: "13px",
+        fontWeight: 700,
+        color: "#374151",
+        cursor: "pointer"
+      }}
+    >
+
+      <input
+        type="checkbox"
+        checked={day.noteEnabled || false}
+        onChange={(e) => {
+
+          const updated = [
+            ...(itineraryData.itinerary || [])
+          ];
+
+          updated[index].noteEnabled =
+            e.target.checked;
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+      />
+
+      <span>
+        📝 Optional Note
+      </span>
+
+    </label>
+
+
+    {day.noteEnabled && (
+
+      <button
+        type="button"
+        onClick={() => {
+
+          setOpenDayNote({
+            ...openDayNote,
+            [index]:
+              !openDayNote[index]
+          });
+
+        }}
+        style={{
+          padding: "4px 9px",
+          fontSize: "11px",
+          fontWeight: 700,
+          border: "1px solid #cbd5e1",
+          borderRadius: "5px",
+          background: "#ffffff",
+          color: "#1e3a8a",
+          cursor: "pointer",
+          whiteSpace: "nowrap"
+        }}
+      >
+        {openDayNote[index]
+          ? "Close"
+          : "Edit"}
+      </button>
+
+    )}
+
+  </div>
+
+
+  {/* =======================================================
+      NOTE PREVIEW
+  ======================================================= */}
+
+  {day.noteEnabled &&
+   !openDayNote[index] &&
+   (
+      <div
+        style={{
+          marginTop: "4px",
+          paddingLeft: "30px",
+          fontSize: "12px",
+          color: "#64748b",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis"
+        }}
+      >
+        {day.noteText?.trim()
+          ? day.noteText.trim()
+          : "No note added"}
+      </div>
+  )}
+
+
+  {/* =======================================================
+      NOTE RICH TEXT EDITOR
+  ======================================================= */}
+
+  {day.noteEnabled &&
+   openDayNote[index] && (
+
+    <div
+      style={{
+        marginTop: "7px"
+      }}
+    >
+
+      <SightseeingRichTextEditor
+
+        key={`day-note-${index}-${day.day || index}`}
+
+        value={
+          day.noteRichText ||
+          day.noteText ||
+          ""
+        }
+
+        onChange={(html) => {
+
+          const updated = [
+            ...(itineraryData.itinerary || [])
+          ];
+
+          const temp =
+            document.createElement("div");
+
+          temp.innerHTML =
+            html;
+
+          const plainText =
+            temp.innerText
+              .replace(/\r\n/g, "\n");
+
+          updated[index] = {
+            ...updated[index],
+
+            noteRichText:
+              html,
+
+            noteText:
+              plainText
+          };
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+
+        preserveLineBreaks={true}
+
+      />
+
+    </div>
+
+  )}
+
+</div>
+
+
+
+{/* =========================================================
+    CITY & HOTEL — COMPACT TWO-ROW LAYOUT
+========================================================= */}
+
+<div
+  style={{
+    marginTop: "10px",
+    padding: "10px 12px 10px 12px",
+    border: "1px solid #dbe3ea",
+    borderRadius: "10px",
+    background: "#f8fafc",
+    boxSizing: "border-box",
+   borderBottom: "3px solid #7fb8b0"
+  }}
+>
+
+  {/* ---------------------------------------------------------
+      SUB-SECTION HEADING
+  --------------------------------------------------------- */}
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "7px",
+      marginBottom: "7px",
+      paddingBottom: "5px",
+      borderBottom: "1px solid #cfe3df",
+      color: "#287c73",
+      fontSize: "13px",
+      fontWeight: 800
+    }}
+  >
+    <span style={{ fontSize: "14px" }}>
+      📍
+    </span>
+
+    <span>
+      City & Hotel
+    </span>
+  </div>
+
+
+  {/* =========================================================
+      ROW 1 — CITY
+  ========================================================= */}
+
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "80px minmax(0, 1fr) minmax(0, 1fr)",
+      gap: "8px",
+      alignItems: "center",
+      marginBottom: "7px"
+    }}
+  >
+
+    <label
+      style={{
+        fontSize: "12px",
+        fontWeight: 700,
+        color: "#475569",
+        textAlign: "right",
+        paddingRight: "2px"
+      }}
+    >
+      City
+    </label>
+
+
+    {/* SELECT CITY */}
+
+    <select
+      value={day.city || ""}
+      onChange={(e) => {
+
+        const updated =
+          [...(itineraryData.itinerary || [])];
+
+        updated[index] = {
+          ...updated[index],
+
+          city: e.target.value,
+          customCity: "",
+
+          hotel: "",
+          roomType: "",
+          mealPlan: ""
+        };
+
+        console.log(
+          "CITY AFTER CHANGE:",
+          updated[index]
+        );
+
+        setItineraryData({
+          ...itineraryData,
+          itinerary: updated
+        });
+
+      }}
+      style={{
+        width: "100%",
+        padding: "6px 8px",
+        fontSize: "12px",
+        boxSizing: "border-box"
+      }}
+    >
+
+      <option value="">
+        Select City
+      </option>
+
+      {cities.map((city) => (
+
+        <option
+          key={city}
+          value={city}
+        >
+          {city}
+        </option>
+
+      ))}
+
+    </select>
+
+
+    {/* CUSTOM CITY */}
+
+    <input
+      type="text"
+      placeholder="Or enter custom city"
+      value={day.customCity || ""}
+      onChange={(e) => {
+
+        const updated =
+          [...(itineraryData.itinerary || [])];
+
+        updated[index].customCity =
+          e.target.value;
+
+        setItineraryData({
+          ...itineraryData,
+          itinerary: updated
+        });
+
+      }}
+      style={{
+        width: "100%",
+        padding: "6px 8px",
+        fontSize: "12px",
+        boxSizing: "border-box"
+      }}
+    />
+
+  </div>
+
+
+  {/* =========================================================
+      ROW 2 — HOTEL
+  ========================================================= */}
+
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "80px minmax(0, 1fr) minmax(0, 1fr)",
+      gap: "8px",
+      alignItems: "center",
+      marginBottom: "4px"
+    }}
+  >
+
+    <label
+      style={{
+        fontSize: "12px",
+        fontWeight: 700,
+        color: "#475569",
+        textAlign: "right",
+        paddingRight: "2px"
+      }}
+    >
+      Hotel
+    </label>
+
+
+    {/* -------------------------------------------------------
+        HOTEL TYPE
+    ------------------------------------------------------- */}
+
+    <select
+      value={day.hotelSource || "database"}
+      onChange={(e) => {
+
+        const updated =
+          [...(itineraryData.itinerary || [])];
+
+        updated[index].hotelSource =
+          e.target.value;
+
+        updated[index].hotel = "";
+        updated[index].customHotel = "";
+        updated[index].roomType = "";
+        updated[index].mealPlan = "";
+
+        setItineraryData({
+          ...itineraryData,
+          itinerary: updated
+        });
+
+      }}
+      style={{
+        width: "100%",
+        padding: "6px 8px",
+        fontSize: "12px",
+        boxSizing: "border-box"
+      }}
+    >
+
+      <option value="database">
+        Hotel Database
+      </option>
+
+      <option value="custom">
+        Custom Hotel
+      </option>
+
+    </select>
+
+
+    {/* -------------------------------------------------------
+        DATABASE MODE — HOTEL
+    ------------------------------------------------------- */}
+
+    {day.hotelSource !== "custom" ? (
+
+      <select
+        value={day.hotel || ""}
+        onChange={(e) => {
+
+          const selectedHotel =
+            e.target.value;
+
+          const updated =
+            [...(itineraryData.itinerary || [])];
+
+          updated[index].hotel =
+            selectedHotel;
+
+          const hotelObj =
+            itineraryHotels.find(
+              (hotel) =>
+                hotel.hotelName ===
+                selectedHotel
+            );
+
+          updated[index].roomType =
+            hotelObj?.roomType || "";
+
+          updated[index].mealPlan =
+            hotelObj?.mealPlan || "";
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+        style={{
+          width: "100%",
+          padding: "6px 8px",
+          fontSize: "12px",
+          boxSizing: "border-box"
+        }}
+      >
+
+        <option value="">
+          Select Hotel
+        </option>
+
+        {filteredHotels.map(
+          (hotel) => (
+
+            <option
+              key={hotel.hotelName}
+              value={hotel.hotelName}
+            >
+              {hotel.hotelName}
+            </option>
+
+          )
+        )}
+
+      </select>
+
+    ) : (
+
+      /* -----------------------------------------------------
+         CUSTOM HOTEL MODE — CATEGORY
+      ----------------------------------------------------- */
+
+      <input
+        type="text"
+        placeholder="e.g. 3 Star, 4 Star, Deluxe Camp"
+        value={
+          day.hotelCategoryLabel || ""
+        }
+        onChange={(e) => {
+
+          const updated =
+            [...(itineraryData.itinerary || [])];
+
+          updated[index].hotelCategoryLabel =
+            e.target.value;
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+        style={{
+          width: "100%",
+          padding: "6px 8px",
+          fontSize: "12px",
+          boxSizing: "border-box"
+        }}
+      />
+
+    )}
+
+  </div>
+
+
+  {/* =========================================================
+      DATABASE MODE — CATEGORY
+      Third item stays on the same row.
+  ========================================================= */}
+
+  {day.hotelSource !== "custom" && (
+
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "80px minmax(0, 1fr) minmax(0, 1fr)",
+        gap: "8px",
+        alignItems: "center",
+        marginTop: "-4px"
+      }}
+    >
+
+      <span />
+
+      <span
+        style={{
+          fontSize: "11px",
+          color: "#64748b",
+          textAlign: "right",
+          paddingRight: "2px"
+        }}
+      >
+        Category
+      </span>
+
+      <input
+        type="text"
+        placeholder="e.g. 3 Star, 4 Star, Deluxe Camp"
+        value={
+          day.hotelCategoryLabel || ""
+        }
+        onChange={(e) => {
+
+          const updated =
+            [...(itineraryData.itinerary || [])];
+
+          updated[index].hotelCategoryLabel =
+            e.target.value;
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+        style={{
+          width: "100%",
+          padding: "6px 8px",
+          fontSize: "12px",
+          boxSizing: "border-box"
+        }}
+      />
+
+    </div>
+
+  )}
+
+
+  {/* =========================================================
+      CUSTOM HOTEL MODE
+  ========================================================= */}
+
+  {day.hotelSource === "custom" && (
+
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "80px minmax(0, 1fr) auto",
+        gap: "8px",
+        alignItems: "center",
+        marginTop: "2px"
+      }}
+    >
+
+      <label
+        style={{
+          fontSize: "11px",
+          fontWeight: 700,
+          color: "#64748b",
+          textAlign: "right",
+          paddingRight: "2px"
+        }}
+      >
+        Custom Hotel
+      </label>
+
+      <input
+        type="text"
+        placeholder="Enter custom hotel name"
+        value={
+          day.customHotel || ""
+        }
+        onChange={(e) => {
+
+          const updated =
+            [...(itineraryData.itinerary || [])];
+
+          updated[index].customHotel =
+            e.target.value;
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+        style={{
+          width: "100%",
+          padding: "6px 8px",
+          fontSize: "12px",
+          boxSizing: "border-box"
+        }}
+      />
+
+      <button
+        type="button"
+        onClick={() => {
+
+          const updated =
+            [...(itineraryData.itinerary || [])];
+
+          updated[index].customHotel =
+            "";
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+        style={{
+          background: "#ffffff",
+          color: "#ef4444",
+          border: "1px solid #ef4444",
+          borderRadius: "5px",
+          padding: "4px 7px",
+          cursor: "pointer",
+          fontWeight: 700,
+          fontSize: "11px"
+        }}
+      >
+        ❌
+      </button>
+
+    </div>
+
+  )}
+
+</div>
+
+
+
+
+{/* =========================================================
+    SIGHTSEEING SUBSECTION CARD
+========================================================= */}
+
+<div
+  style={{
+    marginTop: "12px",
+    marginBottom: "12px",
+    padding: "10px 12px 12px 12px",
+    background: "#f8fbff",
+    border: "1px solid #dbe3ea",
+    borderRadius: "9px",
+    borderBottom: "3px solid #7fb8b0",
+    boxSizing: "border-box",
+    width: "100%"
+  }}
+>
+
+  <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "10px",
+    paddingBottom: "6px",
+    borderBottom: "1px solid #d7e1e8",
+    color: "#287c73",
+    fontSize: "13px",
+    fontWeight: 800
+  }}
+>
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "7px"
+      }}
+    >
+      <span
+        style={{
+          fontSize: "14px"
+        }}
+      >
+        🎯
+      </span>
+
+      <span>
+        Sightseeing
+      </span>
+    </div>
+
+
+    <button
+      type="button"
+      onClick={() => {
+
+        setOpenDaySightseeing({
+          ...openDaySightseeing,
+          [index]:
+            !openDaySightseeing[index]
+        });
+
+      }}
+      style={{
+  padding: "5px 14px",
+  minWidth: "58px",
+  height: "28px",
+  border: "1px solid #dc2626",
+  borderRadius: "999px",
+  background: "#dc2626",
+  color: "#ffffff",
+  fontSize: "11px",
+  fontWeight: 800,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+  lineHeight: "1"
+}}
+    >
+      {openDaySightseeing[index]
+        ? "Close"
+        : "Edit"}
+    </button>
+
+  </div>
+
+
+  {/* ---------------------------------------------------------
+      MODE SELECTOR
+      Keep it visible because it is a primary control.
+  --------------------------------------------------------- */}
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "14px",
+      marginTop: "6px",
+      fontSize: "12px"
+    }}
+  >
+
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+        cursor: "pointer"
+      }}
+    >
+
+      <input
+        type="radio"
+        checked={
+          (day.sightseeingMode || "chips") ===
+          "chips"
+        }
+        onChange={() => {
+
+          const updated = [
+            ...(itineraryData.itinerary || [])
+          ];
+
+          updated[index].sightseeingMode =
+            "chips";
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+      />
+
+      Chips
+
+    </label>
+
+
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+        cursor: "pointer"
+      }}
+    >
+
+      <input
+        type="radio"
+        checked={
+          (day.sightseeingMode || "chips") ===
+          "text"
+        }
+        onChange={() => {
+
+          const updated = [
+            ...(itineraryData.itinerary || [])
+          ];
+
+          updated[index].sightseeingMode =
+            "text";
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+      />
+
+      Custom Text
+
+    </label>
+
+  </div>
+
+{openDaySightseeing[index] && (
+  <>
+
+
+
+{(day.sightseeingMode || "chips") === "chips" && (
+
+  <div
+    style={{
+      width: "100%",
+      marginBottom: "8px"
+    }}
+  >
+
+    {/* =====================================================
+        SIGHTSEEING SELECTOR + CUSTOM SIGHTSEEING
+        SINGLE COMPACT ROW
+    ===================================================== */}
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        width: "100%"
+      }}
+    >
+
+      {/* -------------------------------------------------
+          SELECT SIGHTSEEING
+      ------------------------------------------------- */}
+
+      <div
+        onClick={() =>
+          setOpenSightseeingSelector({
+            ...openSightseeingSelector,
+            [index]:
+              !openSightseeingSelector[index]
+          })
+        }
+        style={{
+          flex: "1 1 0",
+          minWidth: 0,
+          height: "34px",
+          padding: "7px 10px",
+          border: "1px solid #a3a3a3",
+          borderRadius: "6px",
+          background: "#fff",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          cursor: "pointer",
+          boxSizing: "border-box",
+          fontSize: "12px"
+        }}
+      >
+
+        <span
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+          }}
+        >
+          {(day.sightseeing || []).length > 0
+            ? `Sightseeing Selected (${day.sightseeing.length})`
+            : "Select Sightseeing"}
+        </span>
+
+        <span
+          style={{
+            fontSize: "13px",
+            marginLeft: "6px",
+            flexShrink: 0
+          }}
+        >
+          ▼
+        </span>
+
+      </div>
+
+
+      {/* -------------------------------------------------
+          CUSTOM SIGHTSEEING
+      ------------------------------------------------- */}
+
+      <input
+        type="text"
+        placeholder="Custom Sightseeing"
+        value={
+          day.customSightseeingInput || ""
+        }
+        onChange={(e) => {
+
+          const updated =
+            [...(itineraryData.itinerary || [])];
+
+          updated[index].customSightseeingInput =
+            e.target.value;
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+        style={{
+          flex: "0 1 34%",
+          minWidth: "120px",
+          height: "34px",
+          padding: "7px 9px",
+          border: "1px solid #a3a3a3",
+          borderRadius: "6px",
+          boxSizing: "border-box",
+          fontSize: "12px"
+        }}
+      />
+
+
+      {/* -------------------------------------------------
+          ADD BUTTON
+      ------------------------------------------------- */}
+
+      <button
+        type="button"
+        onClick={() => {
+
+          if (
+            !day.customSightseeingInput?.trim()
+          ) {
+            return;
+          }
+
+          const updated =
+            [...(itineraryData.itinerary || [])];
+
+          updated[index].customSightseeing = [
+
+            ...(updated[index]
+              .customSightseeing || []),
+
+            updated[index]
+              .customSightseeingInput
+              .trim()
+
+          ];
+
+          // ---------- EXISTING OBJECT ARRAY ----------
+
+          const value =
+            updated[index]
+              .customSightseeingInput
+              .trim();
+
+          if (value !== "") {
+
+            const selected =
+              updated[index]
+                .selectedSightseeing || [];
+
+            const exists =
+              selected.some(
+                item =>
+                  item.name === value
+              );
+
+            if (!exists) {
+
+              updated[index]
+                .selectedSightseeing = [
+
+                ...selected,
+
+                {
+                  id:
+                    Date.now() +
+                    Math.random(),
+
+                  name:
+                    value,
+
+                  source:
+                    "manual",
+
+                  description:
+                    "",
+
+                  expanded:
+                    false
+                }
+
+              ];
+
+            }
+
+          }
+
+          // ------------------------------------------
+
+          updated[index]
+            .customSightseeingInput = "";
+
+          setItineraryData({
+            ...itineraryData,
+            itinerary: updated
+          });
+
+        }}
+        style={{
+          flexShrink: 0,
+          height: "34px",
+          padding: "6px 10px",
+          border: "1px solid #287c73",
+          borderRadius: "6px",
+          background: "#287c73",
+          color: "#fff",
+          fontSize: "12px",
+          fontWeight: 700,
+          cursor: "pointer",
+          whiteSpace: "nowrap"
+        }}
+      >
+        ＋ Add
+      </button>
+
+    </div>
+
+
+    {/* =====================================================
+        EXISTING SIGHTSEEING DROPDOWN
+        LOGIC UNCHANGED
+    ===================================================== */}
+
+    {openSightseeingSelector[index] && (
+
+      <div
+        style={{
+          marginTop: "4px",
+          padding: "8px 10px",
+          border: "1px solid #a3a3a3",
+          borderRadius: "6px",
+          background: "#fff",
+          maxHeight: "180px",
+          overflowY: "auto"
+        }}
+      >
+
+        {sightseeingOptions.map((spot) => (
+
+          <label
+            key={spot}
+            style={{
+              display: "block",
+              marginBottom: "5px",
+              fontSize: "12px"
+            }}
+          >
+
+            <input
+              type="checkbox"
+              checked={
+                day.sightseeing?.includes(
+                  spot
+                ) || false
+              }
+              onChange={(e) => {
+
+                const updated =
+                  [...(itineraryData.itinerary || [])];
+
+                const current =
+                  updated[index]
+                    .sightseeing || [];
+
+                const selected =
+                  updated[index]
+                    .selectedSightseeing || [];
+
+                updated[index].sightseeing =
+                  e.target.checked
+                    ? [...current, spot]
+                    : current.filter(
+                        (s) =>
+                          s !== spot
+                      );
+
+                if (e.target.checked) {
+
+                  const exists =
+                    selected.some(
+                      (item) =>
+                        item.name === spot
+                    );
+
+                  if (!exists) {
+
+                    updated[index]
+                      .selectedSightseeing = [
+
+                      ...selected,
+
+                      {
+                        id:
+                          Date.now() +
+                          Math.random(),
+
+                        name:
+                          spot,
+
+                        source:
+                          "chip",
+
+                        description:
+                          "",
+
+                        expanded:
+                          false
+                      }
+
+                    ];
+
+                  }
+
+                } else {
+
+                  updated[index]
+                    .selectedSightseeing =
+                    selected.filter(
+                      (item) =>
+                        item.name !== spot
+                    );
+
+                }
+
+                setItineraryData({
+                  ...itineraryData,
+                  itinerary: updated
+                });
+
+              }}
+            />
+
+            {" "}
+            {spot}
+
+          </label>
+
+        ))}
+
+      </div>
+
+    )}
+
+
+    {/* =====================================================
+        SELECTED SIGHTSEEING
+        EXISTING SECTION CONTINUES BELOW
+    ===================================================== */}
+
+    {(day.selectedSightseeing || []).length > 0 && (
 
 <div
   style={{
@@ -1013,42 +1800,75 @@ if (value !== "") {
   }}
 >
 
-  <div
+  {/* =====================================================
+    SELECTED SIGHTSEEING — SUBSECTION HEADER
+===================================================== */}
+
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: "8px",
+    marginTop: "6px",
+    marginBottom: "6px",
+    paddingBottom: "5px",
+    borderBottom: "1px solid #e5e7eb",
+    color: "#8B1E3F",
+    fontSize: "12px",
+    fontWeight: 700
+  }}
+>
+  <span
     style={{
-      fontWeight: "bold",
-      marginBottom: 8
+      fontSize: "13px",
+      color: "#A52A4A"
     }}
   >
+    ☷
+  </span>
+
+  <span>
     Selected Sightseeing
-  </div>
+  </span>
+</div>
 
   {(day.selectedSightseeing || []).map(
     (item) => (
 
       <div
-        key={item.id}
-        style={{
-    border: "1px solid #ddd",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-    background: "#fafafa"
-}}
-      >
-
-        <div
+  key={item.id}
   style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
+    borderBottom: "1px solid #e5e7eb",
+    padding: "4px 0",
+    marginBottom: "0",
+    background: "transparent"
   }}
 >
 
+        <div
+  style={{
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  gap: "6px",
+  width: "100%",
+  minHeight: "28px",
+  boxSizing: "border-box"
+}}
+>
+
   <div
-    style={{
-      fontWeight: 600
-    }}
-  >
+style={{
+  flex: 1,
+  minWidth: 0,
+  textAlign: "left",
+  fontSize: "12px",
+  fontWeight: 600,
+  color: "#374151",
+  lineHeight: "1.3"
+}}
+>
     • {item.name}
 
     {item.source === "chip" && (
@@ -1076,43 +1896,150 @@ if (value !== "") {
     )}
   </div>
 
+ <div
+ style={{
+  display: "flex",
+  alignItems: "center",
+  gap: "5px",
+  flexShrink: 0,
+  width: "58px",
+  marginRight: "50%"
+}}
+>
+
   <button
-    type="button"
-    onClick={() => {
+  type="button"
+  onClick={() => {
 
-      const updated = [...(itineraryData.itinerary || [])];
+    const updated = [...(itineraryData.itinerary || [])];
 
-      updated[index].selectedSightseeing =
-        updated[index].selectedSightseeing.map(s =>
+    updated[index].selectedSightseeing =
+      updated[index].selectedSightseeing.map(
+        s =>
           s.id === item.id
             ? {
                 ...s,
                 expanded: !s.expanded
               }
             : s
+      );
+
+    setItineraryData({
+      ...itineraryData,
+      itinerary: updated
+    });
+
+  }}
+  style={{
+    padding: "3px 7px",
+    fontSize: "11px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "5px",
+    background: "#fff",
+    color: "#374151",
+    cursor: "pointer",
+    whiteSpace: "nowrap"
+  }}
+>
+  {item.expanded
+    ? "Close"
+    : item.description?.trim()
+      ? "Edit"
+      : "Add"}
+</button>
+
+  {/* DELETE */}
+  <button
+    type="button"
+    onClick={() => {
+
+  const updated =
+    [...(itineraryData.itinerary || [])];
+
+  const removedItem =
+    updated[index].selectedSightseeing.find(
+      s => s.id === item.id
+    );
+
+  /*
+   * Remove from Selected Sightseeing list
+   */
+  updated[index].selectedSightseeing =
+    updated[index].selectedSightseeing.filter(
+      s => s.id !== item.id
+    );
+
+  /*
+   * If this was a chip item,
+   * also remove it from the main
+   * sightseeing selection array.
+   */
+  if (
+    removedItem?.source === "chip"
+  ) {
+
+    updated[index].sightseeing =
+      (updated[index].sightseeing || [])
+        .filter(
+          name =>
+            name !== removedItem.name
         );
+  }
 
-      setItineraryData({
-        ...itineraryData,
-        itinerary: updated
-      });
+  /*
+   * If this was a manually added item,
+   * also remove it from customSightseeing.
+   */
+  if (
+    removedItem?.source === "manual"
+  ) {
 
+    updated[index].customSightseeing =
+      (updated[index].customSightseeing || [])
+        .filter(
+          name =>
+            name !== removedItem.name
+        );
+  }
+
+  setItineraryData({
+    ...itineraryData,
+    itinerary: updated
+  });
+
+}}
+    style={{
+      width: "24px",
+      height: "24px",
+      padding: 0,
+      border: "1px solid #f1a1b2",
+      borderRadius: "5px",
+      background: "#fff",
+      color: "#be123c",
+      fontSize: "11px",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
     }}
+    title="Remove sightseeing"
   >
-    {item.description?.trim()
-      ? "✏ Edit"
-      : "✏ Add"}
+    ×
   </button>
+
+</div>
 
 </div>
           
 {item.expanded && (
 
 <div
-    style={{
-        marginTop: 10,
-       
-    }}
+  style={{
+    marginTop: "6px",
+    marginLeft: "12px",
+    marginRight: "12px",
+    marginBottom: "4px"
+  }}
 >
 
   <SightseeingRichTextEditor
@@ -1174,6 +2101,9 @@ if (value !== "") {
 
   }}
   preserveLineBreaks={true}
+
+  compact={true}
+
 />
 
 </div>
@@ -1186,74 +2116,6 @@ if (value !== "") {
 
     )
   )}
-
-</div>
-
-)}
-
-{(day.customSightseeing || []).length > 0 && (
-
-<div
-  style={{
-    marginTop: "8px"
-  }}
->
-
-{day.customSightseeing.map((item, i) => (
-
-<div
-  key={i}
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "4px"
-  }}
->
-
-<span>
-• {item}
-</span>
-
-<button
-type="button"
-onClick={() => {
-
-const updated =
-  [...(itineraryData.itinerary || [])];
-
-const removedPlace =
-  updated[index].customSightseeing[i];
-
-// Remove from Custom Sightseeing list
-updated[index].customSightseeing =
-  updated[index].customSightseeing.filter(
-    (_, idx) => idx !== i
-  );
-
-// Also remove the corresponding manual
-// sightseeing object from Selected Sightseeing
-updated[index].selectedSightseeing =
-  (updated[index].selectedSightseeing || []).filter(
-    item =>
-      !(
-        item.source === "manual" &&
-        item.name === removedPlace
-      )
-  );
-
-setItineraryData({
-  ...itineraryData,
-  itinerary: updated
-});
-
-}}
->
-❌
-</button>
-
-</div>
-
-))}
 
 </div>
 
@@ -1279,19 +2141,9 @@ setItineraryData({
         ...(itineraryData.itinerary || [])
       ];
 
-      /*
-       * Store the formatted version.
-       */
       updated[index].sightseeingRichText =
         html;
 
-      /*
-       * Also keep a plain-text version.
-       *
-       * This preserves compatibility with the
-       * existing PDF/data logic until we update
-       * the PDF renderer.
-       */
       const temp =
         document.createElement("div");
 
@@ -1307,29 +2159,71 @@ setItineraryData({
         ...itineraryData,
         itinerary: updated
       });
+
     }}
+
     preserveLineBreaks={true}
   />
 
 )}
 
+  </>
+)}
+</div>
+
+
+
+
+{/* =========================================================
+    MEALS + TRANSFERS — TWO COLUMN ROW
+========================================================= */}
+
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "minmax(0, 1fr) minmax(0, 1fr)",
+    gap: "12px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    alignItems: "start"
+  }}
+>
+
+<div
+  style={{
+    border: "1px solid #dbe3ea",
+    borderRadius: "10px",
+    padding: "10px 12px",
+    background: "#f8fafc",
+    boxSizing: "border-box"
+  }}
+>
+
 
 <h4
   style={{
-    margin: "18px 0 8px 0",
-    color: "#1f2937",
-    fontWeight: 700
+    margin: "0 0 8px 0",
+    paddingBottom: "7px",
+    borderBottom: "1px solid #dbe3ea",
+    color: "#287c73",
+    fontSize: "13px",
+    fontWeight: 800,
+    textAlign: "left"
   }}
 >
-🍽 Meals
+  🍴 Meals
 </h4>
 
 <div
   style={{
-    display: "flex",
-    gap: 10,
-    marginBottom: 8
-  }}
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  marginBottom: "7px",
+  fontSize: "12px",
+  color: "#64748b"
+}}
 >
   <label>
   <input
@@ -1395,16 +2289,19 @@ setItineraryData({
       })
     }
     style={{
-      width: "100%",
-      padding: "10px 12px",
-      border: "1px solid #a3a3a3",
-      background: "#fff",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      cursor: "pointer",
-      boxSizing: "border-box"
-    }}
+  width: "100%",
+  padding: "7px 9px",
+  height: "32px",
+  border: "1px solid #a3a3a3",
+  background: "#fff",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  cursor: "pointer",
+  boxSizing: "border-box",
+  fontSize: "12px",
+  color: "#64748b"
+}}
   >
     <span>
   {(day.meals || []).length > 0
@@ -1492,64 +2389,167 @@ setItineraryData({
 </div>
 )}
 
+
+{day.mealMode === "chips" &&
+  (day.meals || []).length > 0 && (
+
+  <div
+    style={{
+      marginTop: "6px",
+      marginBottom: "6px",
+      width: "100%",
+      textAlign: "left"
+    }}
+  >
+
+    {day.meals.map((meal, i) => (
+
+      <div
+        key={`${meal}-${i}`}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "6px",
+          width: "100%",
+          boxSizing: "border-box",
+          marginBottom: "3px",
+          fontSize: "11px",
+          color: "#475569",
+          textAlign: "left"
+        }}
+      >
+
+        <span
+          style={{
+            flex: 1,
+            minWidth: 0,
+            textAlign: "left"
+          }}
+        >
+          • {meal}
+        </span>
+
+
+        <button
+          type="button"
+          style={{
+            border: "1px solid #ef4444",
+            background: "#ffffff",
+            color: "#ef4444",
+            borderRadius: "5px",
+            width: "24px",
+            height: "24px",
+            padding: "0",
+            fontSize: "12px",
+            lineHeight: "22px",
+            cursor: "pointer",
+            flexShrink: 0
+          }}
+
+          onClick={() => {
+
+            const updated =
+              [...(itineraryData.itinerary || [])];
+
+            updated[index].meals =
+              updated[index].meals.filter(
+                (_, idx) => idx !== i
+              );
+
+            setItineraryData({
+              ...itineraryData,
+              itinerary: updated
+            });
+
+          }}
+        >
+          ×
+        </button>
+
+      </div>
+
+    ))}
+
+  </div>
+
+)}
+
 {day.mealMode === "text" && (
 
-<SightseeingRichTextEditor
-    key={`meal-text-${index}-${day.day || index}`}
+  <div
+    style={{
+      marginTop: "6px",
+      height: "95px",
+      overflow: "hidden"
+    }}
+  >
 
-    value={
+    <SightseeingRichTextEditor
+      key={`meal-text-${index}-${day.day || index}`}
+
+      value={
         day.mealRichText ||
         day.mealText ||
         ""
-    }
+      }
 
-    onChange={(html) => {
+      onChange={(html) => {
 
         const updated = [
-            ...(itineraryData.itinerary || [])
+          ...(itineraryData.itinerary || [])
         ];
 
         const temp =
-            document.createElement("div");
+          document.createElement("div");
 
         temp.innerHTML =
-            html;
+          html;
 
         const plainText =
-            temp.innerText
-                .replace(/\r\n/g, "\n")
-                .replace(/\r/g, "\n");
+          temp.innerText
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n");
 
         updated[index] = {
-            ...updated[index],
+          ...updated[index],
 
-            /*
-             * Rich formatted version
-             */
-            mealRichText:
-                html,
+          mealRichText:
+            html,
 
-            /*
-             * Existing compatibility field
-             */
-            mealText:
-                plainText
+          mealText:
+            plainText
         };
 
         setItineraryData({
-            ...itineraryData,
-            itinerary: updated
+          ...itineraryData,
+          itinerary: updated
         });
 
-    }}
+      }}
 
-    preserveLineBreaks={true}
-/>
+      preserveLineBreaks={true}
+    />
+
+  </div>
 
 )}
 
 
-<div style={{ marginTop: "10px" }}>
+
+
+
+<div
+  style={{
+   display:
+  (day.mealMode || "chips") === "chips"
+    ? "flex"
+    : "none",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "8px"
+  }}
+>
 
 <input
   type="text"
@@ -1569,15 +2569,28 @@ setItineraryData({
     });
 
   }}
-  style={{
-    width: "75%",
-    padding: "8px"
-  }}
+ style={{
+  flex: 1,
+  minWidth: 0,
+  padding: "7px 9px",
+  fontSize: "12px",
+  boxSizing: "border-box"
+}}
 />
 
 <button
   type="button"
-  style={{ marginLeft: "8px" }}
+  style={{
+  padding: "7px 12px",
+  border: "1px solid #0f766e",
+  borderRadius: "6px",
+  background: "#0f766e",
+  color: "#ffffff",
+  fontSize: "11px",
+  fontWeight: 700,
+  cursor: "pointer",
+  whiteSpace: "nowrap"
+}}
   onClick={() => {
 
     if (!day.customMealsInput?.trim())
@@ -1603,34 +2616,66 @@ setItineraryData({
 
   }}
 >
-➕ Add
++ Add
 </button>
 
 </div>
 {(day.customMeals || []).length > 0 && (
 
-<div style={{ marginTop: "8px" }}>
+<div
+  style={{
+  marginTop: "8px",
+  width: "100%",
+  textAlign: "left"
+}}
+>
 
 {day.customMeals.map((meal, i) => (
 
 <div
 key={i}
 style={{
-display: "flex",
-justifyContent: "space-between",
-marginBottom: "4px"
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "6px",
+  width: "100%",
+  boxSizing: "border-box",
+  marginBottom: "3px",
+  fontSize: "11px",
+  color: "#475569",
+  textAlign: "left"
 }}
 >
 
-<span>
-• {meal}
+<span
+  style={{
+    flex: 1,
+    minWidth: 0
+  }}
+>
+  • {meal}
 </span>
 
 <button
 type="button"
+style={{
+  border: "1px solid #ef4444",
+  background: "#ffffff",
+  color: "#ef4444",
+  borderRadius: "5px",
+  width: "24px",
+  height: "24px",
+  padding: "0",
+  fontSize: "12px",
+  lineHeight: "22px",
+  cursor: "pointer",
+  flexShrink: 0
+}}
+
 onClick={() => {
 
-const updated =
+  const updated =
 [...(itineraryData.itinerary || [])];
 
 updated[index].customMeals =
@@ -1645,7 +2690,7 @@ itinerary: updated
 
 }}
 >
-❌
+×
 </button>
 
 </div>
@@ -1656,22 +2701,43 @@ itinerary: updated
 
 )}
 
-<h4
+</div>
+
+
+
+<div
   style={{
-    margin: "18px 0 8px 0",
-    color: "#1f2937",
-    fontWeight: 700
+    border: "1px solid #dbe3ea",
+    borderRadius: "10px",
+    padding: "10px 12px",
+    background: "#f8fafc",
+    boxSizing: "border-box"
   }}
 >
-🚐 Transfers
+
+ <h4
+  style={{
+    margin: "0 0 8px 0",
+    paddingBottom: "7px",
+    borderBottom: "1px solid #dbe3ea",
+    color: "#287c73",
+    fontSize: "13px",
+    fontWeight: 800,
+    textAlign: "left"
+  }}
+>
+  🚐 Transfers
 </h4>
 
 <div
   style={{
-    display: "flex",
-    gap: 15,
-    marginBottom: 8
-  }}
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  marginBottom: "7px",
+  fontSize: "12px",
+  color: "#64748b"
+}}
 >
   <label>
     <input
@@ -1736,16 +2802,19 @@ itinerary: updated
       })
     }
     style={{
-      width: "100%",
-      padding: "10px 12px",
-      border: "1px solid #a3a3a3",
-      background: "#fff",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      cursor: "pointer",
-      boxSizing: "border-box"
-    }}
+  width: "100%",
+  padding: "7px 9px",
+  height: "32px",
+  border: "1px solid #a3a3a3",
+  background: "#fff",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  cursor: "pointer",
+  boxSizing: "border-box",
+  fontSize: "12px",
+  color: "#64748b"
+}}
   >
     <span>
   {(day.transfers || []).length > 0
@@ -1837,9 +2906,103 @@ itinerary: updated
 </div>
 )}
 
+
+{(day.transferMode || "chips") === "chips" &&
+  (day.transfers || []).length > 0 && (
+
+  <div
+    style={{
+      marginTop: "6px",
+      marginBottom: "6px",
+      width: "100%",
+      textAlign: "left"
+    }}
+  >
+
+    {day.transfers.map((transfer, i) => (
+
+      <div
+        key={`${transfer}-${i}`}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "6px",
+          width: "100%",
+          boxSizing: "border-box",
+          marginBottom: "3px",
+          fontSize: "11px",
+          color: "#475569",
+          textAlign: "left"
+        }}
+      >
+
+        <span
+          style={{
+            flex: 1,
+            minWidth: 0,
+            textAlign: "left"
+          }}
+        >
+          • {transfer}
+        </span>
+
+        <button
+          type="button"
+          style={{
+            border: "1px solid #ef4444",
+            background: "#ffffff",
+            color: "#ef4444",
+            borderRadius: "5px",
+            width: "24px",
+            height: "24px",
+            padding: "0",
+            fontSize: "12px",
+            lineHeight: "22px",
+            cursor: "pointer",
+            flexShrink: 0
+          }}
+          onClick={() => {
+
+            const updated =
+              [...(itineraryData.itinerary || [])];
+
+            updated[index].transfers =
+              updated[index].transfers.filter(
+                (_, idx) => idx !== i
+              );
+
+            setItineraryData({
+              ...itineraryData,
+              itinerary: updated
+            });
+
+          }}
+        >
+          ×
+        </button>
+
+      </div>
+
+    ))}
+
+  </div>
+
+)}
+
+
 {(day.transferMode || "chips") === "text" && (
 
-<SightseeingRichTextEditor
+  <div
+    style={{
+      marginTop: "6px",
+      height: "95px",
+      overflow: "hidden"
+    }}
+  >
+
+    <SightseeingRichTextEditor
+
     key={`transfer-text-${index}-${day.day || index}`}
 
     value={
@@ -1890,10 +3053,17 @@ itinerary: updated
 
     preserveLineBreaks={true}
 />
-
+ </div>
 )}
 
-<div style={{ marginTop: "10px" }}>
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "8px"
+  }}
+>
 
   <input
     type="text"
@@ -1913,14 +3083,27 @@ itinerary: updated
 
     }}
     style={{
-      width: "75%",
-      padding: "8px"
-    }}
+  flex: 1,
+  minWidth: 0,
+  padding: "7px 9px",
+  fontSize: "12px",
+  boxSizing: "border-box"
+}}
   />
 
   <button
     type="button"
-    style={{ marginLeft: "8px" }}
+    style={{
+  padding: "7px 12px",
+  border: "1px solid #0f766e",
+  borderRadius: "6px",
+  background: "#0f766e",
+  color: "#ffffff",
+  fontSize: "11px",
+  fontWeight: 700,
+  cursor: "pointer",
+  whiteSpace: "nowrap"
+}}
     onClick={() => {
 
       if (!day.customTransfersInput?.trim())
@@ -1945,31 +3128,63 @@ itinerary: updated
 
     }}
   >
-    ➕ Add
+   + Add
   </button>
 
 </div>
 {(day.customTransfers || []).length > 0 && (
 
-<div style={{ marginTop: "8px" }}>
+<div
+  style={{
+    marginTop: "8px",
+    width: "100%",
+    textAlign: "left"
+  }}
+>
 
   {day.customTransfers.map((item, i) => (
 
     <div
       key={i}
       style={{
-        display: "flex",
-        justifyContent: "space-between",
-        marginBottom: "4px"
-      }}
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "6px",
+  width: "100%",
+  boxSizing: "border-box",
+  marginBottom: "3px",
+  fontSize: "11px",
+  color: "#475569",
+  textAlign: "left"
+}}
     >
 
-      <span>
-        • {item}
-      </span>
+      <span
+  style={{
+    flex: 1,
+    minWidth: 0
+  }}
+>
+  • {item}
+</span>
 
       <button
         type="button"
+        style={{
+  border: "1px solid #ef4444",
+  background: "#ffffff",
+  color: "#ef4444",
+  borderRadius: "5px",
+  width: "24px",
+  height: "24px",
+  padding: "0",
+  fontSize: "12px",
+  lineHeight: "22px",
+  cursor: "pointer",
+  flexShrink: 0
+}}
+
         onClick={() => {
 
           const updated =
@@ -1987,7 +3202,7 @@ itinerary: updated
 
         }}
       >
-        ❌
+        ×
       </button>
 
     </div>
@@ -1998,21 +3213,43 @@ itinerary: updated
 
 )}
 
+ </div>
 
+  </div>
 
-                    </div>
+   </div>
 
-        );
+   );
 
-      }
+  }
 )}
 
-<button
+<div
+  style={{
+    textAlign: "left"
+  }}
+>
+  <button
   type="button"
   onClick={addDay}
+  style={{
+  marginTop: "8px",
+  marginBottom: "12px",
+  padding: "7px 16px",
+  border: "1px solid #4F46A5",
+  borderRadius: "999px",
+  background: "#4F46A5",
+  color: "#ffffff",
+  fontSize: "12px",
+  fontWeight: 800,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+  lineHeight: "1"
+}}
 >
   + Add Day
 </button>
+</div>
 
 <ItineraryTemplateLibrary
   open={showTemplateLibrary}

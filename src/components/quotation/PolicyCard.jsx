@@ -37,17 +37,14 @@ export default function PolicyCard({
 
        <div
     style={{
-        marginBottom: "14px",
-
-        borderRadius: "10px",
-
-        transition: "all .25s ease",
-
-        boxShadow:
-            expandedPolicyId === policy.id
-                ? "0 6px 18px rgba(15,23,42,.10)"
-                : "none"
-    }}
+  marginBottom: "8px",
+  borderRadius: "8px",
+  transition: "all .2s ease",
+  boxShadow:
+    expandedPolicyId === policy.id
+      ? "0 3px 10px rgba(15,23,42,.07)"
+      : "none"
+}}
 >
 
             <div
@@ -57,19 +54,19 @@ export default function PolicyCard({
     justifyContent: "space-between",
     alignItems: "center",
 
-    padding: "12px 18px",
+    padding: "9px 14px",
 
     border: "1px solid #E5E7EB",
 
     borderRadius:
-        expandedPolicyId === policy.id
-            ? "10px 10px 0 0"
-            : "10px",
+  expandedPolicyId === policy.id
+    ? "8px 8px 0 0"
+    : "8px",
 
-    background:
-    expandedPolicyId === policy.id
-        ? "#F0F9FF"
-        : "#F8FAFC",
+   background:
+  expandedPolicyId === policy.id
+    ? "#F8FAFC"
+    : "#FBFCFE",
 
     cursor: "pointer",
 
@@ -126,8 +123,8 @@ export default function PolicyCard({
          index === 0
         ? 0.35
         : 1,
-        fontSize: "10px",
-        padding: 0,
+        fontSize: "9px",
+       padding: "1px 3px",
         lineHeight: 1
     }}
 >
@@ -160,8 +157,8 @@ export default function PolicyCard({
           index === totalPolicies - 1
         ? 0.35
         : 1,
-        fontSize: "10px",
-        padding: 0,
+        fontSize: "9px",
+       padding: "1px 3px",
         lineHeight: 1
     }}
 >
@@ -257,7 +254,7 @@ onBlur={() => {
 
             color: "#1E293B",
 
-            fontSize: "14px",
+            fontSize: "13px",
 
             width: "220px"
 
@@ -271,7 +268,7 @@ onBlur={() => {
         style={{
             fontWeight: 600,
             color: "#1E293B",
-            fontSize: "14px",
+            fontSize: "13px",
 
             cursor:
                 policy.isCustom
@@ -304,11 +301,11 @@ onBlur={() => {
         style={{
             marginLeft: "10px",
 
-            padding: "3px 9px",
+            padding: "2px 8px",
 
             borderRadius: "999px",
 
-            fontSize: "11px",
+            fontSize: "10px",
 
             fontWeight: 600,
 
@@ -334,45 +331,75 @@ onBlur={() => {
 
 {policy.isCustom && (
 
-    <button
-        type="button"
-
-        onClick={(e) => {
-
-    e.stopPropagation();
-
-    setDeletePolicyId(policy.id);
-
-}}
-
-        title="Delete Policy"
-
+    <div
         style={{
-
-            border: "none",
-
-            background: "transparent",
-
-            cursor: "pointer",
-
-            color: "#DC2626",
-
-            fontSize: "15px",
-
-            padding: "2px",
-
             display: "flex",
-
             alignItems: "center",
-
-            justifyContent: "center"
-
+            gap: "10px",
+            marginLeft: "10px"
         }}
     >
 
-        🗑
+        <button
+            type="button"
 
-    </button>
+            onClick={(e) => {
+
+                e.stopPropagation();
+
+                setDeletePolicyId(policy.id);
+
+            }}
+
+            title="Delete Policy"
+
+            style={{
+                width: "28px",
+                height: "28px",
+
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+
+                border: "1px solid #FECACA",
+                borderRadius: "6px",
+
+                background: "#FFF1F2",
+                color: "#DC2626",
+
+                cursor: "pointer",
+
+                fontSize: "14px",
+
+                padding: 0,
+
+                transition: "all .2s ease"
+            }}
+
+            onMouseEnter={(e) => {
+                e.currentTarget.style.background =
+                    "#FEE2E2";
+            }}
+
+            onMouseLeave={(e) => {
+                e.currentTarget.style.background =
+                    "#FFF1F2";
+            }}
+        >
+
+            🗑
+
+        </button>
+
+        <div
+  style={{
+    width: "1px",
+    height: "22px",
+    background: "#94A3B8"
+  }}
+/>
+
+    </div>
 
 )}
 
@@ -552,28 +579,31 @@ onBlur={() => {
                     }}
 
                     style={{
+    display: "block",
+    width: "100%",
+    minWidth: 0,
+    minHeight: "110px",
 
-                        width: "100%",
+    padding: "10px 12px",
 
-                        padding: "14px",
+    border: "1px solid #E5E7EB",
+    borderTop: "none",
 
-                        border: "1px solid #E5E7EB",
+    borderBottomLeftRadius: "8px",
+    borderBottomRightRadius: "8px",
 
-                        borderTop: "none",
+    background: "#FFFFFF",
 
-                        borderBottomLeftRadius: "10px",
+    resize: "vertical",
 
-                        borderBottomRightRadius: "10px",
+    fontFamily: "inherit",
+    fontSize: "12px",
+    lineHeight: "18px",
 
-                        resize: "vertical",
+    boxSizing: "border-box",
 
-                        fontFamily: "inherit",
-
-                        boxSizing: "border-box",
-
-                        outline: "none"
-
-                    }}
+    outline: "none"
+}}
 
                 />
 

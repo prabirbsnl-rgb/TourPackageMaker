@@ -17,8 +17,11 @@ export default function SightseeingRichTextEditor({
   value = "",
   onChange,
   preserveLineBreaks = false,
-  compact = false
+  compact = false,
+  onFocus,
+  active = false
 }) {
+
 
   const [showColorPalette, setShowColorPalette] =
   useState(false);
@@ -38,6 +41,14 @@ export default function SightseeingRichTextEditor({
     content: value,
 
     autofocus: false,
+
+     onFocus: ({ editor }) => {
+
+  if (onFocus) {
+    onFocus(editor);
+  }
+
+},
 
     onUpdate: ({ editor }) => {
 
@@ -75,13 +86,16 @@ export default function SightseeingRichTextEditor({
 
     editorProps: {
 
-  attributes: {
-    class:
-      "sightseeing-rich-text-editor",
+ attributes: {
+  class:
+    `sightseeing-rich-text-editor${
+      active
+        ? " sightseeing-rich-text-editor-active"
+        : ""
+    }`,
 
-    tabindex: "0"
-  },
-
+  tabindex: "0"
+},
 
   handlePaste: (view, event) => {
 
@@ -416,17 +430,22 @@ return true;
           TOOLBAR
       ========================= */}
 
-      <div
-        style={{
-          display: "flex",
-          gap: "6px",
-          padding: "6px 8px",
-          border: "1px solid #a3a3a3",
-          borderBottom: "none",
-          borderRadius: "6px 6px 0 0",
-          background: "#f3f4f6"
-        }}
-      >
+     <div
+  className={
+    compact
+      ? "sightseeing-rich-text-editor-internal-toolbar-compact"
+      : ""
+  }
+  style={{
+    display: "flex",
+    gap: "6px",
+    padding: "6px 8px",
+    border: "1px solid #a3a3a3",
+    borderBottom: "none",
+    borderRadius: "6px 6px 0 0",
+    background: "#f3f4f6"
+  }}
+>
 
         <button
           type="button"
@@ -687,22 +706,31 @@ return true;
   width: 100%;
 }
 
+.sightseeing-rich-text-editor-internal-toolbar-compact {
+  display: none !important;
+}
+
+.sightseeing-rich-text-editor-active {
+  outline: 2px solid #64748b !important;
+  outline-offset: -2px;
+}
+
 .sightseeing-rich-text-editor-compact button {
-  width: 23px !important;
-  height: 27px !important;
-  min-width: 23px !important;
+  width: 21px !important;
+  height: 23px !important;
+  min-width: 21px !important;
   padding: 0 !important;
   margin: 1px !important;
-  font-size: 12px !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
 }
 
 .sightseeing-rich-text-editor-compact
 .sightseeing-rich-text-editor {
-  height: 54px;
-  min-height: 54px;
-  max-height: 54px;
-
-  padding: 6px;
+  height: 46px;
+min-height: 46px;
+max-height: 46px;
+  padding: 4px 6px;
 }
         `}
       </style>

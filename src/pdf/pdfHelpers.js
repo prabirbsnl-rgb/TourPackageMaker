@@ -35,7 +35,12 @@ export function drawRibbon(pdf, text, y, x = PAGE.marginLeft) {
 
 
 
-export function drawSectionHeading(pdf, title, y) {
+export function drawSectionHeading(
+  pdf,
+  title,
+  y,
+  sectionColor
+) {
 
   // More space after blue divider
   y += SPACING.sectionGap;
@@ -48,17 +53,78 @@ export function drawSectionHeading(pdf, title, y) {
     PAGE.marginRight;
 
   // ==========================
-  // SECTION RIBBON
-  // Same visual construction
-  // as Billing Details
+  // SECTION RIBBON COLOR
   // ==========================
+
+
+  console.log(
+  "DRAW SECTION HEADING:",
+  title,
+  sectionColor
+);
+
+
+ // ==========================
+// SECTION RIBBON COLOR
+// ==========================
+
+if (
+  typeof sectionColor === "string" &&
+  /^#[0-9A-Fa-f]{6}$/.test(sectionColor)
+) {
+
+  const hex =
+    sectionColor.substring(1);
+
+  const r =
+    parseInt(
+      hex.substring(0, 2),
+      16
+    );
+
+  const g =
+    parseInt(
+      hex.substring(2, 4),
+      16
+    );
+
+  const b =
+    parseInt(
+      hex.substring(4, 6),
+      16
+    );
+
+  pdf.setFillColor(
+    r,
+    g,
+    b
+  );
+
+} else if (
+  Array.isArray(sectionColor)
+) {
+
+  pdf.setFillColor(
+    ...sectionColor
+  );
+
+} else {
+
+  // Existing sections that pass
+  // ensureSpace or another function
+  // continue using the original default.
 
   pdf.setFillColor(
     ...COLORS.sectionHeader
   );
 
-  // Rounded outer shape
- pdf.roundedRect(
+}
+
+  // ==========================
+  // ROUNDED SECTION RIBBON
+  // ==========================
+
+  pdf.roundedRect(
     PAGE.marginLeft,
     y,
     ribbonWidth,
@@ -66,23 +132,28 @@ export function drawSectionHeading(pdf, title, y) {
     radius,
     radius,
     "F"
-);
+  );
 
-pdf.rect(
+  pdf.rect(
     PAGE.marginLeft,
     y + RIBBON.height - radius,
     ribbonWidth,
     radius,
     "F"
-);
-
+  );
 
   // ==========================
   // HEADER TEXT
   // ==========================
 
-  pdf.setFont("times", "bold");
-  pdf.setFontSize(RIBBON.titleFont);
+  pdf.setFont(
+    "times",
+    "bold"
+  );
+
+  pdf.setFontSize(
+    RIBBON.titleFont
+  );
 
   pdf.setTextColor(
     255,
@@ -92,16 +163,25 @@ pdf.rect(
 
   pdf.text(
     title,
-    PAGE.marginLeft + RIBBON.leftPadding,
-    y + RIBBON.topPadding
+    PAGE.marginLeft +
+      RIBBON.leftPadding,
+    y +
+      RIBBON.topPadding
   );
 
-  pdf.setTextColor(0, 0, 0);
+  pdf.setTextColor(
+    0,
+    0,
+    0
+  );
 
   // Leave space before first row
-  return y + SPACING.ribbonGap;
-}
 
+  return (
+    y +
+    SPACING.ribbonGap
+  );
+}
 
 
 export function drawLabelValue(pdf, label, value, y) {
@@ -1183,7 +1263,8 @@ export function drawHangingLines(
     labelX,
     valueX,
     cursorY,
-    iconType = "transfer"
+    iconType = "transfer",
+    labelColor
 ) {
 
     const wrapped =
@@ -1201,7 +1282,7 @@ export function drawHangingLines(
 pdf.setFontSize(10);
 
 pdf.setTextColor(
-    ...COLORS.contentLabel
+    ...(labelColor || COLORS.contentLabel)
 );
 
 pdf.text(
@@ -1470,7 +1551,13 @@ const ROW_TEXT_Y_OFFSET = 0.8;
 
 
 
-export function drawGreyCostRowCompact(pdf, label, value, y) {
+export function drawGreyCostRowCompact(
+  pdf,
+  label,
+  value,
+  y,
+  rowColors
+) {
 
   pdf.setFont("NotoSans", "normal");
   pdf.setFontSize(10);
@@ -1494,7 +1581,9 @@ export function drawGreyCostRowCompact(pdf, label, value, y) {
 
   if (labelWidth <= LABEL_MAX_WIDTH) {
 
-    pdf.setFillColor(246, 241, 236);
+    pdf.setFillColor(
+  ...(rowColors?.background || [246, 241, 236])
+);
 
     pdf.rect(
   PAGE.marginLeft,
@@ -1505,7 +1594,10 @@ export function drawGreyCostRowCompact(pdf, label, value, y) {
 );
 
     // Subtle row divider
-pdf.setDrawColor(220, 230, 224);
+pdf.setDrawColor(
+  ...(rowColors?.border || [220, 230, 224])
+);
+
 pdf.setLineWidth(0.25);
 
 pdf.line(
@@ -1519,8 +1611,9 @@ pdf.line(
 
     pdf.setFontSize(10);
 
-    pdf.setTextColor(62, 48, 48);
-
+    pdf.setTextColor(
+  ...(rowColors?.text || [62, 48, 48])
+);
 
     pdf.text(
       label,
@@ -1563,7 +1656,9 @@ pdf.line(
 
   const rowHeight = 12;
 
- pdf.setFillColor(244, 248, 245);
+ pdf.setFillColor(
+  ...(rowColors?.backgroundAlt || [244, 248, 245])
+);
 
  pdf.rect(
   PAGE.marginLeft,
@@ -1574,7 +1669,10 @@ pdf.line(
 );
 
   // Subtle divider below two-line row
-pdf.setDrawColor(220, 230, 224);
+pdf.setDrawColor(
+  ...(rowColors?.border || [220, 230, 224])
+);
+
 pdf.setLineWidth(0.25);
 
 pdf.line(
@@ -1586,8 +1684,9 @@ pdf.line(
 
   pdf.setFont("NotoSans", "bold");
 pdf.setFontSize(10);
-pdf.setTextColor(38, 58, 53);
-
+pdf.setTextColor(
+  ...(rowColors?.text || [38, 58, 53])
+);
 
   const line1Y = y + 1;
   const line2Y = y + 5.5;
@@ -1628,30 +1727,17 @@ pdf.setTextColor(38, 58, 53);
 
 
 
-export function drawBlueCostRowCompact(pdf, label, value, y) {
+export function drawBlueCostRowCompact(
+  pdf,
+  label,
+  value,
+  y,
+  rowColors
+) {
 
   // ==========================
-  // PREMIUM TOTAL ROW
+  // FIXED COLUMN POSITIONS
   // ==========================
-
-  pdf.setFillColor(237, 224, 217);
-
-  pdf.rect(
-  PAGE.marginLeft,
-  y - 3,
-  PAGE.width - PAGE.marginLeft - PAGE.marginRight,
-  6,
-  "F"
-);
-
-  // ==========================
-  // TYPOGRAPHY
-  // ==========================
-
- 
-  pdf.setFontSize(10.5);
-
-  pdf.setTextColor(122, 46, 62);
 
   const colonX =
     PAGE.marginLeft + 94;
@@ -1662,44 +1748,119 @@ export function drawBlueCostRowCompact(pdf, label, value, y) {
   const LABEL_X =
     PAGE.marginLeft + RIBBON.leftPadding;
 
+
   // ==========================
-// LABEL — BOLD
-// ==========================
+  // LABEL WRAPPING
+  // ==========================
 
-pdf.setFont("times", "bold");
-pdf.setFontSize(10.5);
-pdf.setTextColor(40, 96, 82);
+  pdf.setFont("times", "bold");
+  pdf.setFontSize(10.5);
 
-pdf.text(
-  label,
-  LABEL_X,
-  y + ROW_TEXT_Y_OFFSET
-);
+  const labelMaxWidth =
+    colonX - LABEL_X - 4;
 
- // ==========================
-// COLON + VALUE — Noto Sans
-// ==========================
-
-pdf.setFont("NotoSans", "normal");
-pdf.setFontSize(10.5);
-
-pdf.text(
-  ":",
-  colonX,
-  y + ROW_TEXT_Y_OFFSET
-);
-
-// Total amount
-pdf.setTextColor(107, 38, 54);
+  const labelLines =
+    pdf.splitTextToSize(
+      String(label || ""),
+      labelMaxWidth
+    );
 
 
-pdf.text(
-  value,
-  valueX,
-  y + ROW_TEXT_Y_OFFSET
-);
+  // ==========================
+  // LINE / ROW HEIGHT
+  // ==========================
 
-  return y + 7;
+  const lineHeight = 4.8;
+
+  const rowHeight =
+    Math.max(
+      6,
+      labelLines.length * lineHeight + 1.5
+    );
+
+
+  // ==========================
+  // PREMIUM TOTAL ROW
+  // ==========================
+
+  pdf.setFillColor(237, 224, 217);
+
+  pdf.rect(
+    PAGE.marginLeft,
+    y - 3,
+    PAGE.width -
+      PAGE.marginLeft -
+      PAGE.marginRight,
+    rowHeight,
+    "F"
+  );
+
+
+  // ==========================
+  // LABEL — DRAW EACH LINE
+  // ==========================
+
+  pdf.setFont("times", "bold");
+  pdf.setFontSize(10.5);
+  pdf.setTextColor(40, 96, 82);
+
+  labelLines.forEach(
+    (line, index) => {
+
+      pdf.text(
+        line,
+        LABEL_X,
+        y +
+          ROW_TEXT_Y_OFFSET +
+          (index * lineHeight)
+      );
+
+    }
+  );
+
+
+  // ==========================
+  // COLON + VALUE
+  // KEEP FIXED
+  // ==========================
+
+  const valueY =
+    y +
+    (rowHeight - 6) / 2 +
+    ROW_TEXT_Y_OFFSET;
+
+
+  pdf.setFont("NotoSans", "normal");
+  pdf.setFontSize(10.5);
+
+  // Colon
+
+  pdf.setTextColor(40, 40, 40);
+
+  pdf.text(
+    ":",
+    colonX,
+    valueY
+  );
+
+
+  // Amount
+
+  pdf.setTextColor(107, 38, 54);
+
+  pdf.text(
+    value,
+    valueX,
+    valueY
+  );
+
+
+  // ==========================
+  // NEXT ROW POSITION
+  // ==========================
+
+  return y + rowHeight;
+
 }
 
 
@@ -1841,7 +2002,8 @@ export function drawBillingCard(
     x,
     y,
     width,
-    height
+    height,
+    sectionColor
 ) {
 
     const radius = 3;
@@ -1850,15 +2012,46 @@ export function drawBillingCard(
     // PREMIUM EMERALD PALETTE
     // ==========================
 
-    const BURGUNDY = [107,38,54];
-const IVORY = [252, 248, 243];
-const BORDER = [226, 214, 208];
+    const HEADER_COLOR =
+    Array.isArray(sectionColor)
+        ? sectionColor
+        : [107, 38, 54];
+
+const mixWithWhite = (color, amount) => [
+    Math.round(
+        color[0] +
+        (255 - color[0]) * amount
+    ),
+    Math.round(
+        color[1] +
+        (255 - color[1]) * amount
+    ),
+    Math.round(
+        color[2] +
+        (255 - color[2]) * amount
+    )
+];
+
+const BODY_COLOR =
+    mixWithWhite(
+        HEADER_COLOR,
+        0.94
+    );
+
+const BORDER_COLOR =
+    mixWithWhite(
+        HEADER_COLOR,
+        0.62
+    );
+
 
     // ==========================
     // BODY BACKGROUND
     // ==========================
 
-   pdf.setFillColor(...IVORY);
+  pdf.setFillColor(
+    ...BODY_COLOR
+);
 
     pdf.roundedRect(
         x,
@@ -1874,7 +2067,9 @@ const BORDER = [226, 214, 208];
     // HEADER BACKGROUND
     // ==========================
 
-  pdf.setFillColor(...BURGUNDY);
+  pdf.setFillColor(
+    ...HEADER_COLOR
+);
 
     pdf.roundedRect(
         x,
@@ -1892,7 +2087,9 @@ const BORDER = [226, 214, 208];
     // BORDER
     // ==========================
 
-    pdf.setDrawColor(...BORDER);
+    pdf.setDrawColor(
+    ...BORDER_COLOR
+);
 
     pdf.roundedRect(
         x,
@@ -1904,6 +2101,7 @@ const BORDER = [226, 214, 208];
         "S"
     );
 
+    
   
 
 
