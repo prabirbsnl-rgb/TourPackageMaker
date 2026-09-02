@@ -315,6 +315,58 @@ export function getTaxInvoices() {
 }
 
 
+export async function loadTaxInvoicesFromFirestore() {
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "taxInvoices"
+                )
+            );
+
+        const invoices =
+            snapshot.docs.map(
+                docSnap => docSnap.data()
+            );
+
+        console.log(
+            "🔥 TAX INVOICES LOADED FROM FIRESTORE:",
+            invoices.length
+        );
+
+        /*
+         * Keep Firestore as the shared source,
+         * while maintaining a local cache.
+         */
+        localStorage.setItem(
+            "taxInvoices",
+            JSON.stringify(invoices)
+        );
+
+        return invoices;
+
+    } catch (error) {
+
+        console.error(
+            "🔥 TAX INVOICES FIRESTORE LOAD FAILED:",
+            error
+        );
+
+        /*
+         * If Firestore is temporarily unavailable,
+         * retain the existing local invoices.
+         */
+        return getTaxInvoices();
+
+    }
+
+}
+
+
+
 export async function deleteTaxInvoice(invoiceId) {
 
     // ==========================================
