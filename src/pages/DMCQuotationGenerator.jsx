@@ -36,8 +36,9 @@ import {
     saveDraft,
     getLatestDraft,
     getAllDrafts,
-     getTaxInvoices,
-      saveTaxInvoice,
+    getTaxInvoices,
+    saveTaxInvoice,
+    loadTaxInvoicesFromFirestore,
     getAllDraftsFromFirestore,
     migrateLocalDraftsToFirestore,
     deleteDraft,
@@ -46,7 +47,6 @@ import {
     clearWorkingCopy,
     getWorkingCopy,
     saveTemplateToFirestore
-    
 } from "../utils/quotationStorage";
 
 import DraftLibrary
@@ -371,13 +371,23 @@ export default function DMCQuotationGenerator({
     useState([]);
 
 
-   useEffect(() => {
+  useEffect(() => {
 
-    setTaxInvoices(
-        getTaxInvoices()
-    );
+    const loadTaxInvoices = async () => {
+
+        const firestoreInvoices =
+            await loadTaxInvoicesFromFirestore();
+
+        setTaxInvoices(
+            firestoreInvoices
+        );
+
+    };
+
+    loadTaxInvoices();
 
 }, []);
+
 
 
     const [commonData, setCommonData] = useState(() => ({
@@ -3732,21 +3742,20 @@ importingTemplateRef={
     drafts={drafts}
     taxInvoices={taxInvoices}
 
-    onRefresh={() => {
+    onRefresh={async () => {
+    const refreshedInvoices =
+        await loadTaxInvoicesFromFirestore();
 
-        const refreshedInvoices =
-            getTaxInvoices();
+    console.log(
+        "🔥 TAX INVOICES AFTER FIRESTORE REFRESH:",
+        refreshedInvoices
+    );
 
-        console.log(
-            "🔥 TAX INVOICES AFTER REFRESH:",
-            refreshedInvoices
-        );
+    setTaxInvoices(
+        refreshedInvoices
+    );
+}}
 
-        setTaxInvoices(
-            refreshedInvoices
-        );
-
-    }}
 
     onOpen={(draft, existingTaxInvoice) => {
 
