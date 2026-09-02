@@ -1562,58 +1562,86 @@ export function drawGreyCostRowCompact(
   pdf.setFont("NotoSans", "normal");
   pdf.setFontSize(10);
 
-  const colonX = PAGE.marginLeft + 94;
-  const valueX = PAGE.marginLeft + 99;
+  // --------------------------------
+  // FIXED BILLING COLUMNS
+  // --------------------------------
+const colonX = PAGE.marginLeft + 70;
+const valueX = PAGE.marginLeft + 75;
 
   const LABEL_X =
     PAGE.marginLeft + RIBBON.leftPadding;
 
-  // Space available before the fixed colon
+  // Space available BEFORE the fixed colon
   const LABEL_MAX_WIDTH =
     colonX - LABEL_X - 4;
 
+  // Space available AFTER the fixed colon
+  const VALUE_MAX_WIDTH =
+    PAGE.width -
+    PAGE.marginRight -
+    valueX -
+    2;
+
   const labelWidth =
-    pdf.getTextWidth(label);
+    pdf.getTextWidth(String(label || ""));
+
+  const valueText =
+    String(value || "");
+
+  // --------------------------------
+  // WRAP VALUE ONLY WHEN NECESSARY
+  // --------------------------------
+
+  const wrappedValue =
+    pdf.splitTextToSize(
+      valueText,
+      VALUE_MAX_WIDTH
+    );
 
   // --------------------------------
   // NORMAL SINGLE-LINE ROW
   // --------------------------------
 
-  if (labelWidth <= LABEL_MAX_WIDTH) {
+  if (
+    labelWidth <= LABEL_MAX_WIDTH &&
+    wrappedValue.length <= 1
+  ) {
 
     pdf.setFillColor(
-  ...(rowColors?.background || [246, 241, 236])
-);
+      ...(rowColors?.background || [246, 241, 236])
+    );
 
     pdf.rect(
-  PAGE.marginLeft,
-  y - 3,
-  PAGE.width - PAGE.marginLeft - PAGE.marginRight,
-  6,
-  "F"
-);
+      PAGE.marginLeft,
+      y - 3,
+      PAGE.width -
+        PAGE.marginLeft -
+        PAGE.marginRight,
+      6,
+      "F"
+    );
 
     // Subtle row divider
-pdf.setDrawColor(
-  ...(rowColors?.border || [220, 230, 224])
-);
+    pdf.setDrawColor(
+      ...(rowColors?.border || [220, 230, 224])
+    );
 
-pdf.setLineWidth(0.25);
+    pdf.setLineWidth(0.25);
 
-pdf.line(
-  PAGE.marginLeft,
-  y + 3,
-  PAGE.width - PAGE.marginRight,
-  y + 3
-);
+    pdf.line(
+      PAGE.marginLeft,
+      y + 3,
+      PAGE.width - PAGE.marginRight,
+      y + 3
+    );
 
+    // Label
     pdf.setFont("NotoSans", "bold");
-
     pdf.setFontSize(10);
 
     pdf.setTextColor(
-  ...(rowColors?.text || [62, 48, 48])
-);
+      ...(rowColors?.text || [62, 48, 48])
+    );
 
     pdf.text(
       label,
@@ -1621,9 +1649,8 @@ pdf.line(
       y + ROW_TEXT_Y_OFFSET
     );
 
-
+    // Colon
     pdf.setFont("NotoSans", "normal");
-
 
     pdf.text(
       ":",
@@ -1631,8 +1658,9 @@ pdf.line(
       y + ROW_TEXT_Y_OFFSET
     );
 
+    // Value
     pdf.text(
-      value,
+      valueText,
       valueX,
       y + ROW_TEXT_Y_OFFSET
     );
@@ -1641,56 +1669,154 @@ pdf.line(
   }
 
   // --------------------------------
-  // LONG LABEL — TWO-LINE ROW
+  // LONG VALUE
+  // --------------------------------
+  //
+  // Label and colon remain fixed.
+  // Only the value wraps.
+  // --------------------------------
+
+  if (
+    labelWidth <= LABEL_MAX_WIDTH &&
+    wrappedValue.length > 1
+  ) {
+
+    const lineHeight = 4.5;
+
+    const rowHeight =
+      Math.max(
+        12,
+        wrappedValue.length * lineHeight + 4
+      );
+
+    pdf.setFillColor(
+      ...(rowColors?.backgroundAlt ||
+        [244, 248, 245])
+    );
+
+    pdf.rect(
+      PAGE.marginLeft,
+      y - 3,
+      PAGE.width -
+        PAGE.marginLeft -
+        PAGE.marginRight,
+      rowHeight,
+      "F"
+    );
+
+    // Divider
+    pdf.setDrawColor(
+      ...(rowColors?.border ||
+        [220, 230, 224])
+    );
+
+    pdf.setLineWidth(0.25);
+
+    pdf.line(
+      PAGE.marginLeft,
+      y + rowHeight - 3,
+      PAGE.width - PAGE.marginRight,
+      y + rowHeight - 3
+    );
+
+    // Label
+    pdf.setFont("NotoSans", "bold");
+    pdf.setFontSize(10);
+
+    pdf.setTextColor(
+      ...(rowColors?.text ||
+        [38, 58, 53])
+    );
+
+    pdf.text(
+      label,
+      LABEL_X,
+      y + ROW_TEXT_Y_OFFSET
+    );
+
+    // Colon stays in the SAME column
+    pdf.setFont("NotoSans", "normal");
+
+    pdf.text(
+      ":",
+      colonX,
+      y + ROW_TEXT_Y_OFFSET
+    );
+
+    // Wrapped value starts AFTER colon
+    wrappedValue.forEach(
+      (line, index) => {
+
+        pdf.text(
+          line,
+          valueX,
+          y +
+            ROW_TEXT_Y_OFFSET +
+            index * lineHeight
+        );
+
+      }
+    );
+
+    return y + rowHeight + 1;
+  }
+
+  // --------------------------------
+  // LONG LABEL
   // --------------------------------
 
   const wrappedLabel =
     pdf.splitTextToSize(
-      label,
+      String(label || ""),
       LABEL_MAX_WIDTH
     );
 
-  // Maximum two lines for billing rows
   const lines =
     wrappedLabel.slice(0, 2);
 
   const rowHeight = 12;
 
- pdf.setFillColor(
-  ...(rowColors?.backgroundAlt || [244, 248, 245])
-);
+  pdf.setFillColor(
+    ...(rowColors?.backgroundAlt ||
+      [244, 248, 245])
+  );
 
- pdf.rect(
-  PAGE.marginLeft,
-  y - 3,
-  PAGE.width - PAGE.marginLeft - PAGE.marginRight,
-  rowHeight,
-  "F"
-);
+  pdf.rect(
+    PAGE.marginLeft,
+    y - 3,
+    PAGE.width -
+      PAGE.marginLeft -
+      PAGE.marginRight,
+    rowHeight,
+    "F"
+  );
 
-  // Subtle divider below two-line row
-pdf.setDrawColor(
-  ...(rowColors?.border || [220, 230, 224])
-);
+  // Divider
+  pdf.setDrawColor(
+    ...(rowColors?.border ||
+      [220, 230, 224])
+  );
 
-pdf.setLineWidth(0.25);
+  pdf.setLineWidth(0.25);
 
-pdf.line(
-  PAGE.marginLeft,
-  y + rowHeight - 3,
-  PAGE.width - PAGE.marginRight,
-  y + rowHeight - 3
-);
+  pdf.line(
+    PAGE.marginLeft,
+    y + rowHeight - 3,
+    PAGE.width - PAGE.marginRight,
+    y + rowHeight - 3
+  );
 
+  // Label
   pdf.setFont("NotoSans", "bold");
-pdf.setFontSize(10);
-pdf.setTextColor(
-  ...(rowColors?.text || [38, 58, 53])
-);
+  pdf.setFontSize(10);
+
+  pdf.setTextColor(
+    ...(rowColors?.text ||
+      [38, 58, 53])
+  );
 
   const line1Y = y + 1;
   const line2Y = y + 5.5;
-  const centerY = y + 3.25;
 
   pdf.text(
     lines[0],
@@ -1699,26 +1825,29 @@ pdf.setTextColor(
   );
 
   if (lines[1]) {
+
     pdf.text(
       lines[1],
       LABEL_X,
       line2Y
     );
+
   }
 
+  // Fixed colon
   pdf.setFont("NotoSans", "normal");
 
-  // Colon and amount remain in the SAME fixed columns
   pdf.text(
     ":",
     colonX,
-    centerY
+    y + 3.25
   );
 
+  // Value
   pdf.text(
-    value,
+    valueText,
     valueX,
-    centerY
+    y + 3.25
   );
 
   return y + rowHeight + 1;
@@ -1740,10 +1869,10 @@ export function drawBlueCostRowCompact(
   // ==========================
 
   const colonX =
-    PAGE.marginLeft + 94;
+    PAGE.marginLeft + 70;
 
   const valueX =
-    PAGE.marginLeft + 99;
+    PAGE.marginLeft + 75;
 
   const LABEL_X =
     PAGE.marginLeft + RIBBON.leftPadding;
@@ -2064,23 +2193,32 @@ const BORDER_COLOR =
     );
 
     // ==========================
-    // HEADER BACKGROUND
-    // ==========================
+// HEADER BACKGROUND
+// MATCH STANDARD SECTION RIBBON
+// ==========================
 
-  pdf.setFillColor(
+pdf.setFillColor(
     ...HEADER_COLOR
 );
 
-    pdf.roundedRect(
-        x,
-        y,
-        width,
-        RIBBON.height + radius,
-        radius,
-        radius,
-        "F"
-    );
+pdf.roundedRect(
+    x,
+    y,
+    width,
+    RIBBON.height,
+    radius,
+    radius,
+    "F"
+);
 
+// Flatten the bottom corners
+pdf.rect(
+    x,
+    y + RIBBON.height - radius,
+    width,
+    radius,
+    "F"
+);
 
    
     // ==========================
@@ -2113,7 +2251,7 @@ const BORDER_COLOR =
     pdf.setFontSize(RIBBON.titleFont);
     pdf.setTextColor(255, 255, 255);
 
-    const TITLE_Y_OFFSET = 1.5;
+    const TITLE_Y_OFFSET = 0.45;
 
     pdf.text(
         title,

@@ -218,6 +218,226 @@ export async function saveDraft(draft) {
 }
 
 
+export async function saveTaxInvoice(invoice) {
+
+    // ==========================================
+    // LOCAL STORAGE BACKUP
+    // ==========================================
+
+    const invoices =
+        JSON.parse(
+            localStorage.getItem("taxInvoices") || "[]"
+        );
+
+    const index =
+        invoices.findIndex(
+            item =>
+                item.invoiceNo === invoice.invoiceNo
+        );
+
+    if (index >= 0) {
+
+        invoices[index] = invoice;
+
+    } else {
+
+        invoices.unshift(invoice);
+
+    }
+
+    localStorage.setItem(
+        "taxInvoices",
+        JSON.stringify(invoices)
+    );
+
+
+    // ==========================================
+    // FIRESTORE SHARED STORAGE
+    // ==========================================
+
+    try {
+
+        console.log(
+    "===== FIRESTORE TAX INVOICE SAVE CHECK =====",
+    {
+        dbExists:
+            Boolean(db),
+
+        invoiceNo:
+            invoice?.invoiceNo,
+
+        invoiceStatus:
+            invoice?.status,
+
+        paymentStatus:
+            invoice?.paymentStatus
+    }
+);
+
+        await setDoc(
+            doc(
+                db,
+                "taxInvoices",
+                invoice.invoiceNo
+            ),
+            invoice
+        );
+
+        console.log(
+            "🔥 TAX INVOICE SAVED TO FIRESTORE:",
+            invoice.invoiceNo
+        );
+
+    } catch (error) {
+
+        console.error(
+            "🔥 TAX INVOICE FIRESTORE SAVE FAILED:",
+            error
+        );
+
+        /*
+         * LocalStorage has already been updated.
+         *
+         * Therefore a Firestore failure does NOT
+         * destroy the user's local tax invoice.
+         */
+    }
+
+}
+
+
+export function getTaxInvoices() {
+
+    return JSON.parse(
+        localStorage.getItem("taxInvoices") || "[]"
+    );
+
+}
+
+
+export async function deleteTaxInvoice(invoiceId) {
+
+    // ==========================================
+    // GET CURRENT INVOICE BEFORE DELETION
+    // ==========================================
+
+    const invoices = getTaxInvoices();
+
+    const invoiceToDelete =
+        invoices.find(
+            invoice =>
+                invoice?.invoiceNo === invoiceId
+        );
+
+
+    // ==========================================
+    // REMEMBER DELETED TAX INVOICE
+    // ==========================================
+
+    if (invoiceToDelete) {
+
+        const deletedInvoices =
+            JSON.parse(
+                localStorage.getItem(
+                    "deletedTaxInvoices"
+                ) || "[]"
+            );
+
+        const alreadyTracked =
+            deletedInvoices.some(
+                invoice =>
+                    invoice?.invoiceNo ===
+                    invoiceId
+            );
+
+        if (!alreadyTracked) {
+
+            deletedInvoices.unshift({
+
+                invoiceNo:
+                    invoiceToDelete.invoiceNo,
+
+                quotationNo:
+                    invoiceToDelete.quotationNo ||
+                    "",
+
+                sourceDraftQuotationNo:
+                    invoiceToDelete.sourceDraftQuotationNo ||
+                    invoiceToDelete.quotationNo ||
+                    "",
+
+                displayQuotationNo:
+                    invoiceToDelete.displayQuotationNo ||
+                    "",
+
+                deletedAt:
+                    new Date().toISOString(),
+
+                status:
+                    invoiceToDelete.status ||
+                    "Pending"
+
+            });
+
+            localStorage.setItem(
+                "deletedTaxInvoices",
+                JSON.stringify(
+                    deletedInvoices
+                )
+            );
+
+        }
+
+    }
+
+
+    // ==========================================
+    // LOCAL STORAGE
+    // ==========================================
+
+    const updatedInvoices =
+        invoices.filter(
+            invoice =>
+                invoice?.invoiceNo !== invoiceId
+        );
+
+    localStorage.setItem(
+        "taxInvoices",
+        JSON.stringify(updatedInvoices)
+    );
+
+
+    // ==========================================
+    // FIRESTORE
+    // ==========================================
+
+    try {
+
+        await deleteDoc(
+            doc(
+                db,
+                "taxInvoices",
+                invoiceId
+            )
+        );
+
+        console.log(
+            "🔥 TAX INVOICE DELETED FROM FIRESTORE:",
+            invoiceId
+        );
+
+    } catch (error) {
+
+        console.error(
+            "🔥 TAX INVOICE FIRESTORE DELETE FAILED:",
+            error
+        );
+
+    }
+
+}
+
+
 export function getAllDrafts() {
 
     const drafts = getDrafts();
@@ -720,6 +940,28 @@ export async function updateDraftStatus(
 
 
     // ==========================================
+    // CONFIRMED DATE
+    // ==========================================
+
+    const existingDraft =
+        index >= 0
+            ? drafts[index]
+            : null;
+
+    const isConfirming =
+        String(status || "")
+            .toLowerCase() === "confirmed";
+
+    const confirmedAt =
+        isConfirming
+            ? (
+                existingDraft?.confirmedAt ||
+                new Date().toISOString()
+            )
+            : existingDraft?.confirmedAt;
+
+
+    // ==========================================
     // LOCAL STORAGE BACKUP
     // ==========================================
 
@@ -729,7 +971,11 @@ export async function updateDraftStatus(
 
             ...drafts[index],
 
-            status
+            status,
+
+            ...(confirmedAt
+                ? { confirmedAt }
+                : {})
 
         };
 
@@ -789,6 +1035,16 @@ export async function updateDraftStatus(
             snapshot.data();
 
 
+        const firestoreConfirmedAt =
+            isConfirming
+                ? (
+                    firestoreDraft?.confirmedAt ||
+                    confirmedAt ||
+                    new Date().toISOString()
+                )
+                : firestoreDraft?.confirmedAt;
+
+
         await setDoc(
 
             draftRef,
@@ -797,7 +1053,14 @@ export async function updateDraftStatus(
 
                 ...firestoreDraft,
 
-                status
+                status,
+
+                ...(firestoreConfirmedAt
+                    ? {
+                        confirmedAt:
+                            firestoreConfirmedAt
+                    }
+                    : {})
 
             }
 
@@ -813,6 +1076,19 @@ export async function updateDraftStatus(
             status
 
         );
+
+
+        if (isConfirming) {
+
+            console.log(
+
+                "📅 DRAFT CONFIRMED AT:",
+
+                firestoreConfirmedAt
+
+            );
+
+        }
 
 
     } catch (error) {

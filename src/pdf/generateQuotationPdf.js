@@ -4150,119 +4150,171 @@ cursorY = drawBlueCostRowCompact(
   }
 
   // -----------------------------
-  // GENERAL PACKAGE
-  // -----------------------------
-  else {
-const subtotal = Number(quoteData.subtotal || 0);
+// GENERAL PACKAGE
+// -----------------------------
+else {
 
-const gstAmount =
-  quoteData.applyGst
-    ? subtotal * Number(quoteData.gstPercent || 0) / 100
-    : 0;
+  const subtotal =
+    Number(quoteData.subtotal || 0);
 
-const grandTotal = subtotal + gstAmount;
-
-const packageCostDescription =
+  const packageCostDescription =
     String(
-        quoteData.packageCostDescription ||
-        ""
+      quoteData.packageCostDescription ||
+      ""
     ).trim();
 
-const packageCostLabel =
-    packageCostDescription
-        ? `Package Cost (${packageCostDescription})`
-        : "Package Cost";
+  /*
+   * ---------------------------------------------------------
+   * CUSTOMER-FACING PROFORMA
+   * ---------------------------------------------------------
+   *
+   * Do NOT expose:
+   *   - GST amount
+   *   - Markup / Profit
+   *   - internal costing calculation
+   *
+   * The editor remains responsible for calculating the
+   * final payable amount.
+   *
+   * The PDF simply presents that final quoted amount.
+   * ---------------------------------------------------------
+   */
+const totalAmountPayable =
+    Number(
+        quoteData.grandTotal ?? subtotal
+    );
 
-if (measureOnly) {
+  /*
+   * ---------------------------------------------------------
+   * PACKAGE COST DESCRIPTION
+   * ---------------------------------------------------------
+   */
 
-  pdf.setFont("NotoSans", "normal");
-  pdf.setFontSize(10);
+  if (packageCostDescription) {
 
-  const LABEL_X =
-    PAGE.marginLeft + RIBBON.leftPadding;
+  if (measureOnly) {
 
-  const colonX =
-    PAGE.marginLeft + 94;
+    pdf.setFont("NotoSans", "normal");
+    pdf.setFontSize(10);
 
-  const LABEL_MAX_WIDTH =
-    colonX - LABEL_X - 4;
+    // --------------------------------
+    // SAME FIXED COLUMNS AS
+    // drawGreyCostRowCompact()
+    // --------------------------------
 
-  const packageCostLabelWidth =
-    pdf.getTextWidth(packageCostLabel);
+    const colonX =
+  PAGE.marginLeft + 88;
 
-  if (packageCostLabelWidth <= LABEL_MAX_WIDTH) {
+const valueX =
+  PAGE.marginLeft + 93;
 
-    cursorY += 7;
+    const VALUE_MAX_WIDTH =
+      PAGE.width -
+      PAGE.marginRight -
+      valueX -
+      2;
+
+    const wrappedDescription =
+      pdf.splitTextToSize(
+        packageCostDescription,
+        VALUE_MAX_WIDTH
+      );
+
+    // --------------------------------
+    // Match the actual drawing logic
+    // --------------------------------
+
+    if (wrappedDescription.length <= 1) {
+
+      cursorY += 7;
+
+    } else {
+
+      const lineHeight = 4.5;
+
+      const rowHeight =
+        Math.max(
+          12,
+          wrappedDescription.length *
+            lineHeight +
+            4
+        );
+
+      cursorY +=
+        rowHeight + 1;
+
+    }
 
   } else {
 
-    cursorY += 13;
+    cursorY =
+      drawGreyCostRowCompact(
+        pdf,
+        "Package Cost Description",
+        packageCostDescription,
+        cursorY,
+        billingColors
+      );
 
   }
-
-} else {
-
-  cursorY = drawGreyCostRowCompact(
-  pdf,
-  packageCostLabel,
-  `${currencySymbol} ${subtotal.toLocaleString()}`,
-  cursorY,
-  billingColors
-);
 }
 
-if (quoteData.applyGst) {
+  /*
+   * ---------------------------------------------------------
+   * TOTAL AMOUNT PAYABLE
+   * ---------------------------------------------------------
+   */
 
   if (measureOnly) {
 
     cursorY += 7;
 
-} else {
+  } else {
 
-  cursorY = drawGreyCostRowCompact(
-  pdf,
-  `GST (${quoteData.gstPercent}%)`,
-  `${currencySymbol} ${gstAmount.toLocaleString()}`,
-  cursorY,
-  billingColors
-);
-}
-}
-if (measureOnly) {
+    cursorY =
+      drawBlueCostRowCompact(
+        pdf,
+        "TOTAL AMOUNT PAYABLE",
+        `${currencySymbol} ${totalAmountPayable.toLocaleString()}`,
+        cursorY
+      );
+  }
 
-    cursorY += 7;
+  /*
+   * ---------------------------------------------------------
+   * USD EQUIVALENT
+   * ---------------------------------------------------------
+   */
 
-} else {
-cursorY = drawBlueCostRowCompact(
-  pdf,
- "TOTAL AMOUNT PAYABLE",
-`${currencySymbol} ${grandTotal.toLocaleString()}`,
-  cursorY
-);
-}
-// ---------- USD ----------
-if (quoteData.showUsd) {
+  if (quoteData.showUsd) {
 
-  const usd =
-    Number(quoteData.grandTotalUsd || 0);
+    const usd =
+      Number(
+        quoteData.grandTotalUsd ||
+        (
+          totalAmountPayable /
+          Number(quoteData.usdRate || 86)
+        )
+      );
 
     if (measureOnly) {
 
-    cursorY += 7;
+      cursorY += 7;
 
-} else {
+    } else {
 
-  cursorY = drawGreyCostRowCompact(
-  pdf,
-  "USD Equivalent",
-  `$${usd.toFixed(2)}`,
-  cursorY,
-  billingColors
-);
-}
-}
-   
+      cursorY =
+        drawGreyCostRowCompact(
+          pdf,
+          "USD Equivalent",
+          `$${usd.toFixed(2)}`,
+          cursorY,
+          billingColors
+        );
+    }
   }
+
+}
 
   return cursorY;
 
@@ -5797,6 +5849,9 @@ function drawRichSightseeingText(
 
     container.innerHTML = html;
 
+   
+
+
     const CARD_RIGHT_INSET = 4;
 
 const cardRight =
@@ -5929,6 +5984,9 @@ const availableWidth =
             walk(node)
     );
 
+   
+
+
     /*
      * Remove the final artificial newline.
      */
@@ -5994,6 +6052,8 @@ const availableWidth =
      */
     if (run.color) {
 
+       
+
         let r;
         let g;
         let b;
@@ -6031,21 +6091,69 @@ const availableWidth =
 
         } else {
 
-            const rgb =
-                run.color.match(
-                    /\d+/g
-                );
+    const rgb =
+        run.color.match(
+            /\d+/g
+        );
 
-            if (
-                rgb &&
-                rgb.length >= 3
-            ) {
+    if (
+        rgb &&
+        rgb.length >= 3
+    ) {
 
-                r = Number(rgb[0]);
-                g = Number(rgb[1]);
-                b = Number(rgb[2]);
-            }
+        r = Number(rgb[0]);
+        g = Number(rgb[1]);
+        b = Number(rgb[2]);
+
+    } else {
+
+        /*
+         * ---------------------------------------------------
+         * NAMED CSS COLORS
+         *
+         * Tiptap/browser HTML may return colors such as:
+         * "red", "blue", "green", etc.
+         *
+         * Convert the CSS color name to RGB using the browser
+         * itself so we do not need a large hard-coded list.
+         * ---------------------------------------------------
+         */
+
+        const colorProbe =
+            document.createElement("span");
+
+        colorProbe.style.color =
+            run.color;
+
+        document.body.appendChild(
+            colorProbe
+        );
+
+        const computedColor =
+            window.getComputedStyle(
+                colorProbe
+            ).color;
+
+        document.body.removeChild(
+            colorProbe
+        );
+
+        const namedRgb =
+            computedColor.match(
+                /\d+/g
+            );
+
+        if (
+            namedRgb &&
+            namedRgb.length >= 3
+        ) {
+
+            r = Number(namedRgb[0]);
+            g = Number(namedRgb[1]);
+            b = Number(namedRgb[2]);
         }
+    }
+}
 
         if (
             Number.isFinite(r) &&
@@ -6089,46 +6197,57 @@ const availableWidth =
 
         setRunFont(run);
 
-        const width =
-            pdf.getTextWidth(text);
+       const width =
+    pdf.getTextWidth(text);
 
-        /*
-         * If the complete segment fits,
-         * draw it normally.
-         */
-       if (
+/*
+ * ---------------------------------------------------
+ * PRESERVE MANUALLY ADDED SPACES
+ *
+ * jsPDF can visually collapse consecutive normal
+ * spaces when an entire text run is drawn at once.
+ *
+ * Draw whitespace separately so every keyboard
+ * space becomes a real horizontal gap.
+ * ---------------------------------------------------
+ */
+
+if (
     x + width <=
-    cardRight
+    cardRight &&
+    !/^\s/.test(text) &&
+    !/\s$/.test(text) &&
+    !/\s{2,}/.test(text)
 ) {
 
-            pdf.text(
-                text,
-                x,
-                cursorY
-            );
-
-            if (run.underline) {
-
-              pdf.setDrawColor(
-        0,
-        0,
-        0
+    pdf.text(
+        text,
+        x,
+        cursorY
     );
 
-    pdf.setLineWidth(0.05);
+    if (run.underline) {
 
-                pdf.line(
-                    x,
-                    cursorY + 0.8,
-                    x + width,
-                    cursorY + 0.8
-                );
-            }
+        pdf.setDrawColor(
+            0,
+            0,
+            0
+        );
 
-            x += width;
+        pdf.setLineWidth(0.05);
 
-            return;
-        }
+        pdf.line(
+            x,
+            cursorY + 0.8,
+            x + width,
+            cursorY + 0.8
+        );
+    }
+
+    x += width;
+
+    return;
+}
 
         /*
          * ---------------------------------------------------
@@ -6339,22 +6458,23 @@ const availableWidth =
             lineText !== ""
         ) {
 
-            const cleanLine =
-                sanitizePdfText(
-                    lineText
-                );
+          const cleanLine =
+    String(lineText || "")
+        .replace(/\u00A0/g, " ")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/\r?\n/g, " ")
+        .replace(/₹/g, "Rs. ");
 
-            if (
-                cleanLine
-            ) {
+if (
+    cleanLine.trim()
+) {
 
-                drawTextSegment(
-                    cleanLine,
-                    run
-                );
+    drawTextSegment(
+        cleanLine,
+        run
+    );
 
-            }
-
+}
         }
 
         /*

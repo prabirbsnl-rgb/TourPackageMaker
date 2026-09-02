@@ -3056,14 +3056,15 @@ itinerary: updated
  </div>
 )}
 
-<div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    marginTop: "8px"
-  }}
->
+{day.transferMode !== "text" && (
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      marginTop: "8px"
+    }}
+  >
 
   <input
     type="text"
@@ -3132,6 +3133,9 @@ itinerary: updated
   </button>
 
 </div>
+)}
+
+
 {(day.customTransfers || []).length > 0 && (
 
 <div

@@ -27,12 +27,17 @@ import { calculateQuotationTotals }
 
 import { generateQuotationPdf } from "../pdf/generateQuotationPdf";
 
+import TaxInvoiceLibrary from "../components/taxinvoice/TaxInvoiceLibrary";
+
+import TaxInvoiceEditor from "../components/taxinvoice/TaxInvoiceEditor";
 
 
 import {
     saveDraft,
     getLatestDraft,
     getAllDrafts,
+     getTaxInvoices,
+      saveTaxInvoice,
     getAllDraftsFromFirestore,
     migrateLocalDraftsToFirestore,
     deleteDraft,
@@ -256,6 +261,12 @@ export default function DMCQuotationGenerator({
     const [showDraftLibrary, setShowDraftLibrary] =
     useState(false);
 
+    const [showTaxInvoiceLibrary, setShowTaxInvoiceLibrary] =
+    useState(false);
+
+    const [taxInvoiceDraft, setTaxInvoiceDraft] =
+    useState(null);
+
     const [revisionHistoryDraft, setRevisionHistoryDraft] =
     useState(null);
 
@@ -356,6 +367,17 @@ export default function DMCQuotationGenerator({
 
     const [showEmailOptions, setShowEmailOptions] = useState(false);
 
+   const [taxInvoices, setTaxInvoices] =
+    useState([]);
+
+
+   useEffect(() => {
+
+    setTaxInvoices(
+        getTaxInvoices()
+    );
+
+}, []);
 
 
     const [commonData, setCommonData] = useState(() => ({
@@ -530,16 +552,356 @@ const updateItineraryData = (value) => {
     status
 ) => {
 
-     console.log(
+    console.log(
         "🔥 HANDLE STATUS CHANGE:",
         quotationNo,
         status
     );
 
+
     await updateDraftStatus(
         quotationNo,
         status
     );
+
+
+    // ==========================================
+    // AUTO CREATE PENDING TAX INVOICE
+    // ==========================================
+
+    if (
+        String(status).toLowerCase() ===
+        "confirmed"
+    ) {
+
+        try {
+
+            const confirmedDrafts =
+                await getAllDraftsFromFirestore();
+
+            const confirmedDraft =
+                confirmedDrafts.find(
+                    draft =>
+                        draft?.quotationNo ===
+                        quotationNo
+                );
+
+
+                console.log(
+    "===== CONFIRMED DRAFT RATE CHECK =====",
+    {
+        quotationNo,
+
+        confirmedDraftTotal:
+            confirmedDraft?.totalAmountPayable,
+
+        commonDataTotal:
+            confirmedDraft?.commonData?.totalAmountPayable,
+
+        perAdultCost:
+            confirmedDraft?.commonData?.perAdultCost,
+
+        perChildCost:
+            confirmedDraft?.commonData?.perChildCost,
+
+        adults:
+            confirmedDraft?.commonData?.adults,
+
+        children:
+            confirmedDraft?.commonData?.children
+    }
+);
+
+
+
+            if (confirmedDraft) {
+
+                const existingTaxInvoices =
+                    getTaxInvoices();
+
+                const alreadyImported =
+                    existingTaxInvoices.some(
+                        invoice =>
+                            invoice?.sourceDraftQuotationNo ===
+                            quotationNo
+                    );
+
+
+                if (!alreadyImported) {
+
+                    const sourceCommonData =
+                        confirmedDraft?.commonData || {};
+
+                        const autoTaxInvoiceQuotationTotals =
+    calculateQuotationTotals({
+        commonData: sourceCommonData,
+        usdRate: 86
+    });
+
+    
+    console.log(
+    "===== AUTO QUOTATION TOTAL DEBUG =====",
+    {
+        quotationNo,
+        perAdultCost:
+            sourceCommonData?.perAdultCost,
+        perChildCost:
+            sourceCommonData?.perChildCost,
+        adults:
+            sourceCommonData?.adults,
+        children:
+            sourceCommonData?.children,
+        markupPercent:
+            sourceCommonData?.markupPercent,
+        applyGst:
+            sourceCommonData?.applyGst,
+        gstPercent:
+            sourceCommonData?.gstPercent,
+        totalCost:
+            autoTaxInvoiceQuotationTotals?.totalCost,
+        gstAmount:
+            autoTaxInvoiceQuotationTotals?.gstAmount,
+        markupAmount:
+            autoTaxInvoiceQuotationTotals?.markupAmount,
+        suggestedTotalAmount:
+            autoTaxInvoiceQuotationTotals?.suggestedTotalAmount
+    }
+);
+
+
+const sourceTotalAmount =
+    Number(
+        confirmedDraft?.totalAmountPayable
+    ) || 0;
+
+const commonDataTotalAmount =
+    Number(
+        sourceCommonData?.totalAmountPayable
+    ) || 0;
+
+const calculatedQuotationAmount =
+    Number(
+        autoTaxInvoiceQuotationTotals?.grandTotal
+    ) || 0;
+
+const autoTaxInvoiceCustomerAmount =
+    sourceTotalAmount > 0
+        ? sourceTotalAmount
+        : commonDataTotalAmount > 0
+            ? commonDataTotalAmount
+            : calculatedQuotationAmount;
+
+
+            console.log(
+    "===== AUTO TAX INVOICE RATE DEBUG =====",
+    {
+        quotationNo,
+
+        perAdultCost:
+            sourceCommonData?.perAdultCost,
+
+        perChildCost:
+            sourceCommonData?.perChildCost,
+
+        adults:
+            sourceCommonData?.adults,
+
+        children:
+            sourceCommonData?.children,
+
+        markupPercent:
+            sourceCommonData?.markupPercent,
+
+        applyGst:
+            sourceCommonData?.applyGst,
+
+        gstPercent:
+            sourceCommonData?.gstPercent,
+
+        sourceTotalAmount,
+
+        commonDataTotalAmount,
+
+        calculatedQuotationAmount,
+
+        autoTaxInvoiceCustomerAmount
+    }
+);
+
+
+
+                    const taxInvoiceData = {
+
+                        invoiceNo:
+                            confirmedDraft?.quotationNo ||
+                            quotationNo,
+
+                        quotationNo:
+                            confirmedDraft?.quotationNo ||
+                            quotationNo,
+
+                        displayQuotationNo:
+                            confirmedDraft?.displayQuotationNo ||
+                            "",
+
+                        sourceDraftQuotationNo:
+                            confirmedDraft?.quotationNo ||
+                            quotationNo,
+
+
+                       totalAmountPayable:
+    autoTaxInvoiceCustomerAmount,
+
+
+                        commonData:
+                            structuredClone(
+                                confirmedDraft?.commonData || {}
+                            ),
+
+                        packageData:
+                            structuredClone(
+                                confirmedDraft?.packageData || {}
+                            ),
+
+                        itineraryData:
+                            structuredClone(
+                                confirmedDraft?.itineraryData || {}
+                            ),
+
+
+                        clientName:
+                            sourceCommonData.clientName ||
+                            "",
+
+                        mobile:
+                            sourceCommonData.mobile ||
+                            "",
+
+                        email:
+                            sourceCommonData.email ||
+                            "",
+
+                        customerAddress:
+                            sourceCommonData.customerAddress ||
+                            sourceCommonData.address ||
+                            sourceCommonData.city ||
+                            "",
+
+                        customerGstinPan:
+                            sourceCommonData.customerGstinPan ||
+                            sourceCommonData.customerGstin ||
+                            sourceCommonData.customerPan ||
+                            "",
+
+
+                        destination:
+                            sourceCommonData.customDestination?.trim() ||
+                            sourceCommonData.destination ||
+                            "",
+
+                        travelFrom:
+                            sourceCommonData.travelFrom ||
+                            "",
+
+                        travelTo:
+                            sourceCommonData.travelTo ||
+                            "",
+
+                        travelDates:
+                            (
+                                sourceCommonData.travelFrom ||
+                                sourceCommonData.travelTo
+                            )
+                                ? `${sourceCommonData.travelFrom || ""} – ${sourceCommonData.travelTo || ""}`
+                                : "",
+
+                        passengerName:
+                            sourceCommonData.clientName ||
+                            "",
+
+                        pax:
+                            (
+                                Number(
+                                    sourceCommonData.adults || 0
+                                ) +
+                                Number(
+                                    sourceCommonData.children || 0
+                                )
+                            ) || "",
+
+
+                        placeOfSupply:
+                            sourceCommonData.placeOfSupply ||
+                            sourceCommonData.city ||
+                            "",
+
+                        invoiceDate:
+                            sourceCommonData.invoiceDate ||
+                            "",
+
+                        dueDate:
+                            sourceCommonData.dueDate ||
+                            "",
+
+                        bookingReference:
+                            confirmedDraft?.displayQuotationNo ||
+                            confirmedDraft?.quotationNo ||
+                            "",
+
+
+                        supplierGstin:
+                            sourceCommonData.supplierGstin ??
+                            "19AYTPS0423N1ZO",
+
+                        supplierPan:
+                            sourceCommonData.supplierPan ??
+                            "AYTPS0423N",
+
+
+                        status:
+                            "Pending",
+
+                        confirmedAt:
+                            confirmedDraft?.confirmedAt ||
+                            new Date().toISOString(),
+
+                        createdAt:
+                            "",
+
+                        updatedAt:
+                            new Date().toISOString()
+
+                    };
+
+
+                    await saveTaxInvoice(
+                        taxInvoiceData
+                    );
+
+                    setTaxInvoices(
+    getTaxInvoices()
+);
+
+                    console.log(
+                        "🔥 AUTO TAX INVOICE CREATED:",
+                        taxInvoiceData
+                    );
+
+                }
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "🔥 AUTO TAX INVOICE CREATION FAILED:",
+                error
+            );
+
+        }
+
+    }
+
 
     await refreshDrafts();
 
@@ -547,13 +909,57 @@ const updateItineraryData = (value) => {
 
 const handleReviewPdf = async (draft) => {
 
+
+    console.log(
+    "===== REVIEW DRAFT BILLING =====",
+    {
+        totalAmountPayable:
+            draft?.commonData?.totalAmountPayable,
+
+        packageCostDescription:
+            draft?.commonData?.packageCostDescription,
+
+        subtotal:
+            draft?.commonData?.subtotal,
+
+        applyGst:
+            draft?.commonData?.applyGst,
+
+        gstPercent:
+            draft?.commonData?.gstPercent
+    }
+);
+
      setPdfViewerMode("review");
 
     setReviewDraft(draft);
 
     setReviewPdfOpen(true);
 
-    // Temporary
+
+
+    console.log(
+    "DRAFT PDF DATA CHECK:",
+    {
+        totalAmountPayable:
+            draft?.commonData?.totalAmountPayable,
+
+        packageCostDescription:
+            draft?.commonData?.packageCostDescription,
+
+        totalCost:
+            draft?.commonData?.totalCost,
+
+        gstAmount:
+            draft?.commonData?.gstAmount,
+
+        markupPercent:
+            draft?.commonData?.markupPercent
+    }
+);
+
+
+   
     const blob = await handleGeneratePdf(
 
 
@@ -679,6 +1085,21 @@ const handleGeneratePdf = async (
 
     };
 
+    console.log(
+    "PDF PAYABLE CHECK:",
+    {
+        commonDataPayable:
+            commonData?.totalAmountPayable,
+
+        quoteDataPayable:
+            quoteData?.totalAmountPayable,
+
+        packageDescription:
+            quoteData?.packageCostDescription
+    }
+);
+
+
     const {
 
         subtotal,
@@ -696,6 +1117,14 @@ const handleGeneratePdf = async (
         usdRate: quoteData.usdRate
 
     });
+
+
+    console.log("PDF FINAL CALC:", {
+    subtotal,
+    gstAmount,
+    grandTotal,
+    grandTotalUsd
+});
 
    return await generateQuotationPdf({
 
@@ -1012,6 +1441,11 @@ console.log(
     const isFirstSave =
         !editingDraft;
 
+
+      
+        
+
+
     await saveDraft({
 
         quotationNo:
@@ -1042,10 +1476,10 @@ console.log(
                     editingDraft.originalData
                 )
                 : {
-                    commonData:
-                        structuredClone(
-                            commonData
-                        ),
+                  commonData:
+    structuredClone(
+        commonData
+    ),
 
                     packageData:
                         structuredClone(
@@ -1080,9 +1514,9 @@ console.log(
                             new Date().toISOString(),
 
                         commonData:
-                            structuredClone(
-                                commonData
-                            ),
+    structuredClone(
+        commonData
+    ),
 
                         packageData:
                             structuredClone(
@@ -1098,10 +1532,10 @@ console.log(
             }
             : {}),
 
-        commonData:
-            structuredClone(
-                commonData
-            ),
+      commonData:
+    structuredClone(
+        commonData
+    ),
 
         packageData:
             structuredClone(
@@ -1132,9 +1566,9 @@ console.log(
                     new Date().toISOString(),
 
                 commonData:
-                    structuredClone(
-                        commonData
-                    ),
+    structuredClone(
+        commonData
+    ),
 
                 packageData:
                     structuredClone(
@@ -1180,9 +1614,9 @@ console.log(
                     )
                     : {
                         commonData:
-                            structuredClone(
-                                commonData
-                            ),
+    structuredClone(
+        commonData
+    ),
 
                         packageData:
                             structuredClone(
@@ -1214,10 +1648,10 @@ console.log(
                     savedAt:
                         new Date().toISOString(),
 
-                    commonData:
-                        structuredClone(
-                            commonData
-                        ),
+                   commonData:
+    structuredClone(
+        commonData
+    ),
 
                     packageData:
                         structuredClone(
@@ -2739,6 +3173,23 @@ if (currentDraft) {
     📂 Draft Library
 </button>
 
+<button
+    type="button"
+    onClick={() =>
+        setShowTaxInvoiceLibrary(true)
+    }
+    style={{
+        background: "#17334F",
+        color: "#fff",
+        border: "none",
+        padding: "10px 18px",
+        borderRadius: "8px",
+        cursor: "pointer",
+        fontWeight: 600
+    }}
+>
+    🧾 Tax Invoice Library
+</button>
 
 <button
     type="button"
@@ -3274,6 +3725,413 @@ importingTemplateRef={
         setShowDraftLibrary(false)
     }
 />
+
+
+<TaxInvoiceLibrary
+    open={showTaxInvoiceLibrary}
+    drafts={drafts}
+    taxInvoices={taxInvoices}
+
+    onRefresh={() => {
+
+        const refreshedInvoices =
+            getTaxInvoices();
+
+        console.log(
+            "🔥 TAX INVOICES AFTER REFRESH:",
+            refreshedInvoices
+        );
+
+        setTaxInvoices(
+            refreshedInvoices
+        );
+
+    }}
+
+    onOpen={(draft, existingTaxInvoice) => {
+
+
+          console.log(
+        "===== TAX LIBRARY DRAFT SOURCE =====",
+        JSON.stringify(
+            draft,
+            null,
+            2
+        )
+    );
+
+        // ==========================================
+// OPEN EXISTING TAX INVOICE
+// ==========================================
+
+if (existingTaxInvoice) {
+
+
+    console.log(
+    "===== TAX INVOICE OPEN DATA =====",
+    JSON.stringify(
+        existingTaxInvoice,
+        null,
+        2
+    )
+);
+
+
+    setTaxInvoiceDraft(
+        structuredClone(existingTaxInvoice)
+    );
+
+    setShowTaxInvoiceLibrary(false);
+
+    console.log(
+        "===== EXISTING TAX INVOICE OPENED =====",
+        existingTaxInvoice
+    );
+
+    return;
+}
+
+
+   const sourceData = {
+
+    commonData:
+        draft?.commonData ||
+        draft?.originalData?.commonData ||
+        {},
+
+    packageData:
+        draft?.packageData ||
+        draft?.originalData?.packageData ||
+        {},
+
+    itineraryData:
+        draft?.itineraryData ||
+        draft?.originalData?.itineraryData ||
+        {}
+
+};
+
+
+   // ==========================================
+// COPIED QUOTATION DATA
+// ==========================================
+
+const sourceCommonData =
+    sourceData.commonData || {};
+
+const sourcePackageData =
+    sourceData.packageData || {};
+
+const sourceItineraryData =
+    sourceData.itineraryData || {};
+
+
+    const taxInvoiceQuotationTotals =
+    calculateQuotationTotals({
+        commonData:
+            sourceData.commonData || {},
+        usdRate: 86
+    });
+
+const sourceTotalAmount =
+    Number(
+        sourceData?.commonData?.totalAmountPayable
+    ) || 0;
+
+const calculatedQuotationAmount =
+    Number(
+        taxInvoiceQuotationTotals?.grandTotal
+    ) || 0;
+
+const taxInvoiceCustomerAmount =
+    sourceTotalAmount > 0
+        ? sourceTotalAmount
+        : calculatedQuotationAmount;
+
+
+const taxInvoiceData = {
+
+    // ==========================================
+    // SOURCE REFERENCE
+    // ==========================================
+
+    invoiceNo:
+    draft?.quotationNo || "",
+
+    quotationNo:
+        draft?.quotationNo || "",
+
+    displayQuotationNo:
+        draft?.displayQuotationNo || "",
+
+    sourceDraftQuotationNo:
+        draft?.quotationNo || "",
+
+    totalAmountPayable:
+        taxInvoiceCustomerAmount,
+    // ==========================================
+    // ORIGINAL QUOTATION DATA
+    // ==========================================
+
+    commonData:
+        structuredClone(
+            sourceCommonData
+        ),
+
+    packageData:
+        structuredClone(
+            sourcePackageData
+        ),
+
+    itineraryData:
+        structuredClone(
+            sourceItineraryData
+        ),
+
+
+    // ==========================================
+    // CUSTOMER DATA
+    // ==========================================
+
+    clientName:
+        sourceCommonData.clientName || "",
+
+    mobile:
+        sourceCommonData.mobile || "",
+
+    email:
+        sourceCommonData.email || "",
+
+    customerAddress:
+        sourceCommonData.customerAddress ||
+        sourceCommonData.address ||
+        sourceCommonData.city ||
+        "",
+
+    customerGstinPan:
+        sourceCommonData.customerGstinPan ||
+        sourceCommonData.customerGstin ||
+        sourceCommonData.customerPan ||
+        "",
+
+
+    // ==========================================
+    // TRAVEL DATA
+    // ==========================================
+
+    destination:
+        sourceCommonData.customDestination?.trim() ||
+        sourceCommonData.destination ||
+        "",
+
+    travelFrom:
+        sourceCommonData.travelFrom || "",
+
+    travelTo:
+        sourceCommonData.travelTo || "",
+
+    travelDates:
+        (
+            sourceCommonData.travelFrom ||
+            sourceCommonData.travelTo
+        )
+            ? `${sourceCommonData.travelFrom || ""} – ${sourceCommonData.travelTo || ""}`
+            : "",
+
+    passengerName:
+        sourceCommonData.clientName || "",
+
+    pax:
+        (
+            Number(sourceCommonData.adults || 0) +
+            Number(sourceCommonData.children || 0)
+        ) || "",
+
+
+    // ==========================================
+    // INVOICE DATA
+    // ==========================================
+
+    placeOfSupply:
+        sourceCommonData.placeOfSupply ||
+        sourceCommonData.city ||
+        "",
+
+    invoiceDate:
+        sourceCommonData.invoiceDate || "",
+
+    dueDate:
+        sourceCommonData.dueDate || "",
+
+    bookingReference:
+        draft?.displayQuotationNo ||
+        draft?.quotationNo ||
+        "",
+
+
+    // ==========================================
+    // SUPPLIER DATA
+    // ==========================================
+
+    supplierGstin:
+        sourceCommonData.supplierGstin ??
+        "19AYTPS0423N1ZO",
+
+    supplierPan:
+        sourceCommonData.supplierPan ??
+        "AYTPS0423N",
+
+
+    // ==========================================
+    // TAX INVOICE STATUS
+    // ==========================================
+
+    status: "Draft",
+
+    createdAt:
+        new Date().toISOString(),
+
+    updatedAt:
+        new Date().toISOString()
+
+};
+
+
+console.log(
+    "===== FINAL TAX INVOICE DATA =====",
+    JSON.stringify(
+        taxInvoiceData,
+        null,
+        2
+    )
+);
+
+
+console.log(
+    "===== RATE SOURCE CHECK =====",
+    {
+        draftTotalAmount:
+            draft?.totalAmountPayable,
+
+        commonDataTotal:
+            sourceCommonData?.totalAmountPayable,
+
+        quotationGrandTotal:
+            taxInvoiceQuotationTotals?.grandTotal,
+
+        calculatedTaxInvoiceAmount:
+            taxInvoiceCustomerAmount,
+
+        finalRateValue:
+            taxInvoiceData?.totalAmountPayable
+    }
+);
+
+
+console.log(
+    "===== WHERE IS TOTAL AMOUNT PAYABLE? =====",
+    {
+        sourceDataTotal:
+            sourceData?.totalAmountPayable,
+
+        sourceCommonDataTotal:
+            sourceData?.commonData?.totalAmountPayable,
+
+        sourcePackageDataTotal:
+            sourceData?.packageData?.totalAmountPayable,
+
+        draftTotal:
+            draft?.totalAmountPayable,
+
+        draftCommonDataTotal:
+            draft?.commonData?.totalAmountPayable,
+
+        taxInvoiceTotal:
+            taxInvoiceData?.totalAmountPayable,
+
+        taxInvoiceCommonDataTotal:
+            taxInvoiceData?.commonData?.totalAmountPayable
+    }
+);
+
+
+
+
+
+
+
+    setTaxInvoiceDraft(
+        taxInvoiceData
+    );
+
+    setShowTaxInvoiceLibrary(
+        false
+    );
+
+    
+}}
+
+
+    onClose={() =>
+        setShowTaxInvoiceLibrary(false)
+    }
+/>
+
+
+<TaxInvoiceEditor
+    invoice={taxInvoiceDraft}
+
+    onSave={async (savedInvoice) => {
+
+    try {
+
+        await saveTaxInvoice(savedInvoice);
+
+        const refreshedInvoices =
+            getTaxInvoices();
+
+        setTaxInvoices(
+            refreshedInvoices
+        );
+
+        setTaxInvoiceDraft(
+            structuredClone(savedInvoice)
+        );
+
+        console.log(
+            "===== TAX INVOICE SAVED =====",
+            savedInvoice
+        );
+
+        alert(
+            "Tax Invoice saved successfully."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "===== TAX INVOICE SAVE FAILED =====",
+            error
+        );
+
+        alert(
+            "Tax Invoice could not be saved."
+        );
+
+    }
+
+}}
+
+
+    onClose={() => {
+
+    setTaxInvoiceDraft(null);
+
+    setShowTaxInvoiceLibrary(true);
+
+}}
+/>
+
 
 {revisionHistoryDraft && (
     <div
