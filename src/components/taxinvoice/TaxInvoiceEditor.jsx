@@ -2,6 +2,13 @@
 
 import React from "react";
 
+import { generateTaxInvoicePdf } from "../../pdf/generateTaxInvoicePdf";
+
+
+
+
+
+
 export default function TaxInvoiceEditor({
     invoice,
     onClose,
@@ -11,6 +18,148 @@ export default function TaxInvoiceEditor({
 
         const [invoiceData, setInvoiceData] =
         React.useState(invoice);
+
+
+        const [showSendOptions, setShowSendOptions] =
+    React.useState(false);
+
+
+        const customServiceOptions = [
+    "Flight Charges",
+    "Visa Charges",
+    "Hotel Charges",
+    "Transport Charges",
+    "Other / Custom Service"
+];
+
+
+const calculateCustomService = (service) => {
+
+    const taxPercent =
+        Number(service.taxPercent) || 0;
+
+    const qty =
+        Number(service.qty) || 1;
+
+    const rate =
+        Number(service.rate) || 0;
+
+    const amount =
+        Number(service.amount) || 0;
+
+    let taxableValue = 0;
+    let taxAmount = 0;
+    let lineAmount = 0;
+
+
+    /* =========================================
+       GST INCLUSIVE
+       Amount = TOTAL GROSS AMOUNT entered by user
+    ========================================= */
+
+    if (
+        service.taxTreatment === "inclusive"
+    ) {
+
+        lineAmount =
+            amount;
+
+        taxableValue =
+            taxPercent > 0
+                ? lineAmount /
+                  (1 + taxPercent / 100)
+                : lineAmount;
+
+        taxAmount =
+            lineAmount -
+            taxableValue;
+
+
+    /* =========================================
+       GST EXCLUSIVE
+       Rate = RATE PER UNIT entered by user
+    ========================================= */
+
+    } else if (
+        service.taxTreatment === "exclusive"
+    ) {
+
+        taxableValue =
+            rate * qty;
+
+        taxAmount =
+            taxableValue *
+            taxPercent /
+            100;
+
+        lineAmount =
+            taxableValue +
+            taxAmount;
+
+
+    /* =========================================
+       NO GST / EXEMPT
+       Rate = RATE PER UNIT entered by user
+    ========================================= */
+
+    } else {
+
+        taxableValue =
+            rate * qty;
+
+        taxAmount = 0;
+
+        lineAmount =
+            taxableValue;
+    }
+
+
+    return {
+        taxableValue,
+        taxAmount,
+        lineAmount,
+
+        ratePerUnit:
+            qty > 0
+                ? taxableValue / qty
+                : 0
+    };
+};
+
+
+
+
+const createCustomService = (serviceName) => ({
+    id:
+        `${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2)}`,
+
+    service:
+        serviceName,
+
+    description:
+        serviceName === "Other / Custom Service"
+            ? ""
+            : serviceName,
+
+    hsnSac: "",
+
+    qty: 1,
+
+    rate: "",
+
+    taxPercent: 5,
+
+    taxTreatment: "exclusive",
+
+    amount: ""
+});
+
+
+const [selectedCustomService, setSelectedCustomService] =
+    React.useState("");
+
 
         const [serviceData, setServiceData] =
     React.useState(() => ({
@@ -53,8 +202,29 @@ paymentModes: {
     upi: false,
     cash: false,
     card: false
-}
+},
+
+// Additional custom invoice services
+
+customServices:
+    invoice?.serviceData?.customServices ??
+    [],
+
     }));
+
+
+    React.useEffect(() => {
+
+    console.log(
+        "===== EDITOR CUSTOM SERVICES =====",
+        "COUNT:",
+        serviceData.customServices?.length ?? 0,
+        JSON.stringify(
+            serviceData.customServices || []
+        )
+    );
+
+}, [serviceData]);
 
 
     React.useEffect(() => {
@@ -78,7 +248,11 @@ React.useEffect(() => {
         discountOtherCharges:
             invoice?.serviceData?.discountOtherCharges ??
             invoice?.discountOtherCharges ??
-            ""
+            "",
+
+        customServices:
+            invoice?.serviceData?.customServices ??
+            []
 
     }));
 
@@ -310,17 +484,50 @@ if (
 }
 
 
+
+const customServiceTotals =
+    (serviceData.customServices || [])
+        .reduce(
+            (totals, service) => {
+
+                const calculated =
+                    calculateCustomService(
+                        service
+                    );
+
+                totals.taxableValue +=
+                    calculated.taxableValue;
+
+                totals.taxAmount +=
+                    calculated.taxAmount;
+
+                return totals;
+            },
+            {
+                taxableValue: 0,
+                taxAmount: 0
+            }
+        );
+
+const finalTaxableValue =
+    taxableValue +
+    customServiceTotals.taxableValue;
+
+const totalTax =
+    taxAmount +
+    customServiceTotals.taxAmount;
+
+
+
 /* =========================================
    TOTALS
 ========================================= */
 
-const totalTax =
-    taxAmount;
 
 const grandTotal =
     Math.max(
         0,
-        taxableValue +
+        finalTaxableValue +
         totalTax -
         discountOtherCharges
     );
@@ -470,6 +677,55 @@ const amountInWords =
         )} ONLY`;
 
 
+        const completedInvoiceData = {
+    ...invoiceData,
+
+    serviceData:
+        structuredClone(serviceData),
+
+    grossQuotedAmount:
+        grossQuotedAmount,
+
+    sourceQuotedAmount:
+        sourceQuotedAmount,
+
+    taxableValue:
+        taxableValue,
+
+    taxAmount:
+        taxAmount,
+
+    totalTax:
+        totalTax,
+
+    grandTotal:
+        grandTotal,
+
+    advancePaid:
+        advancePaid,
+
+    balanceDue:
+        balanceDue,
+
+    amountInWords:
+        amountInWords,
+
+    paymentStatus:
+        balanceDue <= 0
+            ? "Paid in Full"
+            : `Due ₹${balanceDue.toLocaleString()}`,
+
+    status:
+        "Completed",
+
+    createdAt:
+        invoiceData?.createdAt ||
+        new Date().toISOString(),
+
+    updatedAt:
+        new Date().toISOString()
+};
+
 
 
     const formatInvoiceDate = (date) => {
@@ -511,15 +767,17 @@ const invoiceValueStyle = {
 
 const invoiceValueBoxStyle = {
     width: "100%",
-    height: "25px",
-    padding: "3px 6px",
+    height: "27px",
+    padding: "1px 6px",
     boxSizing: "border-box",
     border: "1px solid #cbd8df",
     borderRadius: "2px",
     background: "#fff",
     fontSize: "10px",
     color: "#1f2937",
-    outline: "none"
+    outline: "none",
+    WebkitAppearance: "none",
+    MozAppearance: "textfield"
 };
 
 
@@ -547,6 +805,22 @@ const supplierFixedValueStyle = {
                 boxSizing: "border-box"
             }}
         >
+
+
+         <style>
+            {`
+                input[type="number"]::-webkit-inner-spin-button,
+                input[type="number"]::-webkit-outer-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
+
+                input[type="number"] {
+                    -moz-appearance: textfield;
+                }
+            `}
+        </style>
+
 
             <div
                 style={{
@@ -599,71 +873,298 @@ const supplierFixedValueStyle = {
     }}
 >
 
+
+
+
+
+{/* SAVE & SEND */}
+
+<div
+    style={{
+        display: "inline-flex",
+        position: "relative"
+    }}
+>
+
+    {/* SAVE & SEND ACTION */}
+    <button
+        type="button"
+        onClick={async () => {
+
+            try {
+
+                // SAVE AND WAIT FOR USER TO FINISH
+               const saveCompleted =
+    await onSave?.(
+        completedInvoiceData
+    );
+
+if (!saveCompleted) {
+    return;
+}
+
+                // ONLY AFTER OK → GENERATE + DOWNLOAD PDF
+                const pdfBlob =
+                    await generateTaxInvoicePdf(
+                        completedInvoiceData
+                    );
+
+                // KEEP SAME PDF FOR SEND OPTIONS
+                window.__orbitzTaxInvoicePdfBlob =
+                    pdfBlob;
+
+
+                    // SEND SAME PDF TO LOCAL ORBITZ HELPER
+const helperResponse =
+    await fetch(
+        "http://127.0.0.1:38765/receive-pdf",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/pdf"
+            },
+            body: pdfBlob
+        }
+    );
+
+if (!helperResponse.ok) {
+
+    throw new Error(
+        "Orbitz Helper did not accept the PDF."
+    );
+}
+
+
+                
+            } catch (error) {
+
+                console.error(
+                    "SAVE & SEND FAILED:",
+                    error
+                );
+
+               alert(
+    "Invoice was saved, but PDF sending to Orbitz Helper failed."
+);
+
+            }
+
+        }}
+
+
+        style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            background: "#ffffff",
+            color: "#17334F",
+            border: "1px solid #c8d5df",
+            borderRight: "none",
+            padding: "8px 14px",
+            borderRadius: "8px 0 0 8px",
+            cursor: "pointer",
+            fontSize: "12px",
+            fontWeight: 700
+        }}
+    >
+        📄 Save & Send
+    </button>
+
+
+    {/* ARROW ONLY */}
+    <button
+        type="button"
+        onClick={() =>
+            setShowSendOptions(
+                prev => !prev
+            )
+        }
+        style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#ffffff",
+            color: "#17334F",
+            border: "1px solid #c8d5df",
+            padding: "8px 9px",
+            borderRadius: "0 8px 8px 0",
+            cursor: "pointer",
+            fontSize: "11px",
+            fontWeight: 700
+        }}
+        aria-label="Open send options"
+    >
+        ▾
+    </button>
+
+</div>
+
+
+{showSendOptions && (
+    <div
+        style={{
+            position: "absolute",
+            top: "40px",
+            right: 0,
+            minWidth: "190px",
+            background: "#fff",
+            border: "1px solid #d1d5db",
+            borderRadius: "8px",
+            boxShadow:
+                "0 8px 20px rgba(0,0,0,.15)",
+            padding: "5px",
+            zIndex: 10000
+        }}
+    >
+
+        <button
+    type="button"
+    onClick={async () => {
+
+    try {
+
+        const mobile =
+            invoiceData?.mobile ??
+            invoiceData?.commonData?.mobile ??
+            "";
+
+       if (!mobile.trim()) {
+    await fetch(
+        "http://127.0.0.1:38765/prepare-whatsapp",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                mobile: ""
+            })
+        }
+    );
+
+    return;
+}
+
+        const response =
+            await fetch(
+                "http://127.0.0.1:38765/prepare-whatsapp",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        mobile:
+                            mobile
+                    })
+                }
+            );
+
+        const result =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.message ||
+                "Orbitz Helper failed."
+            );
+        }
+
+        console.log(
+            "WhatsApp prepared:",
+            result
+        );
+
+        setShowSendOptions(false);
+
+    } catch (error) {
+
+        console.error(
+            "WHATSAPP HELPER FAILED:",
+            error
+        );
+
+        alert(
+            "Orbitz Helper is not running or could not prepare WhatsApp."
+        );
+
+    }
+
+}}
+
+    style={{
+        width: "100%",
+        padding: "9px 12px",
+        background: "#fff",
+        border: "none",
+        borderRadius: "6px",
+        cursor: "pointer",
+        textAlign: "left",
+        fontSize: "12px",
+        fontWeight: 600,
+        color: "#374151"
+    }}
+>
+    📱 WhatsApp
+</button>
+
+        <button
+            type="button"
+            style={{
+                width: "100%",
+                padding: "9px 12px",
+                background: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                textAlign: "left",
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "#374151"
+            }}
+        >
+            ✉️ Email
+        </button>
+
+        <button
+            type="button"
+            onClick={() =>
+                setShowSendOptions(false)
+            }
+            style={{
+                width: "100%",
+                padding: "9px 12px",
+                background: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                textAlign: "left",
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "#6b7280"
+            }}
+        >
+            Cancel
+        </button>
+
+    </div>
+)}
+
+
+
+
+
+ 
      {/* SAVE */}
 
 
                     <button
     type="button"
-    onClick={() => onSave?.({
-    ...invoiceData,
-
-    serviceData:
-        structuredClone(serviceData),
-
-    // ==========================================
-    // CALCULATED INVOICE VALUES
-    // ==========================================
-
-    grossQuotedAmount:
-        grossQuotedAmount,
-
-    sourceQuotedAmount:
-        sourceQuotedAmount,
-
-    taxableValue:
-        taxableValue,
-
-    taxAmount:
-        taxAmount,
-
-    totalTax:
-        totalTax,
-
-    grandTotal:
-        grandTotal,
-
-    advancePaid:
-        advancePaid,
-
-    balanceDue:
-        balanceDue,
-
-    amountInWords:
-        amountInWords,
-
-   // ==========================================
-// PAYMENT STATUS
-// ==========================================
-
-paymentStatus:
-    balanceDue <= 0
-        ? "Paid in Full"
-        : `Due ₹${balanceDue.toLocaleString()}`,
-
-// ==========================================
-// INVOICE STATUS
-// ==========================================
-
-status:
-    "Completed",
-
-createdAt:
-    invoiceData?.createdAt ||
-    new Date().toISOString(),
-
-updatedAt:
-    new Date().toISOString()
-})}
+   onClick={() => onSave?.(completedInvoiceData)}
 
     style={{
     display: "inline-flex",
@@ -682,7 +1183,10 @@ updatedAt:
 }}
 >
     💾 Save
-</button>
+ </button>
+       
+
+
 
    {/* BACK */}
 
@@ -1193,7 +1697,7 @@ fontWeight: 700
             letterSpacing: ".2px"
         }}
     >
-        SUPPLIER & CUSTOMER
+        SERVICE PROVIDER & CUSTOMER
     </div>
 
 
@@ -2059,38 +2563,694 @@ fontWeight: 700
         </div>
 
 
-        {/* TAX */}
+       {/* TAX */}
 
-        <div
-            style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                padding: "0 5px",
-                fontSize: "9px",
-                borderRight:
-                    "1px solid #d5e0e6"
-            }}
-        >
-            {taxAmount.toFixed(2)}
-        </div>
+<div
+    style={{
+        padding: "4px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        borderRight: "1px solid #d5e0e6"
+    }}
+>
+    <input
+        type="text"
+        value={taxAmount.toFixed(2)}
+        readOnly
+        style={{
+            width: "100%",
+            height: "27px",
+            boxSizing: "border-box",
+            padding: "0 8px",
+            border: "1px solid #cbd5e1",
+            borderRadius: "3px",
+            background: "#f8fafc",
+            textAlign: "right",
+            fontSize: "9px"
+        }}
+    />
+</div>
 
 
-        {/* AMOUNT */}
+       {/* AMOUNT */}
 
-        <div
-            style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                padding: "0 5px",
-                fontSize: "9px"
-            }}
-        >
-            {lineAmount.toFixed(2)}
-        </div>
+<div
+    style={{
+        padding: "4px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-end"
+    }}
+>
+    <input
+        type="text"
+        value={lineAmount.toFixed(2)}
+        readOnly
+        style={{
+            width: "100%",
+            height: "27px",
+            boxSizing: "border-box",
+            padding: "0 8px",
+            border: "1px solid #cbd5e1",
+            borderRadius: "3px",
+            background: "#f8fafc",
+            textAlign: "right",
+            fontSize: "9px"
+        }}
+    />
+</div>
 
     </div>
+
+
+
+
+
+
+
+{/* =========================================
+    CUSTOM SERVICE ROWS
+========================================= */}
+
+{serviceData.customServices.map(
+    (service, index) => {
+
+        const calculated =
+            calculateCustomService(service);
+
+        return (
+            <div
+                key={service.id}
+                style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                        "28px 1.7fr 65px 40px 78px 52px 72px 88px",
+                    minHeight: "38px",
+                    borderTop:
+                        "1px solid #d5e0e6"
+                }}
+            >
+
+                {/* NUMBER */}
+
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "9px",
+                        borderRight:
+                            "1px solid #d5e0e6"
+                    }}
+                >
+                    {index + 2}
+                </div>
+
+
+                {/* DESCRIPTION */}
+
+                <div
+                    style={{
+                        padding: "4px",
+                        borderRight:
+                            "1px solid #d5e0e6",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px"
+                    }}
+                >
+
+                    <input
+                        type="text"
+                        value={
+                            service.description
+                        }
+                        onChange={(e) => {
+
+                            const updated =
+                                serviceData.customServices.map(
+                                    item =>
+                                        item.id === service.id
+                                            ? {
+                                                ...item,
+                                                description:
+                                                    e.target.value
+                                            }
+                                            : item
+                                );
+
+                            setServiceData({
+                                ...serviceData,
+                                customServices:
+                                    updated
+                            });
+
+                        }}
+                        style={{
+                            ...invoiceValueBoxStyle,
+                            height: "27px",
+                            fontSize: "9px",
+                            flex: 1,
+                            minWidth: 0
+                        }}
+                    />
+
+                    <select
+                        value={
+                            service.taxTreatment
+                        }
+                        onChange={(e) => {
+
+                            const treatment =
+                                e.target.value;
+
+                            const updated =
+                                serviceData.customServices.map(
+                                    item =>
+                                        item.id === service.id
+                                            ? {
+                                                ...item,
+                                                taxTreatment:
+                                                    treatment,
+                                                taxPercent:
+                                                    treatment === "none"
+                                                        ? 0
+                                                        : (
+                                                            Number(
+                                                                item.taxPercent
+                                                            ) || 5
+                                                        )
+                                            }
+                                            : item
+                                );
+
+                            setServiceData({
+                                ...serviceData,
+                                customServices:
+                                    updated
+                            });
+
+                        }}
+                        style={{
+                            height: "27px",
+                            width: "76px",
+                            border:
+                                "1px solid #cbd8df",
+                            borderRadius: "2px",
+                            padding: "2px 2px",
+                            fontSize: "7px",
+                            background: "#fff",
+                            flexShrink: 0
+                        }}
+                    >
+
+                       <option value="inclusive">
+    GST Inclusive
+</option>
+
+<option value="exclusive">
+    GST Exclusive
+</option>
+
+<option value="none">
+    No GST / Exempt
+</option>
+
+                    </select>
+
+
+                    {/* DELETE */}
+
+                    <button
+                        type="button"
+                        title="Delete service"
+                        onClick={() => {
+
+                            setServiceData({
+                                ...serviceData,
+
+                                customServices:
+                                    serviceData.customServices.filter(
+                                        item =>
+                                            item.id !==
+                                            service.id
+                                    )
+                            });
+
+                        }}
+                        style={{
+                            width: "20px",
+                            height: "22px",
+                            padding: 0,
+                            border:
+                                "1px solid #dc2626",
+                            borderRadius: "2px",
+                            background: "#fff",
+                            color: "#dc2626",
+                            fontSize: "13px",
+                            lineHeight: "18px",
+                            cursor: "pointer",
+                            flexShrink: 0
+                        }}
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                {/* HSN / SAC */}
+
+                <div
+                    style={{
+                        padding: "4px",
+                        borderRight:
+                            "1px solid #d5e0e6"
+                    }}
+                >
+
+                    <input
+                        type="text"
+                        value={
+                            service.hsnSac
+                        }
+                        onChange={(e) => {
+
+                            const updated =
+                                serviceData.customServices.map(
+                                    item =>
+                                        item.id === service.id
+                                            ? {
+                                                ...item,
+                                                hsnSac:
+                                                    e.target.value
+                                            }
+                                            : item
+                                );
+
+                            setServiceData({
+                                ...serviceData,
+                                customServices:
+                                    updated
+                            });
+
+                        }}
+                        style={{
+                            ...invoiceValueBoxStyle,
+                            height: "27px",
+                            fontSize: "9px"
+                        }}
+                    />
+
+                </div>
+
+
+                {/* QTY */}
+
+                <div
+                    style={{
+                        padding: "4px",
+                        borderRight:
+                            "1px solid #d5e0e6"
+                    }}
+                >
+
+                    <input
+                        type="number"
+                        min="1"
+                        value={
+                            service.qty
+                        }
+                        onChange={(e) => {
+
+                            const updated =
+                                serviceData.customServices.map(
+                                    item =>
+                                        item.id === service.id
+                                            ? {
+                                                ...item,
+                                                qty:
+                                                    e.target.value
+                                            }
+                                            : item
+                                );
+
+                            setServiceData({
+                                ...serviceData,
+                                customServices:
+                                    updated
+                            });
+
+                        }}
+                        style={{
+                            ...invoiceValueBoxStyle,
+                            width: "100%",
+                            height: "27px",
+                            boxSizing:
+                                "border-box",
+                            fontSize: "9px",
+                            textAlign: "center",
+                            padding: "4px 3px"
+                        }}
+                    />
+
+                </div>
+
+
+                {/* RATE */}
+
+                <div
+                    style={{
+                        padding: "4px",
+                        borderRight:
+                            "1px solid #d5e0e6"
+                    }}
+                >
+
+                    <input
+                        type="number"
+                        min="0"
+                        value={
+                            service.taxTreatment === "inclusive"
+                              ? (
+                                 calculated.taxableValue /
+                                (Number(service.qty) || 1)
+                             ).toFixed(2)
+                             : service.rate
+}
+                        disabled={
+                            service.taxTreatment ===
+                            "inclusive"
+                        }
+                        onChange={(e) => {
+
+                            const updated =
+                                serviceData.customServices.map(
+                                    item =>
+                                        item.id === service.id
+                                            ? {
+                                                ...item,
+                                                rate:
+                                                    e.target.value
+                                            }
+                                            : item
+                                );
+
+                            setServiceData({
+                                ...serviceData,
+                                customServices:
+                                    updated
+                            });
+
+                        }}
+                        style={{
+                            ...invoiceValueBoxStyle,
+                            height: "27px",
+                            fontSize: "9px",
+                            textAlign: "right",
+                            background:
+                                service.taxTreatment ===
+                                "inclusive"
+                                    ? "#eef2f5"
+                                    : "#fff"
+                        }}
+                    />
+
+                </div>
+
+
+                {/* TAX % */}
+
+                <div
+                    style={{
+                        padding: "4px",
+                        borderRight:
+                            "1px solid #d5e0e6"
+                    }}
+                >
+
+                    <input
+                        type="number"
+                        min="0"
+                        value={
+                            service.taxPercent
+                        }
+                        disabled={
+                            service.taxTreatment ===
+                            "none"
+                        }
+                        onChange={(e) => {
+
+                            const updated =
+                                serviceData.customServices.map(
+                                    item =>
+                                        item.id === service.id
+                                            ? {
+                                                ...item,
+                                                taxPercent:
+                                                    e.target.value
+                                            }
+                                            : item
+                                );
+
+                            setServiceData({
+                                ...serviceData,
+                                customServices:
+                                    updated
+                            });
+
+                        }}
+                        style={{
+                            ...invoiceValueBoxStyle,
+                            height: "27px",
+                            fontSize: "9px",
+                            textAlign: "center",
+                            background:
+                                service.taxTreatment ===
+                                "none"
+                                    ? "#eef2f5"
+                                    : "#fff"
+                        }}
+                    />
+
+                </div>
+
+
+              {/* TAX */}
+
+<div
+    style={{
+        padding: "4px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-end"
+    }}
+>
+    <input
+        type="text"
+        value={calculated.taxAmount.toFixed(2)}
+        readOnly
+        style={{
+            width: "100%",
+            height: "27px",
+            boxSizing: "border-box",
+            padding: "0 8px",
+            border: "1px solid #cbd5e1",
+            borderRadius: "3px",
+            background: "#f8fafc",
+            textAlign: "right",
+            fontSize: "9px"
+        }}
+    />
+</div>
+
+
+                {/* AMOUNT */}
+
+                <div
+                    style={{
+                        padding: "4px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent:
+                            "flex-end"
+                    }}
+                >
+
+                    {service.taxTreatment ===
+                    "inclusive" ? (
+
+                        <input
+                            type="number"
+                            min="0"
+                            value={
+                                service.amount
+                            }
+                            onChange={(e) => {
+
+                                const updated =
+                                    serviceData.customServices.map(
+                                        item =>
+                                            item.id === service.id
+                                                ? {
+                                                    ...item,
+                                                    amount:
+                                                        e.target.value
+                                                }
+                                                : item
+                                    );
+
+                                setServiceData({
+                                    ...serviceData,
+                                    customServices:
+                                        updated
+                                });
+
+                            }}
+                            style={{
+                                ...invoiceValueBoxStyle,
+                                width: "100%",
+                                height: "27px",
+                                fontSize: "9px",
+                                textAlign: "right"
+                            }}
+                        />
+
+                    ) : (
+
+                       <input
+    type="text"
+    value={calculated.lineAmount.toFixed(2)}
+    readOnly
+   style={{
+    ...invoiceValueBoxStyle,
+    width: "100%",
+    height: "27px",
+    minWidth: 0,
+    boxSizing: "border-box",
+    padding: "0 8px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "3px",
+    background: "#f8fafc",
+    textAlign: "right",
+    fontSize: "9px"
+}}
+/>
+
+                    )}
+
+                </div>
+
+            </div>
+        );
+
+    }
+)}
+
+
+
+
+    {/* ADDITIONAL CUSTOM SERVICES */}
+
+    <div
+        style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "5px 8px",
+            background: "#f8fafc",
+            borderTop:
+                "1px solid #d5e0e6",
+            fontSize: "9px"
+        }}
+    >
+
+        <strong>
+            Additional Service:
+        </strong>
+
+        <select
+            value={
+                selectedCustomService
+            }
+            onChange={(e) =>
+                setSelectedCustomService(
+                    e.target.value
+                )
+            }
+            style={{
+                height: "24px",
+                border:
+                    "1px solid #cbd8df",
+                borderRadius: "2px",
+                padding: "2px 6px",
+                fontSize: "9px",
+                background: "#fff",
+                minWidth: "170px"
+            }}
+        >
+
+            <option value="">
+                Select Service
+            </option>
+
+            {customServiceOptions.map(
+                (service) => (
+
+                    <option
+                        key={service}
+                        value={service}
+                    >
+                        {service}
+                    </option>
+
+                )
+            )}
+
+        </select>
+
+        <button
+            type="button"
+            onClick={() => {
+
+                if (
+                    !selectedCustomService
+                ) {
+                    return;
+                }
+
+                setServiceData(prev => ({
+                    ...prev,
+
+                    customServices: [
+                        ...prev.customServices,
+                        createCustomService(
+                            selectedCustomService
+                        )
+                    ]
+                }));
+
+                setSelectedCustomService("");
+
+            }}
+            style={{
+                height: "24px",
+                padding: "2px 10px",
+                border: "none",
+                borderRadius: "2px",
+                background: "#17334F",
+                color: "#fff",
+                fontSize: "9px",
+                fontWeight: 600,
+                cursor: "pointer"
+            }}
+        >
+            + Add
+        </button>
+
+    </div>
+
 
 
     {/* TAX TREATMENT */}
@@ -2109,8 +3269,8 @@ fontWeight: 700
     >
 
         <strong>
-            Tax Treatment:
-        </strong>
+    Package Tax Treatment:
+</strong>
 
         <select
             value={
@@ -2186,7 +3346,7 @@ fontWeight: 700
                 fontSize: "9px"
             }}
         >
-            ₹ {taxableValue.toFixed(2)}
+            ₹ {finalTaxableValue.toFixed(2)}
         </div>
 
     </div>

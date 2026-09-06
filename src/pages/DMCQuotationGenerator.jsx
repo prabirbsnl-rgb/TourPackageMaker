@@ -3786,6 +3786,13 @@ if (existingTaxInvoice) {
 );
 
 
+console.log(
+    "===== EXISTING INVOICE CUSTOM SERVICES =====",
+    existingTaxInvoice?.serviceData?.customServices
+);
+
+
+
     setTaxInvoiceDraft(
         structuredClone(existingTaxInvoice)
     );
@@ -4094,7 +4101,9 @@ console.log(
 
     try {
 
-        await saveTaxInvoice(savedInvoice);
+        await saveTaxInvoice(
+            savedInvoice
+        );
 
         const refreshedInvoices =
             getTaxInvoices();
@@ -4116,6 +4125,10 @@ console.log(
             "Tax Invoice saved successfully."
         );
 
+        // Tell Save & Send that the
+        // user has completed the OK step.
+        return true;
+
     } catch (error) {
 
         console.error(
@@ -4126,6 +4139,8 @@ console.log(
         alert(
             "Tax Invoice could not be saved."
         );
+
+        return false;
 
     }
 

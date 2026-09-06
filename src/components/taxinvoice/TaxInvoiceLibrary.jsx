@@ -3,9 +3,16 @@
 import React from "react";
 
 import {
+
     deleteTaxInvoice,
-    saveTaxInvoice
+
+    saveTaxInvoice,
+
+    loadTaxInvoicesFromFirestore
+
 } from "../../utils/quotationStorage";
+
+
 
 import { calculateQuotationTotals }
     from "../../utils/quotationCalculator";
@@ -1513,7 +1520,7 @@ overflow: "hidden",
 
 <div
     style={{
-        padding: "0 10px",
+       padding: "0 6px",
         whiteSpace: "nowrap",
 boxSizing: "border-box",
 overflow: "hidden",
