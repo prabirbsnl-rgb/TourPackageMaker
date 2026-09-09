@@ -987,10 +987,10 @@ if (!helperResponse.ok) {
             background: "#ffffff",
             color: "#17334F",
             border: "1px solid #c8d5df",
-            padding: "8px 9px",
+            padding: "8px 11px",
             borderRadius: "0 8px 8px 0",
             cursor: "pointer",
-            fontSize: "11px",
+            fontSize: "14px",
             fontWeight: 700
         }}
         aria-label="Open send options"
@@ -1112,23 +1112,123 @@ if (!helperResponse.ok) {
     📱 WhatsApp
 </button>
 
-        <button
-            type="button"
-            style={{
-                width: "100%",
-                padding: "9px 12px",
-                background: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                textAlign: "left",
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "#374151"
-            }}
-        >
-            ✉️ Email
-        </button>
+       <button
+    type="button"
+    onClick={async () => {
+
+        try {
+
+            const email =
+                invoiceData?.email ??
+                invoiceData?.commonData?.email ??
+                "";
+
+            const pdfBlob =
+                window.__orbitzTaxInvoicePdfBlob;
+
+            if (!pdfBlob) {
+
+                alert(
+                    "Please click Save & Send first so the tax invoice PDF can be prepared."
+                );
+
+                return;
+            }
+
+            if (
+                !email.trim() ||
+                !email.includes("@")
+            ) {
+
+                alert(
+                    "Customer email address is missing or invalid."
+                );
+
+                return;
+            }
+
+            const response =
+                await fetch(
+                    "http://127.0.0.1:38765/prepare-email-pdf",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/pdf",
+
+                            "x-orbitz-email":
+                                email,
+
+                               "x-orbitz-filename":
+    "Orbitz-Tax-Invoice-" +
+    (
+        completedInvoiceData?.displayQuotationNo ||
+        completedInvoiceData?.quotationNo ||
+        "Tax-Invoice"
+    ) +
+    ".pdf",
+
+                            "x-orbitz-subject":
+                                "Orbitz Holidays - Tax Invoice",
+
+                            "x-orbitz-message":
+    encodeURIComponent(
+        "Dear Customer,\n\nPlease find attached your tax invoice from Orbitz Holidays.\n\nThank you for choosing Orbitz Holidays.\n\nRegards,\nOrbitz Holidays"
+    )
+                        },
+
+                        body: pdfBlob
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    result.error ||
+                    "Orbitz Helper failed."
+                );
+            }
+
+            console.log(
+                "Email prepared:",
+                result
+            );
+
+            setShowSendOptions(false);
+
+        } catch (error) {
+
+            console.error(
+                "EMAIL HELPER FAILED:",
+                error
+            );
+
+            alert(
+    "EMAIL FAILED:\n\n" +
+    error.message
+);
+        }
+
+    }}
+    style={{
+        width: "100%",
+        padding: "9px 12px",
+        background: "#fff",
+        border: "none",
+        borderRadius: "6px",
+        cursor: "pointer",
+        textAlign: "left",
+        fontSize: "12px",
+        fontWeight: 600,
+        color: "#374151"
+    }}
+>
+    ✉️ Email
+</button>
 
         <button
             type="button"
