@@ -25,7 +25,8 @@ export default function TaxInvoiceLibrary({
     taxInvoices = [],
     onClose,
     onOpen,
-    onRefresh
+    onRefresh,
+    userProfile
 }) {
 
     const [showImportConfirmed, setShowImportConfirmed] =
@@ -1728,90 +1729,117 @@ overflow: "hidden",
     }}
 >
     <button
-        type="button"
-     onClick={async () => {
+    type="button"
 
-    const invoiceNo =
-        taxInvoice?.invoiceNo ||
-        draft?.quotationNo;
-
-    console.log(
-        "🗑 DELETE REQUEST:",
-        invoiceNo
-    );
-
-    if (!invoiceNo) {
-
-        console.warn(
-            "🗑 DELETE ABORTED: NO INVOICE NUMBER"
-        );
-
-        return;
+    disabled={
+        userProfile?.role !== "admin"
     }
 
-    const confirmed =
-        window.confirm(
-            taxInvoice?.status === "Completed"
-                ? "Delete this completed tax invoice?"
-                : "Delete this pending tax invoice?"
-        );
-
-    if (!confirmed) {
-        return;
+    title={
+        userProfile?.role === "admin"
+            ? "Delete tax invoice"
+            : "Only Admin can delete tax invoices"
     }
 
-    try {
+    onClick={async () => {
 
-        await deleteTaxInvoice(
-            invoiceNo
-        );
+        const invoiceNo =
+            taxInvoice?.invoiceNo ||
+            draft?.quotationNo;
 
         console.log(
-            "🗑 TAX INVOICE DELETED:",
+            "🗑 DELETE REQUEST:",
             invoiceNo
         );
 
-      if (onRefresh) {
-    onRefresh();
-}
+        if (!invoiceNo) {
 
-setShowImportConfirmed(false);
+            console.warn(
+                "🗑 DELETE ABORTED: NO INVOICE NUMBER"
+            );
 
-sessionStorage.removeItem(
-    "taxInvoiceRestoreOpen"
-);
+            return;
+        }
 
-    } catch (error) {
+        const confirmed =
+            window.confirm(
+                taxInvoice?.status === "Completed"
+                    ? "Delete this completed tax invoice?"
+                    : "Delete this pending tax invoice?"
+            );
 
-        console.error(
-            "🗑 TAX INVOICE DELETE FAILED:",
-            error
-        );
+        if (!confirmed) {
+            return;
+        }
 
-        alert(
-            "Tax Invoice could not be deleted."
-        );
+        try {
 
-    }
+            await deleteTaxInvoice(
+                invoiceNo
+            );
 
-}}
-        style={{
-            width: "30px",
-            height: "30px",
-            border: "1px solid #e2e8f0",
-            borderRadius: "6px",
-            background: "#fff",
-            color: "#b91c1c",
-            cursor: "pointer",
-            fontSize: "14px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-        }}
-        title="Delete tax invoice"
-    >
-        🗑
-    </button>
+            console.log(
+                "🗑 TAX INVOICE DELETED:",
+                invoiceNo
+            );
+
+            if (onRefresh) {
+                onRefresh();
+            }
+
+            setShowImportConfirmed(false);
+
+            sessionStorage.removeItem(
+                "taxInvoiceRestoreOpen"
+            );
+
+        } catch (error) {
+
+            console.error(
+                "🗑 TAX INVOICE DELETE FAILED:",
+                error
+            );
+
+            alert(
+                "Tax Invoice could not be deleted."
+            );
+
+        }
+
+    }}
+
+    style={{
+        width: "30px",
+        height: "30px",
+        border:
+            userProfile?.role === "admin"
+                ? "1px solid #fecdd3"
+                : "1px solid #e2e8f0",
+        borderRadius: "6px",
+        background:
+            userProfile?.role === "admin"
+                ? "#fff1f2"
+                : "#f1f5f9",
+        color:
+            userProfile?.role === "admin"
+                ? "#dc2626"
+                : "#9ca3af",
+        cursor:
+            userProfile?.role === "admin"
+                ? "pointer"
+                : "not-allowed",
+        fontSize: "14px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        opacity:
+            userProfile?.role === "admin"
+                ? 1
+                : 0.65
+    }}
+>
+    🗑
+</button>
 </div>
 
 

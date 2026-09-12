@@ -3681,6 +3681,7 @@ importingTemplateRef={
     open={showTaxInvoiceLibrary}
     drafts={drafts}
     taxInvoices={taxInvoices}
+    userProfile={userProfile}
 
     onRefresh={async () => {
     const refreshedInvoices =
