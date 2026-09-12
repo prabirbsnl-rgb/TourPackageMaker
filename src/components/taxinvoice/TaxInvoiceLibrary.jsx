@@ -214,17 +214,18 @@ const filteredDrafts =
             }}
         >
 
-            <div
-                style={{
-                    width: "min(1100px, 100%)",
-                    maxHeight: "90vh",
-                    overflowY: "auto",
-                    background: "#f8fafc",
-                    borderRadius: "14px",
-                    boxShadow:
-                        "0 20px 60px rgba(0,0,0,.25)"
-                }}
-            >
+           <div
+    style={{
+        width: "min(1400px, 96vw)",
+        height: "92vh",
+        maxHeight: "92vh",
+        overflowY: "auto",
+        background: "#f8fafc",
+        borderRadius: "14px",
+        boxShadow:
+            "0 20px 60px rgba(0,0,0,.25)"
+    }}
+>
 
                 {/* HEADER */}
 
@@ -571,38 +572,33 @@ const filteredDrafts =
 
             availableConfirmedDrafts.map(draft => (
 
-                <div
-                    key={draft.quotationNo}
-                   style={{
-    display: "grid",
-    gridTemplateColumns:
-        "minmax(0, 1fr) 170px",
-    alignItems: "center",
-    gap: "0",
-    padding: "0",
-    marginBottom: "6px",
-    background: "#ffffff",
-    border: "1px solid #d7e7df",
-    borderRadius: "8px",
-    minHeight: "58px",
-    overflow: "hidden"
-}}
-                >
+              <div
+              key={draft.quotationNo}
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+            "170px minmax(150px, 1fr) minmax(220px, 1.25fr) 170px",
+             alignItems: "center",
+             gap: "0",
+             padding: "0",
+             marginBottom: "6px",
+             background: "#ffffff",
+             border: "1px solid #d7e7df",
+             borderRadius: "8px",
+            minHeight: "48px",
+            overflow: "hidden"
+           }}
+         >
 
-                   <div
-    style={{
-        display: "grid",
-        gridTemplateColumns:
-            "180px minmax(180px, 1fr) 150px",
-        alignItems: "center",
-        minWidth: 0,
-        height: "100%"
-    }}
->
-
-                        <div
+    {/* Quotation Number */}
+    <div
         style={{
-            padding: "0 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "7px",
+            minWidth: 0,
+            height: "100%",
+            padding: "0 12px",
             fontSize: "12px",
             fontWeight: 800,
             color: "#17334F",
@@ -610,39 +606,107 @@ const filteredDrafts =
             whiteSpace: "nowrap"
         }}
     >
-    {draft.displayQuotationNo ||
-        draft.quotationNo}
-</div>
-                       <div
-    style={{
-    padding: "0 16px",
-    fontSize: "13px",
-    fontWeight: 700,
-    color: "#1f2937",
-    borderRight: "1px solid #dbe7e2",
-    whiteSpace: "nowrap"
-}}
->
-    {draft.clientName ||
-        "Unnamed Client"}
-</div>
+        <span
+            style={{
+                fontSize: "15px",
+                lineHeight: 1,
+                flexShrink: 0
+            }}
+        >
+            📄
+        </span>
 
-                        <div
-    style={{
-    padding: "0 16px",
-    fontSize: "11px",
-    fontWeight: 600,
-    color: "#365d78",
-    whiteSpace: "nowrap"
-}}
->
-    {draft.destination || "—"}
-</div>
-
-                    </div>
+        <span
+            style={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+            }}
+        >
+            {draft.displayQuotationNo ||
+                draft.quotationNo}
+        </span>
+    </div>
 
 
-                    <button
+    {/* Client Name */}
+    <div
+        style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "7px",
+            minWidth: 0,
+            height: "100%",
+            padding: "0 12px",
+            fontSize: "12px",
+            fontWeight: 700,
+            color: "#1f2937",
+            borderRight: "1px solid #dbe7e2",
+            whiteSpace: "nowrap"
+        }}
+    >
+        <span
+            style={{
+                fontSize: "15px",
+                lineHeight: 1,
+                flexShrink: 0
+            }}
+        >
+            👤
+        </span>
+
+        <span
+            style={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+            }}
+        >
+            {draft.clientName ||
+                "Unnamed Client"}
+        </span>
+    </div>
+
+
+    {/* Destination */}
+    <div
+        style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "7px",
+            minWidth: 0,
+            height: "100%",
+            padding: "0 12px",
+            fontSize: "11px",
+            fontWeight: 600,
+            color: "#365d78",
+            borderRight: "1px solid #dbe7e2",
+            whiteSpace: "nowrap"
+        }}
+    >
+        <span
+            style={{
+                fontSize: "15px",
+                lineHeight: 1,
+                flexShrink: 0
+            }}
+        >
+            📍
+        </span>
+
+        <span
+            style={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+            }}
+        >
+            {draft.destination || "—"}
+        </span>
+    </div>
+
+
+                     <button
                         type="button"
                         onClick={async () => {
 
@@ -891,7 +955,7 @@ alert(
         "0 2px 5px rgba(21,128,61,.14)"
 }}
                     >
-                       Import to Tax Library
+                       ⬇️ Import to Tax Library
                     </button>
 
                 </div>
@@ -996,7 +1060,7 @@ alert(
                                 style={{
     display: "grid",
 gridTemplateColumns:
-    "88px 105px 85px 98px 92px 108px 100px 90px 88px 92px 50px",
+    "1fr 1.15fr 1.15fr 1.15fr 1.1fr 1.25fr 1.2fr 1.05fr 1.1fr 1.1fr 0.65fr",
     alignItems: "center",
     minHeight: "42px",
     marginBottom: "8px",
@@ -1399,7 +1463,7 @@ const formattedInvoiceCreatedDate =
     style={{
         display: "grid",
    gridTemplateColumns:
-    "88px 105px 85px 98px 92px 108px 100px 90px 88px 92px 50px",
+    "1fr 1.15fr 1.15fr 1.15fr 1.1fr 1.25fr 1.2fr 1.05fr 1.1fr 1.1fr 0.65fr",
         minHeight: "54px",
         background: "#fff",
         border: "1px solid #dce5ea",

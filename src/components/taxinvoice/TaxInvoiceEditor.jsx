@@ -954,19 +954,20 @@ if (!helperResponse.ok) {
 
 
         style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "#ffffff",
-            color: "#17334F",
-            border: "1px solid #c8d5df",
-            borderRight: "none",
-            padding: "8px 14px",
-            borderRadius: "8px 0 0 8px",
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: 700
-        }}
+    padding: "9px 14px",
+    background:
+        "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+    color: "#ffffff",
+    border: "1px solid #1d4ed8",
+    borderRadius: "8px 0 0 8px",
+    cursor: "pointer",
+    fontSize: "12px",
+    fontWeight: 700,
+    boxShadow:
+        "0 2px 5px rgba(37, 99, 235, 0.25)",
+    transition:
+        "transform 0.15s ease, box-shadow 0.15s ease"
+}}
     >
         📄 Save & Send
     </button>
@@ -998,15 +999,15 @@ if (!helperResponse.ok) {
         ▾
     </button>
 
-</div>
+
 
 
 {showSendOptions && (
     <div
         style={{
             position: "absolute",
-            top: "40px",
-            right: 0,
+          top: "calc(100% + 4px)",
+          left: 0,
             minWidth: "190px",
             background: "#fff",
             border: "1px solid #d1d5db",
@@ -1135,17 +1136,9 @@ if (!helperResponse.ok) {
                 return;
             }
 
-            if (
-                !email.trim() ||
-                !email.includes("@")
-            ) {
-
-                alert(
-                    "Customer email address is missing or invalid."
-                );
-
-                return;
-            }
+           // Email is optional.
+// If blank, Gmail will open with the To field empty
+// so the user can enter the recipient manually.
 
             const response =
                 await fetch(
@@ -1236,24 +1229,24 @@ if (!helperResponse.ok) {
                 setShowSendOptions(false)
             }
             style={{
-                width: "100%",
-                padding: "9px 12px",
-                background: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                textAlign: "left",
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "#6b7280"
-            }}
+    width: "100%",
+    padding: "9px 12px",
+    background: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    textAlign: "left",
+    fontSize: "12px",
+    fontWeight: 600,
+    color: "#374151"
+}}
         >
-            Cancel
+           ✖️ Cancel
         </button>
 
     </div>
 )}
-
+</div>
 
 
 
@@ -1267,19 +1260,17 @@ if (!helperResponse.ok) {
    onClick={() => onSave?.(completedInvoiceData)}
 
     style={{
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    background: "#17334F",
-    color: "#fff",
-    border: "1px solid #17334F",
-    padding: "8px 16px",
+    padding: "9px 15px",
+    background:
+        "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+    color: "#ffffff",
+    border: "1px solid #15803d",
     borderRadius: "8px",
     cursor: "pointer",
     fontSize: "12px",
     fontWeight: 700,
-    boxShadow: "0 2px 6px rgba(23, 51, 79, 0.16)",
-    transition: "all 0.2s ease"
+    boxShadow:
+        "0 2px 5px rgba(22, 163, 74, 0.22)"
 }}
 >
     💾 Save
@@ -1294,19 +1285,16 @@ if (!helperResponse.ok) {
                         type="button"
                         onClick={onClose}
                         style={{
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
+    padding: "9px 14px",
     background: "#ffffff",
-    color: "#17334F",
-    border: "1px solid #c8d5df",
-    padding: "8px 15px",
+    color: "#334155",
+    border: "1px solid #cbd5e1",
     borderRadius: "8px",
     cursor: "pointer",
     fontSize: "12px",
-    fontWeight: 700,
-    boxShadow: "0 2px 5px rgba(23, 51, 79, 0.08)",
-    transition: "all 0.2s ease"
+    fontWeight: 600,
+    boxShadow:
+        "0 1px 3px rgba(15, 23, 42, 0.08)"
 }}
                     >
                        ← Back

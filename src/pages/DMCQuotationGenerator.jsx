@@ -2113,7 +2113,7 @@ const handleDeleteDraft = async (quotationNo) => {
 
 };
 
-const handleDeleteRevision = (revision) => {
+const handleDeleteRevision = async (revision) => {
 
     if (!revisionHistoryDraft) {
         return;
@@ -2138,172 +2138,159 @@ const handleDeleteRevision = (revision) => {
                 revision.revisionNo
         );
 
-        console.log(
-    "Deleting revision:",
-    revision.revisionNo
-);
-
-console.log(
-    "Remaining revisions:",
-    remainingRevisions
-);
-
-console.log(
-    "Original data:",
-    revisionHistoryDraft.originalData
-);
-
-
-    const isCurrentRevision =
-        revision.revisionNo ===
-        revisionHistoryDraft.revisionNo;
-
-    /*
-     * -----------------------------------------
-     * CASE 1 — deleting an older revision
-     * -----------------------------------------
-     */
-
-    if (!isCurrentRevision) {
-
-        const updatedDraft = {
-            ...structuredClone(revisionHistoryDraft),
-            revisionHistory:
-                remainingRevisions
-        };
-
-        saveDraft(updatedDraft);
-
-        setRevisionHistoryDraft(updatedDraft);
-
-        setRevisionHistory(
-            remainingRevisions
-        );
-
-        refreshDrafts();
-
-        return;
-    }
-
-    /*
-     * -----------------------------------------
-     * CASE 2 — deleting CURRENT revision
-     * -----------------------------------------
-     */
-
-    const sortedRemaining =
-        [...remainingRevisions].sort(
-            (a, b) =>
-                b.revisionNo -
-                a.revisionNo
-        );
-
-    const previousRevision =
-        sortedRemaining[0];
-
-    /*
-     * If another revision remains,
-     * roll back to that revision.
-     */
-
-    if (previousRevision) {
-
-        const updatedDraft = {
-
-            ...structuredClone(
-                revisionHistoryDraft
-            ),
-
-            commonData:
-                structuredClone(
-                    previousRevision.commonData
-                ),
-
-            packageData:
-                structuredClone(
-                    previousRevision.packageData
-                ),
-
-            itineraryData:
-                structuredClone(
-                    previousRevision.itineraryData
-                ),
-
-            revisionNo:
-                previousRevision.revisionNo,
-
-            revisionHistory:
-                remainingRevisions
-        };
-
-        saveDraft(updatedDraft);
-
-        setCommonData(
-            structuredClone(
-                previousRevision.commonData
-            )
-        );
-
-        setPackageData(
-            structuredClone(
-                previousRevision.packageData
-            )
-        );
-
-        setItineraryData(
-            structuredClone(
-                previousRevision.itineraryData
-            )
-        );
-
-        setCurrentRevision(
-            previousRevision.revisionNo
-        );
-
-        setEditingDraft(
-            updatedDraft
-        );
-
-        setRevisionHistory(
-            remainingRevisions
-        );
-
-        setRevisionHistoryDraft(
-            updatedDraft
-        );
-
-        setViewingRevision(null);
-
-        setViewingRevisionModified(false);
-
-        setViewingRevisionCurrentNo(
-            previousRevision.revisionNo
-        );
-
-        refreshDrafts();
-
-        return;
-    }
-
-   /*
- * -----------------------------------------
- * CASE 3 — no revisions remain
- * → restore ORIGINAL DRAFT
- * -----------------------------------------
- */
-
-const original =
-    revisionHistoryDraft.originalData;
-
-if (!original) {
-
-    alert(
-        "The original saved quotation data is not available for this older draft. " +
-        "Please use a quotation created after the Original Draft snapshot was added."
+    console.log(
+        "Deleting revision:",
+        revision.revisionNo
     );
 
-    return;
-}
+    console.log(
+        "Remaining revisions:",
+        remainingRevisions
+    );
+
+    /*
+     * -----------------------------------------
+     * CASE 1 — revisions still remain
+     * -----------------------------------------
+     */
+
+    if (remainingRevisions.length > 0) {
+
+        const sortedRemaining =
+            [...remainingRevisions].sort(
+                (a, b) =>
+                    b.revisionNo -
+                    a.revisionNo
+            );
+
+        const previousRevision =
+            sortedRemaining[0];
+
+        /*
+         * If deleting CURRENT revision,
+         * roll back to the previous revision.
+         */
+
+        if (
+            revision.revisionNo ===
+            revisionHistoryDraft.revisionNo
+        ) {
+
+            const updatedDraft = {
+
+                ...structuredClone(
+                    revisionHistoryDraft
+                ),
+
+                commonData:
+                    structuredClone(
+                        previousRevision.commonData
+                    ),
+
+                packageData:
+                    structuredClone(
+                        previousRevision.packageData
+                    ),
+
+                itineraryData:
+                    structuredClone(
+                        previousRevision.itineraryData
+                    ),
+
+                revisionNo:
+                    previousRevision.revisionNo,
+
+                revisionHistory:
+                    remainingRevisions
+            };
+
+            await saveDraft(updatedDraft);
+
+            setCommonData(
+                structuredClone(
+                    previousRevision.commonData
+                )
+            );
+
+            setPackageData(
+                structuredClone(
+                    previousRevision.packageData
+                )
+            );
+
+            setItineraryData(
+                structuredClone(
+                    previousRevision.itineraryData
+                )
+            );
+
+            setCurrentRevision(
+                previousRevision.revisionNo
+            );
+
+            setEditingDraft(
+                updatedDraft
+            );
+
+            setRevisionHistory(
+                remainingRevisions
+            );
+
+            setRevisionHistoryDraft(
+                updatedDraft
+            );
+
+            setViewingRevision(null);
+
+            setViewingRevisionModified(false);
+
+            setViewingRevisionCurrentNo(
+                previousRevision.revisionNo
+            );
+
+        } else {
+
+            /*
+             * Deleting an older revision.
+             * Current revision remains unchanged.
+             */
+
+            const updatedDraft = {
+
+                ...structuredClone(
+                    revisionHistoryDraft
+                ),
+
+                revisionHistory:
+                    remainingRevisions
+            };
+
+            await saveDraft(updatedDraft);
+
+            setRevisionHistoryDraft(
+                updatedDraft
+            );
+
+            setRevisionHistory(
+                remainingRevisions
+            );
+        }
+
+        refreshDrafts();
+
+        return;
+    }
+
+    /*
+ * -----------------------------------------
+ * CASE 2 — LAST REVISION DELETED
+ *
+ * Revision History becomes EMPTY.
+ *
+ * Original Draft remains in Draft Library.
+ * Do NOT restore originalData.
+ * -----------------------------------------
+ */
 
 const updatedDraft = {
 
@@ -2311,46 +2298,21 @@ const updatedDraft = {
         revisionHistoryDraft
     ),
 
-    commonData:
-        structuredClone(
-            original.commonData
-        ),
-
-    packageData:
-        structuredClone(
-            original.packageData
-        ),
-
-    itineraryData:
-        structuredClone(
-            original.itineraryData
-        ),
-
-    clientName:
-        original.commonData.clientName,
-
-    destination:
-        original.commonData.customDestination?.trim()
-            || original.commonData.destination
-            || "",
-
-    revisionNo: undefined,
-
     revisionHistory: []
 };
 
-saveDraft(updatedDraft);
+delete updatedDraft.revisionNo;
 
-console.log(
-    "DRAFT AFTER FINAL REVISION DELETE:",
-    getAllDrafts().find(
-        draft =>
-            draft.quotationNo ===
-            revisionHistoryDraft.quotationNo
-    )
-);
 
-// Clear revision state
+await saveDraft(updatedDraft);
+
+
+
+
+/*
+ * Clear revision state
+ */
+
 setRevisionHistory([]);
 
 setCurrentRevision(0);
@@ -2361,48 +2323,26 @@ setViewingRevisionModified(false);
 
 setViewingRevisionCurrentNo(0);
 
-// Close Revision History
-setRevisionHistoryDraft(null);
-
 /*
- * If History was opened from the Editor:
- * restore Original Draft into the editor.
- *
- * If History was opened from Library:
- * leave the editor untouched.
- * The Library remains open and the user
- * can click Open if they want the quotation
- * in the editor.
+ * Keep Revision History modal open
+ * and show empty history.
  */
 
-if (!historyOpenedFromLibrary) {
+setRevisionHistoryDraft(updatedDraft);
 
-    setCommonData(
-        structuredClone(
-            original.commonData
-        )
-    );
+/*
+ * Refresh Draft Library only AFTER
+ * the LocalStorage + Firestore save
+ * has completed.
+ */
 
-    setPackageData(
-        structuredClone(
-            original.packageData
-        )
-    );
-
-    setItineraryData(
-        structuredClone(
-            original.itineraryData
-        )
-    );
-
-    setEditingDraft(null);
-}
-
-setHistoryOpenedFromLibrary(false);
-
-refreshDrafts();
+await refreshDrafts();
 
 };
+
+
+
+
 
 const handleResumeWorkingCopy = () => {
 
