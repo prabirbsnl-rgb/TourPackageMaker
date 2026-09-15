@@ -14,11 +14,11 @@ export default function CancellationPolicyEditor({
 
 }) {
 
-    const [expandedPolicyId, setExpandedPolicyId] =
-        useState(1);
+   const [expandedPolicyId, setExpandedPolicyId] =
+    useState(null);
 
-    const [editorExpanded, setEditorExpanded] =
-        useState(true);
+   const [editorExpanded, setEditorExpanded] =
+    useState(false);
 
     const [deletePolicyId, setDeletePolicyId] =
         useState(null);
@@ -199,7 +199,7 @@ export default function CancellationPolicyEditor({
                     border:
                         "1px solid #E5E7EB",
 
-                    borderRadius: "12px",
+                    borderRadius: "10px",
 
                     overflow: "hidden",
 
@@ -209,101 +209,99 @@ export default function CancellationPolicyEditor({
             >
 
 
-                {/* =================================================
-                    TOP ACCENT LINE
-                ================================================= */}
-
-                <div
-                    style={{
-                        height: "3px",
-
-                        background:
-                            "linear-gradient(90deg, #C084FC 0%, #E879A9 50%, #C084FC 100%)"
-                    }}
-                />
-
+               
 
                 {/* =================================================
                     POLICY HEADER
                 ================================================= */}
 
-                <div
-                    onClick={() => {
+               <div
+  onClick={() => {
+    if (editorExpanded) setExpandedPolicyId(null);
+    setDeletePolicyId(null);
+    setEditorExpanded(!editorExpanded);
+  }}
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+   minHeight: "36px",
+padding: "4px 10px 4px 20px",
+    boxSizing: "border-box",
+    cursor: "pointer",
+    userSelect: "none",
+    borderBottom: "1px solid #E5E7EB",
+    position: "relative"
+  }}
+>
+  <span
+  style={{
+    position: "absolute",
+    left: "0px",
+    top: 0,
+    bottom: 0,
+    width: "3px",
+    background:
+      "linear-gradient(180deg, #60a5fa 0%, #2563eb 100%)",
+    borderRadius: "2px"
+  }}
+/>
 
-                        if (editorExpanded) {
+  <span
+    style={{
+      fontSize: "16px",
+      lineHeight: 1,
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "16px",
+      height: "24px",
+      flexShrink: 0
+    }}
+  >
+    📋
+  </span>
 
-                            setExpandedPolicyId(null);
+  <span
+    style={{
+      fontSize: "14px",
+      fontWeight: 750,
+      color: "#1e3a5f",
+      whiteSpace: "nowrap"
+    }}
+  >
+    Cancellation & Refund Policy
+  </span>
 
-                        }
+  <span
+    style={{
+      width: "24px",
+      height: "24px",
+      border: "1px solid #cbd5e1",
+      borderRadius: "6px",
+      background: "#ffffff",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0
+    }}
+  >
+    <span
+      style={{
+        width: "7px",
+        height: "7px",
+        borderRight: "2px solid #475569",
+        borderBottom: "2px solid #475569",
+        transform: editorExpanded
+          ? "rotate(225deg)"
+          : "rotate(45deg)",
+        marginTop: editorExpanded ? "4px" : "-3px"
+      }}
+    />
+  </span>
+                  
 
-                        setDeletePolicyId(null);
-
-                        setEditorExpanded(
-                            !editorExpanded
-                        );
-
-                    }}
-                    style={{
-                        display: "flex",
-
-                        justifyContent:
-                            "space-between",
-
-                        alignItems: "center",
-
-                        padding:
-                            "16px 18px 14px 18px",
-
-                        cursor: "pointer",
-
-                        userSelect: "none",
-
-                        borderBottom:
-                            "1px dashed #D1D5DB"
-                    }}
-                >
-
-                    <div
-                        style={{
-                            display: "flex",
-
-                            alignItems: "center",
-
-                            gap: "9px"
-                        }}
-                    >
-
-                        <span
-                            style={{
-                                fontSize: "12px",
-
-                                color: "#64748B",
-
-                                width: "14px"
-                            }}
-                        >
-                            {editorExpanded
-                                ? "▼"
-                                : "▶"}
-                        </span>
-
-
-                        <span
-                            style={{
-                                fontSize: "17px",
-
-                                fontWeight: 700,
-
-                                color: "#1F2937"
-                            }}
-                        >
-                            Cancellation & Refund Policy
-                        </span>
-
-                    </div>
-
-
-                    {/* POLICY COUNT */}
+                 {/* POLICY COUNT */}
 
                     <span
                         style={{
@@ -499,19 +497,7 @@ export default function CancellationPolicyEditor({
                 )}
 
 
-                {/* =================================================
-                    BOTTOM ACCENT LINE
-                ================================================= */}
-
-                <div
-                    style={{
-                        height: "4px",
-
-                        background:
-                            "linear-gradient(90deg, #C084FC 0%, #E879A9 50%, #C084FC 100%)"
-                    }}
-                />
-
+                
             </div>
 
         </div>

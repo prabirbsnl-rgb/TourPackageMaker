@@ -4179,10 +4179,12 @@ else {
    * The PDF simply presents that final quoted amount.
    * ---------------------------------------------------------
    */
+  
 const totalAmountPayable =
-    Number(
-        quoteData.grandTotal ?? subtotal
-    );
+    quoteData.totalAmountPayable !== undefined &&
+    quoteData.totalAmountPayable !== ""
+        ? Number(quoteData.totalAmountPayable)
+        : Number(quoteData.grandTotal ?? subtotal);
 
   /*
    * ---------------------------------------------------------

@@ -42,7 +42,7 @@ export default function ExclusionSelector({
   packageData?.exclusionMode || "chips";
 
   return (
-    <div style={{ marginTop: "20px" }}>
+    <div style={{ marginTop: "0px" }}>
 
       {/* =========================
           EXCLUSION HEADER
@@ -54,19 +54,32 @@ export default function ExclusionSelector({
         }
         style={{
   width: "100%",
-  minHeight: "42px",
-  padding: "7px 12px",
+  minHeight: "36px",
+  padding: "4px 10px 4px 20px",
   boxSizing: "border-box",
   background: "#fff8fa",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
   cursor: "pointer",
-  color: "#a05268",
+  color: "#c45a73",
   fontSize: "13px",
-  fontWeight: 700
+  fontWeight: 700,
+  position: "relative"
 }}
       >
+
+       <span
+  style={{
+    position: "absolute",
+    left: "0px",
+    top: 0,
+    bottom: 0,
+    width: "3px",
+    background:
+      "linear-gradient(180deg, #fb7185 0%, #e11d48 100%)"
+  }}
+/>
         <span>
           ❌ Exclusions Selected (
           {(packageData?.exclusions || []).length}
@@ -89,7 +102,32 @@ export default function ExclusionSelector({
     flexShrink: 0
   }}
 >
-  {showExclusions ? "▲" : "▼"}
+  <span
+  style={{
+    width: "24px",
+    height: "24px",
+    border: "1px solid #f0cdd8",
+    borderRadius: "6px",
+    background: "#fbecef",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0
+  }}
+>
+  <span
+    style={{
+      width: "7px",
+      height: "7px",
+      borderRight: "2px solid #c43d61",
+      borderBottom: "2px solid #c43d61",
+      transform: showExclusions
+        ? "rotate(225deg)"
+        : "rotate(45deg)",
+      marginTop: showExclusions ? "4px" : "-3px"
+    }}
+  />
+</span>
 </span>
       </div>
 

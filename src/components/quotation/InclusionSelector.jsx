@@ -41,7 +41,7 @@ export default function InclusionSelector({
     packageData?.inclusionMode || "chips";
 
   return (
-    <div style={{ marginTop: "20px" }}>
+  <div style={{ marginTop: "0px" }}>
 
       <div
         onClick={() =>
@@ -49,8 +49,8 @@ export default function InclusionSelector({
         }
         style={{
   width: "100%",
-  minHeight: "42px",
-  padding: "7px 12px",
+  minHeight: "36px",
+  padding: "4px 10px 4px 20px",
   boxSizing: "border-box",
   background: "#faf8fb",
   display: "flex",
@@ -59,9 +59,23 @@ export default function InclusionSelector({
   cursor: "pointer",
   color: "#72527f",
   fontSize: "13px",
-  fontWeight: 700
+  fontWeight: 700,
+  position: "relative"
 }}
       >
+
+        <span
+  style={{
+    position: "absolute",
+    left: "0px",
+    top: 0,
+    bottom: 0,
+    width: "3px",
+    background:
+      "linear-gradient(180deg, #a78bfa 0%, #7c3aed 100%)",
+    borderRadius: "2px"
+  }}
+/>
         <span>
           📄 Inclusions Selected (
           {(packageData.inclusions || []).length}
@@ -84,7 +98,32 @@ export default function InclusionSelector({
     flexShrink: 0
   }}
 >
-  {showInclusions ? "▲" : "▼"}
+ <span
+  style={{
+    width: "24px",
+    height: "24px",
+    border: "1px solid #d8cbe3",
+    borderRadius: "6px",
+    background: "#eee7f5",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0
+  }}
+>
+  <span
+    style={{
+      width: "7px",
+      height: "7px",
+      borderRight: "2px solid #72527f",
+      borderBottom: "2px solid #72527f",
+      transform: showInclusions
+        ? "rotate(225deg)"
+        : "rotate(45deg)",
+      marginTop: showInclusions ? "4px" : "-3px"
+    }}
+  />
+</span>
 </span>
       </div>
 

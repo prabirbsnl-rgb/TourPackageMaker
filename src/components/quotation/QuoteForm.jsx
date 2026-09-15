@@ -63,9 +63,16 @@ const quoteData = {
     ...(itineraryData || {})
   };
 
-// ===================================
-// Cancellation Policy Accordion
-// ===================================
+
+  const [pdfThemeOpen, setPdfThemeOpen] = useState(false);
+
+  const [tourSummaryOpen, setTourSummaryOpen] = useState(false);
+
+  const [hotelUsedOpen, setHotelUsedOpen] = useState(false);
+
+  const [billingOpen, setBillingOpen] = useState(false);
+
+
 
 const [expandedPolicyId, setExpandedPolicyId] =
   useState(1);
@@ -440,11 +447,16 @@ return (
 
     <div
         style={{
-            background: "#fff",
-            padding: "16px 24px",
-            borderRadius: "12px",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.08)"
-        }}
+    background: "#fff",
+    padding: "0 24px 16px",
+    borderRadius: "12px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+    height: "calc(100vh - 110px)",
+    boxSizing: "border-box",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column"
+}}
     >
 
         {/* ============================== */}
@@ -452,17 +464,23 @@ return (
         {/* ============================== */}
 
         <div
-    style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "10px",
-        width: "100%",
-        flexWrap: "nowrap",
-        minWidth: 0,
-        marginTop: "2px",
-        marginBottom: "4px",
-        boxSizing: "border-box"
-    }}
+   style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    width: "100%",
+    flexWrap: "nowrap",
+    minWidth: 0,
+    marginTop: "2px",
+    marginBottom: "4px",
+    paddingTop: "16px",
+    paddingBottom: "6px",
+    boxSizing: "border-box",
+    flexShrink: 0,
+    background: "#fff",
+    position: "relative",
+    zIndex: 10
+}}
 >
 
             {/* QUOTATION TYPE */}
@@ -688,18 +706,29 @@ flexShrink: 1
         </div>
 
 
+        <div
+    style={{
+        flex: 1,
+        minHeight: 0,
+        overflowY: "auto",
+        overflowX: "hidden",
+        paddingRight: "6px",
+        boxSizing: "border-box"
+    }}
+>
+
+
 {/* =========================================================
     PDF THEME
 ========================================================= */}
 
 <div
   style={{
-    marginTop: "14px",
-    marginBottom: "18px",
-    padding: "12px 14px",
-    background: "#ffffff",
+    marginTop: "4px",
+  padding: "0",
     border: "1px solid #cbd5e1",
     borderRadius: "10px",
+    overflow: "hidden",
     boxShadow: "0 2px 7px rgba(30, 41, 59, 0.05)",
     boxSizing: "border-box",
     width: "100%"
@@ -711,15 +740,37 @@ flexShrink: 1
   ========================= */}
 
   <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingBottom: "9px",
-      marginBottom: "10px",
-      borderBottom: "1px solid #e2e8f0"
-    }}
-  >
+  onClick={() => setPdfThemeOpen(prev => !prev)}
+ style={{
+  width: "100%",
+  minHeight: "36px",
+  padding: "4px 10px 4px 20px",
+  boxSizing: "border-box",
+  background: "#ffffff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  cursor: "pointer",
+  userSelect: "none",
+  fontSize: "13px",
+  fontWeight: 700,
+  position: "relative",
+  
+  marginBottom: pdfThemeOpen ? "6px" : "0px"
+}}
+>
+
+<span
+  style={{
+    position: "absolute",
+    left: "0px",
+    top: 0,
+    bottom: 0,
+    width: "3px",
+    background:
+      "linear-gradient(180deg, #a78bfa 0%, #7c3aed 100%)"
+  }}
+/>
 
     <div
       style={{
@@ -737,15 +788,43 @@ flexShrink: 1
         🎨
       </span>
 
-      <span
-        style={{
-          fontSize: "15px",
-          fontWeight: 800,
-          color: "#334155"
-        }}
-      >
-        PDF THEME
-      </span>
+     <span
+  style={{
+    fontSize: "14px",
+    fontWeight: 750,
+    color: "#1e3a5f",
+    letterSpacing: "0.15px"
+  }}
+>
+  PDF THEME
+</span>
+
+ <span
+  style={{
+    width: "24px",
+    height: "24px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "6px",
+    background: "#ffffff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0
+  }}
+>
+  <span
+    style={{
+      width: "7px",
+      height: "7px",
+      borderRight: "2px solid #475569",
+      borderBottom: "2px solid #475569",
+      transform: pdfThemeOpen
+        ? "rotate(225deg)"
+        : "rotate(45deg)",
+      marginTop: pdfThemeOpen ? "4px" : "-3px"
+    }}
+  />
+</span>
 
     </div>
 
@@ -803,7 +882,7 @@ flexShrink: 1
 
 }}
       style={{
-        height: "32px",
+       height: "24px",
         padding: "4px 30px 4px 9px",
         border: "1px solid #cbd5e1",
         borderRadius: "6px",
@@ -826,6 +905,13 @@ flexShrink: 1
     </select>
 
   </div>
+
+
+    <div
+    style={{
+      display: pdfThemeOpen ? "block" : "none"
+    }}
+  >
 
 
   {/* =========================
@@ -1922,7 +2008,7 @@ flexShrink: 1
 
 </div>
 
-
+</div>
 
 
  {/* =========================================================
@@ -1931,13 +2017,13 @@ flexShrink: 1
 
 <div
   style={{
-    marginTop: "14px",
-    marginBottom: "26px",
-    padding: "14px 16px",
-    background: "#f8fbff",
-    border: "1px solid #bfdbfe",
-    borderBottom: "4px solid #1e3a8a",
-    borderRadius: "12px",
+   marginTop: "4px",
+marginBottom: "4px",
+ padding: "0",
+background: "#f8fbff",
+border: "1px solid #bfdbfe",
+borderRadius: "10px",
+overflow: "hidden",
     boxShadow: "0 2px 8px rgba(30, 64, 96, 0.06)",
     boxSizing: "border-box",
     width: "100%"
@@ -1949,15 +2035,33 @@ flexShrink: 1
   ========================= */}
 
   <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-      paddingBottom: "9px",
-      marginBottom: "12px",
-      borderBottom: "2px solid #dbeafe"
-    }}
-  >
+  onClick={() => setTourSummaryOpen(prev => !prev)}
+ style={{
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  minHeight: "36px",
+  padding: "4px 10px 4px 20px",
+  boxSizing: "border-box",
+  cursor: "pointer",
+  userSelect: "none",
+  borderBottom: "1px solid #e8edf3",
+  marginBottom: tourSummaryOpen ? "6px" : "0px",
+  position: "relative"
+}}
+>
+
+  <span
+  style={{
+    position: "absolute",
+    left: "0px",
+    top: 0,
+    bottom: 0,
+    width: "3px",
+    background:
+      "linear-gradient(180deg, #60a5fa 0%, #2563eb 100%)"
+  }}
+/>
 
     <span
       style={{
@@ -1969,15 +2073,42 @@ flexShrink: 1
     </span>
 
     <span
-      style={{
-        fontSize: "16px",
-        fontWeight: 800,
-        color: "#1e3a8a",
-        letterSpacing: "0.2px"
-      }}
-    >
-      TOUR SUMMARY
-    </span>
+  style={{
+    fontSize: "14px",
+    fontWeight: 750,
+    color: "#1e3a5f",
+    letterSpacing: "0.15px"
+  }}
+>
+  TOUR SUMMARY
+</span>
+
+<span
+  style={{
+    width: "24px",
+    height: "24px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "6px",
+    background: "#ffffff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0
+  }}
+>
+  <span
+    style={{
+      width: "7px",
+      height: "7px",
+      borderRight: "2px solid #475569",
+      borderBottom: "2px solid #475569",
+      transform: tourSummaryOpen
+        ? "rotate(225deg)"
+        : "rotate(45deg)",
+      marginTop: tourSummaryOpen ? "4px" : "-3px"
+    }}
+  />
+</span>
 
     <span
       style={{
@@ -1990,6 +2121,13 @@ flexShrink: 1
     </span>
 
   </div>
+
+
+    <div
+    style={{
+      display: tourSummaryOpen ? "block" : "none"
+    }}
+  >
 
 
 <div
@@ -2540,6 +2678,10 @@ flexShrink: 1
 
 </div>
 
+</div>
+
+
+
 {commonData?.quoteMode === "package" && (
   <>
     <SightseeingSelector
@@ -2574,8 +2716,7 @@ flexShrink: 1
       style={{
         height: "1px",
         background: "#cbd5e1",
-        margin:
-          "0 0 18px 0"
+       margin: "0 0 4px 0"
       }}
     />
 
@@ -2725,15 +2866,15 @@ importingTemplateRef.current = false;
 
 <div
   style={{
-    marginTop: "30px",
-    marginBottom: "12px",
+   marginTop: "4px",
+marginBottom: "6px",
     border: "1px solid #dbe3ea",
     borderRadius: "10px",
-    padding: "12px 14px",
+   padding: hotelUsedOpen ? "0 12px 10px" : "0",
     background: "#f8fafc",
-    boxSizing: "border-box",
-    borderTop: "3px solid #334155",
-    borderBottom: "4px solid #334155"
+    overflow: "hidden",
+    boxSizing: "border-box"
+    
   }}
 >
 
@@ -2745,25 +2886,108 @@ importingTemplateRef.current = false;
   style={{
     display: "flex",
     alignItems: "center",
-    marginBottom: "8px",
-    minHeight: "26px"
+    marginBottom: hotelUsedOpen ? "8px" : "0px",
+    minHeight: "36px",
+    position: "relative"
   }}
 >
 
+  <span
+  style={{
+    position: "absolute",
+    left: "0px",
+    top: 0,
+    bottom: 0,
+    width: "3px",
+    background:
+      "linear-gradient(180deg, #64748b 0%, #334155 100%)"
+  }}
+/>
+
   {/* HOTEL USED HEADING */}
 
-  <h3
+ <div
+  onClick={() => setHotelUsedOpen(prev => !prev)}
+ style={{
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  cursor: "pointer",
+  position: "relative",
+  userSelect: "none",
+  padding: "4px 10px 4px 20px",
+  boxSizing: "border-box"
+}}
+>
+
+  
+
+ <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "6px"
+  }}
+>
+  <span
     style={{
-      margin: 0,
       fontSize: "18px",
-      fontWeight: 800,
-      color: "#1e3a8a",
-      letterSpacing: "0.2px",
-      whiteSpace: "nowrap"
+      lineHeight: 1,
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "14px",
+marginLeft: "-2px",
+      height: "24px",
+      flexShrink: 0
     }}
   >
-    🏨 HOTEL USED
-  </h3>
+    🏨
+  </span>
+
+ <h3
+  style={{
+    margin: 0,
+    marginLeft: "6px",
+    fontSize: "14px",
+    fontWeight: 750,
+    color: "#1e3a5f",
+    letterSpacing: "0.15px",
+    whiteSpace: "nowrap"
+  }}
+>
+  HOTEL USED
+</h3>
+
+</div>
+
+  <span
+  style={{
+    width: "24px",
+    height: "24px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "6px",
+    background: "#ffffff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0
+  }}
+>
+  <span
+    style={{
+      width: "7px",
+      height: "7px",
+      borderRight: "2px solid #475569",
+      borderBottom: "2px solid #475569",
+      transform: hotelUsedOpen
+        ? "rotate(225deg)"
+        : "rotate(45deg)",
+      marginTop: hotelUsedOpen ? "4px" : "-3px"
+    }}
+  />
+</span>
+</div>
 
 
   {/* VERTICAL DIVIDER + SHARED TOOLBAR */}
@@ -3104,6 +3328,11 @@ importingTemplateRef.current = false;
 
 </div>
 
+<div
+  style={{
+    display: hotelUsedOpen ? "block" : "none"
+  }}
+>
 
 {/* ---------------------------------------------------
     HOTEL TABLE HEADER — ONCE
@@ -3538,6 +3767,8 @@ active={
 
 </div>
 </div>
+</div>
+
 
 
 {/* =====================================================
@@ -3546,15 +3777,15 @@ active={
 
 <div
   style={{
-    marginTop: "30px",
-    marginBottom: "20px",
+    marginTop: "4px",
+marginBottom: "6px",
     border: "1px solid #dbe3ea",
     borderRadius: "10px",
-    padding: "12px 14px",
+    padding: billingOpen ? "8px 12px" : "0",
     background: "#f8fafc",
     boxSizing: "border-box",
-    borderTop: "3px solid #334155",
-    borderBottom: "4px solid #334155"
+    overflow: "hidden"
+    
   }}
 >
 
@@ -3562,19 +3793,106 @@ active={
       COSTING HEADER
   --------------------------------------------------- */}
 
-  <h3
+  <div
+  onClick={() => setBillingOpen(prev => !prev)}
+  style={{
+    display: "flex",
+    alignItems: "center",
+    height: "36px",
+    padding: "4px 10px 4px 20px",
+    boxSizing: "border-box",
+    gap: "7px",
+    marginBottom: billingOpen ? "6px" : "0px",
+    cursor: "pointer",
+    position: "relative",
+    userSelect: "none"
+  }}
+>
+
+  <span
+  style={{
+    position: "absolute",
+    left: "0px",
+    top: 0,
+    bottom: 0,
+    width: "3px",
+    background:
+      "linear-gradient(180deg, #fbbf24 0%, #d97706 100%)"
+  }}
+/>
+
+ <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "6px"
+  }}
+>
+  <span
     style={{
-      margin: "0 0 10px 0",
       fontSize: "18px",
-      fontWeight: 800,
-      color: "#1e3a8a",
-      letterSpacing: "0.2px",
-      textAlign: "left"
+      lineHeight: 1,
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "14px",
+      height: "24px",
+      marginLeft: "-2px",
+      flexShrink: 0
     }}
   >
-    💰 BILLING
-  </h3>
+    💰
+  </span>
 
+  <h3
+    style={{
+      margin: 0,
+      marginLeft: "6px",
+      fontSize: "14px",
+      fontWeight: 750,
+      color: "#1e3a5f",
+      letterSpacing: "0.15px",
+      textAlign: "left",
+      whiteSpace: "nowrap"
+    }}
+  >
+    BILLING
+  </h3>
+</div>
+
+  <span
+  style={{
+    width: "24px",
+    height: "24px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "6px",
+    background: "#ffffff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0
+  }}
+>
+  <span
+    style={{
+      width: "7px",
+      height: "7px",
+      borderRight: "2px solid #475569",
+      borderBottom: "2px solid #475569",
+      transform: billingOpen
+        ? "rotate(225deg)"
+        : "rotate(45deg)",
+      marginTop: billingOpen ? "4px" : "-3px"
+    }}
+  />
+</span>
+</div>
+
+<div
+  style={{
+    display: billingOpen ? "block" : "none"
+  }}
+>
 
   <CostCalculator
   commonData={commonData}
@@ -3967,7 +4285,7 @@ active={
 
 </div>
 </div>
-
+</div>
 
 {(
   commonData?.quoteMode === "package" ||
@@ -3980,11 +4298,9 @@ active={
 
 <div
   style={{
-  marginTop: "40px",
-  border: "1px solid #cbd5e1",
-  borderTop: "2px solid #b276c9",
-  borderBottom: "3px solid #b276c9",
-  borderRadius: "10px",
+ marginTop: "8px",
+ border: "1px solid #cbd5e1",
+borderRadius: "10px",
   background: "#ffffff",
   overflow: "hidden",
   boxSizing: "border-box"
@@ -4040,7 +4356,7 @@ active={
 
 <div
   style={{
-    marginTop: "45px"
+   marginTop: "8px"
   }}
 >
 
@@ -4056,7 +4372,7 @@ active={
 <hr style={{ margin: "20px 0" }} />
 
 
-      
+      </div>
 
     </div>
   );

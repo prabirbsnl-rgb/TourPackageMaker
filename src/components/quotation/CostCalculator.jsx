@@ -16,42 +16,15 @@ import {
 
 
 
-export default function CostCalculator({
-  commonData,
-  packageData,
-  itineraryData,
-  setCommonData
-}) {
-
-  const inputStyle = {
-    width: "100%",
-    padding: "10px",
-    borderRadius: "8px",
-    border: "1px solid #d1d5db"
-  };
-
-  const selectedCurrency =
-    getCurrency(
-      commonData?.currency ||
-      DEFAULT_CURRENCY
-    );
-
-
-    
-
-
-  // reusable field update helper
-  const updateField = (key, value, isNumber = true) => {
-  setCommonData({
-    ...commonData,
-    [key]:
-      isNumber && value !== ""
-        ? Number(value)
-        : value,
-  });
+const inputStyle = {
+  width: "100%",
+  padding: "10px",
+  borderRadius: "8px",
+  border: "1px solid #d1d5db"
 };
 
-  // reusable input component
+
+// reusable input component
  const Field = ({
   label,
   value,
@@ -90,13 +63,48 @@ export default function CostCalculator({
   padding: "6px 9px",
   fontSize: "12px",
   borderRadius: "7px",
-  cursor: "pointer",
+   cursor: "text",
   background: "#fff",
   boxSizing: "border-box"
 }}
     />
   </div>
 );
+
+
+
+
+export default function CostCalculator({
+  commonData,
+  packageData,
+  itineraryData,
+  setCommonData
+}) {
+
+  
+
+  const selectedCurrency =
+    getCurrency(
+      commonData?.currency ||
+      DEFAULT_CURRENCY
+    );
+
+
+    
+
+
+  // reusable field update helper
+  const updateField = (key, value, isNumber = true) => {
+  setCommonData({
+    ...commonData,
+    [key]:
+      isNumber && value !== ""
+        ? Number(value)
+        : value,
+  });
+};
+
+  
   
 
   /* =====================================================
@@ -622,6 +630,11 @@ export default function CostCalculator({
       <input
         type="number"
         value={totalAmountPayable}
+          onFocus={(e) => {
+    if (Number(e.target.value) === 0) {
+      e.target.select();
+    }
+  }}
         onChange={(e) =>
           setCommonData({
             ...commonData,

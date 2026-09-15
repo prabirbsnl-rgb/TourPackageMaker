@@ -43,7 +43,11 @@ const [openTransferSelector, setOpenTransferSelector] =
   const [openDaySightseeing, setOpenDaySightseeing] =
   useState({});
 
+const [itineraryOpen, setItineraryOpen] = useState(false);
 
+const [openDays, setOpenDays] = useState({});
+
+const [activeDayIndex, setActiveDayIndex] = useState(null);
 
 
 
@@ -143,30 +147,70 @@ const removeDay = (index) => {
   return (
 
     
-    <div
+   <div
   style={{
-    marginTop: "20px",
-    width: "100%"
+  marginTop: "2px",
+  width: "100%",
+  border: "1px solid #dbe3ea",
+  borderRadius: "10px",
+  background: "#ffffff",
+  boxSizing: "border-box",
+  overflow: "hidden",
+ padding: itineraryOpen ? "0 0 10px 0" : "0"
+}}
+>
+
+<div
+
+ data-itinerary-sticky-header
+  style={{
+    position: "sticky",
+    top: 0,
+    zIndex: 30,
+    background: "#ffffff",
+    boxSizing: "border-box",
+   boxShadow: "none"
   }}
 >
+ 
 
   {/* =========================================================
       DAY WISE ITINERARY SECTION HEADER
   ========================================================= */}
 
   <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-      padding: "0 0 10px 0",
-      marginBottom: "14px",
-      borderBottom: "3px solid #1e3a8a",
-      color: "#1e3a8a",
-      fontSize: "20px",
-      fontWeight: 800
-    }}
-  >
+  onClick={() => setItineraryOpen(prev => !prev)}
+  style={{
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+ minHeight: "36px",
+padding: "4px 10px 4px 20px",
+  boxSizing: "border-box",
+  marginBottom: "0",
+ 
+borderBottom: "1px solid #e8edf3",
+  color: "#1e3a5f",
+  fontSize: "14px",
+  fontWeight: 750,
+  cursor: "pointer",
+  userSelect: "none",
+  position: "relative"
+}}
+>
+
+  <span
+  style={{
+    position: "absolute",
+    left: "0px",
+    top: 0,
+    bottom: 0,
+    width: "3px",
+    background:
+      "linear-gradient(180deg, #2dd4bf 0%, #14b8a6 100%)"
+  }}
+/>
+
     <span
       style={{
         fontSize: "18px"
@@ -175,12 +219,159 @@ const removeDay = (index) => {
       🗺️
     </span>
 
-    <span>
-      Day Wise Itinerary
-    </span>
+    <span
+  style={{
+    fontSize: "14px",
+    fontWeight: 750,
+    color: "#1e3a5f",
+    letterSpacing: "0.15px"
+  }}
+>
+  DAY WISE ITINERARY
+</span>
+
+<span
+  style={{
+    width: "24px",
+    height: "24px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "6px",
+    background: "#ffffff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0
+  }}
+>
+  <span
+    style={{
+      width: "7px",
+      height: "7px",
+      borderRight: "2px solid #475569",
+      borderBottom: "2px solid #475569",
+      transform: itineraryOpen
+        ? "rotate(225deg)"
+        : "rotate(45deg)",
+      marginTop: itineraryOpen ? "4px" : "-3px"
+    }}
+  />
+</span>
+
   </div>
-      
-      {(itineraryData.itinerary || []).map(
+
+
+<div
+  style={{
+    display: itineraryOpen ? "block" : "none"
+  }}
+>
+ 
+
+  {/* DAY NAVIGATION */}
+  <div
+    style={{
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  overflowX: "auto",
+  overflowY: "hidden",
+  padding: "6px 0 10px",
+  marginBottom: "10px",
+  whiteSpace: "nowrap",
+  scrollbarWidth: "thin"
+  
+}}
+  >
+    {(itineraryData.itinerary || []).map((day, index) => (
+      <button
+        key={index}
+        type="button"
+       onClick={() => {
+  const isOpen = !!openDays[index];
+  const isCurrent = activeDayIndex === index;
+
+  if (isOpen && !isCurrent) {
+    // Already open, but currently viewing another day:
+    // just bring this day back into view.
+    setActiveDayIndex(index);
+
+    document
+  .getElementById(`itinerary-day-${index}`)
+  ?.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+    return;
+  }
+
+  if (isOpen && isCurrent) {
+    // Already open and currently viewing it:
+    // close this day.
+    setOpenDays(prev => ({
+      ...prev,
+      [index]: false
+    }));
+
+    setActiveDayIndex(null);
+    return;
+  }
+
+  // Closed day:
+  // open it and bring it into view.
+  setOpenDays(prev => ({
+    ...prev,
+    [index]: true
+  }));
+
+  setActiveDayIndex(index);
+
+  setTimeout(() => {
+   document
+  .getElementById(`itinerary-day-${index}`)
+  ?.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+  }, 50);
+}}
+        style={{
+          flex: "0 0 auto",
+          padding: "5px 12px",
+          borderRadius: "6px",
+          border: openDays[index]
+            ? "1px solid #1e3a8a"
+            : "1px solid #cbd5e1",
+          background: openDays[index]
+            ? "#eff6ff"
+            : "#ffffff",
+          color: openDays[index]
+            ? "#1e3a8a"
+            : "#475569",
+          fontSize: "12px",
+          fontWeight: 700,
+          cursor: "pointer",
+          whiteSpace: "nowrap"
+        }}
+      >
+        Day {day.day}
+      </button>
+    ))}
+  </div>
+
+  </div>
+
+</div>
+
+
+<div
+  style={{
+    display: itineraryOpen ? "block" : "none"
+  }}
+>
+
+  
+
+  {(itineraryData.itinerary || []).map(
   (day, index) => {
 
 const itineraryHotels =
@@ -211,20 +402,26 @@ const sightseeingOptions =
   ] || [];
 
  
+ 
+
+
 
     return (
 
-         <div
+        <div
   key={index}
+  id={`itinerary-day-${index}`}
   style={{
-    border: "1px solid #d6dce5",
-    padding: "10px 12px",
-    marginBottom: "10px",
-    borderRadius: "8px",
-    background: "#ffffff",
-    boxSizing: "border-box",
-    borderBottom: "4px solid #1e3a8a"
-  }}
+    display: openDays[index] ? "block" : "none",
+    scrollMarginTop: "100px",
+  border: "1px solid #d6dce5",
+  padding: "10px 12px",
+  marginBottom: "10px",
+  borderRadius: "8px",
+  background: "#ffffff",
+  boxSizing: "border-box",
+ borderBottom: "1px solid #d6dce5"
+}}
 >
 
 <div
@@ -3254,6 +3451,10 @@ itinerary: updated
   + Add Day
 </button>
 </div>
+
+</div>
+
+
 
 <ItineraryTemplateLibrary
   open={showTemplateLibrary}
