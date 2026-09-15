@@ -155,7 +155,7 @@ const removeDay = (index) => {
   borderRadius: "10px",
   background: "#ffffff",
   boxSizing: "border-box",
-  overflow: "hidden",
+  clipPath: "inset(0 round 10px)",
  padding: itineraryOpen ? "0 0 10px 0" : "0"
 }}
 >
@@ -164,13 +164,15 @@ const removeDay = (index) => {
 
  data-itinerary-sticky-header
   style={{
-    position: "sticky",
-    top: 0,
-    zIndex: 30,
-    background: "#ffffff",
-    boxSizing: "border-box",
-   boxShadow: "none"
-  }}
+  position: "sticky",
+  top: 0,
+  zIndex: 30,
+  background: "#ffffff",
+  boxSizing: "border-box",
+  boxShadow: "none",
+  overflow: "hidden",
+  borderRadius: "9px 9px 0 0"
+}}
 >
  
 
@@ -202,10 +204,10 @@ borderBottom: "1px solid #e8edf3",
   <span
   style={{
     position: "absolute",
-    left: "0px",
+   left: "0px",
     top: 0,
     bottom: 0,
-    width: "3px",
+   width: "3px",
     background:
       "linear-gradient(180deg, #2dd4bf 0%, #14b8a6 100%)"
   }}
