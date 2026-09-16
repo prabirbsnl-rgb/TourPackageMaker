@@ -282,31 +282,32 @@ export default function Login({ onLogin }) {
       alignItems: "center",
       padding: "24px",
       boxSizing: "border-box",
-     background:
-  "radial-gradient(circle at 50% 20%, #ffffff 0%, #eef4f7 48%, #e5edf2 100%)",
+    backgroundImage: "url('/login-background.png')",
+backgroundSize: "cover",
+backgroundPosition: "center",
+backgroundRepeat: "no-repeat",
       overflow: "hidden"
     }}
   >
    {/* SINGLE LOGIN CARD */}
 <div
   style={{
-    width: "min(430px, 94vw)",
-    borderRadius: "20px",
-    overflow: "hidden",
-    background: "#f8fbfd",
-    boxShadow:
-      "0 28px 70px rgba(31, 67, 96, 0.18), 0 4px 14px rgba(31, 67, 96, 0.06)",
-    border: "1px solid rgba(255,255,255,.95)"
-  }}
+  width: "min(430px, 94vw)",
+  borderRadius: "0",
+  overflow: "visible",
+  background: "transparent",
+  boxShadow: "none",
+  border: "none",
+  boxSizing: "border-box"
+}}
 >
 
       
 {/* LOGIN CONTENT */}
 <div
   style={{
-    padding: "20px 34px 22px",
-    background:
-      "linear-gradient(145deg, #f7faf8 0%, #eef5f3 50%, #e5efec 100%)",
+    padding: "14px 34px 16px",
+  background: "transparent",
   }}
 >
 
@@ -318,11 +319,11 @@ export default function Login({ onLogin }) {
           }}
         >
           <img
-  src="/orbitz-logo.png"
+  src="/orbitz-login-logo.png"
   alt="Orbitz Holidays"
   style={{
     display: "block",
-    width: "170px",
+   width: "150px",
     height: "auto",
     margin: "0 auto"
   }}
@@ -345,12 +346,12 @@ export default function Login({ onLogin }) {
         <div
           style={{
             textAlign: "center",
-            marginBottom: "14px"
+           marginBottom: "10px"
           }}
         >
           <div
             style={{
-              fontSize: "27px",
+              fontSize: "24px",
               fontWeight: 800,
               color: "#173e68"
             }}
@@ -375,11 +376,14 @@ export default function Login({ onLogin }) {
             display: "flex",
             alignItems: "center",
             width: "100%",
-            height: "48px",
-            marginBottom: "17px",
+            height: "44px",
+marginBottom: "12px",
             borderRadius: "25px",
-            border: "1px solid #d5e2ef",
-            background: "#f8fbfe",
+          background: "transparent",
+border: "none",
+boxShadow: "none",
+backdropFilter: "none",
+WebkitBackdropFilter: "none",
             padding: "3px",
             boxSizing: "border-box"
           }}
@@ -392,7 +396,7 @@ export default function Login({ onLogin }) {
   }}
   style={{
   flex: 1,
-  height: "40px",
+  height: "36px",
   border: "none",
   borderRadius: "21px",
   background:
@@ -435,7 +439,7 @@ export default function Login({ onLogin }) {
   }}
  style={{
   flex: 1,
-  height: "40px",
+  height: "36px",
   border: "none",
   borderRadius: "21px",
   background:
@@ -465,7 +469,7 @@ export default function Login({ onLogin }) {
         <div
   style={{
     position: "relative",
-    marginBottom: "11px"
+   marginBottom: "8px"
   }}
 >
   <div
@@ -492,16 +496,20 @@ export default function Login({ onLogin }) {
     }}
     style={{
       width: "100%",
-      height: "52px",
+     height: "46px",
       padding: "0 15px 0 44px",
-      boxSizing: "border-box",
       borderRadius: "11px",
-      border: "1px solid #d5e2ef",
-      background: "#ffffff",
       fontSize: "14px",
+      boxSizing: "border-box",
       color: "#263f59",
-      outline: "none"
-    }}
+      outline: "none",
+      
+      background: "transparent",
+border: "none",
+boxShadow: "none",
+backdropFilter: "none",
+WebkitBackdropFilter: "none"
+       }}
   />
 </div>
 
@@ -509,7 +517,7 @@ export default function Login({ onLogin }) {
 <div
   style={{
     position: "relative",
-    marginBottom: "16px"
+   marginBottom: "12px"
   }}
 >
   {/* LOCK ICON */}
@@ -537,12 +545,15 @@ export default function Login({ onLogin }) {
   }}
   style={{
     width: "100%",
-    height: "52px",
+    height: "46px",
     padding: "0 44px",
     boxSizing: "border-box",
     borderRadius: "11px",
-    border: "1px solid #d5e2ef",
-    background: "#ffffff",
+   background: "transparent",
+border: "none",
+boxShadow: "none",
+backdropFilter: "none",
+WebkitBackdropFilter: "none",
     fontSize: "14px",
     color: "#263f59",
     outline: "none"
@@ -576,7 +587,7 @@ export default function Login({ onLogin }) {
   disabled={loggingIn}
   style={{
     width: "100%",
-    height: "54px",
+    height: "48px",
     border: "none",
     borderRadius: "11px",
     background:
@@ -600,8 +611,8 @@ export default function Login({ onLogin }) {
             display: "flex",
             alignItems: "center",
             gap: "10px",
-           marginTop: "19px",
-           marginBottom: "15px"
+           marginTop: "12px",
+marginBottom: "10px"
           }}
         >
           <div
@@ -644,9 +655,9 @@ export default function Login({ onLogin }) {
   <div>
     <div
       style={{
-        width: "38px",
-        height: "38px",
-        margin: "0 auto 5px",
+       width: "34px",
+height: "34px",
+       margin: "0 auto 4px",
         borderRadius: "50%",
         display: "flex",
         alignItems: "center",
@@ -676,9 +687,9 @@ export default function Login({ onLogin }) {
   <div>
     <div
       style={{
-        width: "38px",
-        height: "38px",
-        margin: "0 auto 5px",
+       width: "34px",
+height: "34px",
+       margin: "0 auto 4px",
         borderRadius: "50%",
         display: "flex",
         alignItems: "center",
@@ -708,9 +719,9 @@ export default function Login({ onLogin }) {
   <div>
     <div
       style={{
-        width: "38px",
-        height: "38px",
-        margin: "0 auto 5px",
+       width: "34px",
+height: "34px",
+       margin: "0 auto 4px",
         borderRadius: "50%",
         display: "flex",
         alignItems: "center",
