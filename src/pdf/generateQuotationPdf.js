@@ -17,8 +17,7 @@ import orbitzTravelHeaderImage
   import orbitzHeaderFinalImage
   from "../assets/pdf-header/orbitz-header-final.png";
 
-  import kenyaHeaderImage
-  from "../assets/pdf-header/kenya.png";
+  
 
 import {
   getQuotationHeaderImage
@@ -1455,9 +1454,8 @@ async function drawCommonHeader(
 
 const headerImage =
   await loadImage(
-    kenyaHeaderImage
+    "/quotation-headers/header-international.png"
   );
-
 
 // =========================================================
 // LOCKED HEADER GEOMETRY
@@ -1469,19 +1467,14 @@ const headerWidth =
   PAGE.marginRight;
 
 const headerHeight =
-  56;
+  63;
 
 
 // =========================================================
 // CREATE PHOTO HEADER
 // =========================================================
 
-const photoHeader =
-  createFinalPhotoHeader(
-    headerImage,
-    headerWidth,
-    headerHeight
-  );
+const photoHeader = headerImage;
 
 
 // =========================================================
@@ -1497,253 +1490,6 @@ pdf.addImage(
   headerHeight
 );
 
-// =========================================================
-// EXISTING TRANSPARENT LOGO CODE
-// =========================================================
-
-const transparentLogo =
-  createTransparentLogo(
-    logoImage
-  );
-
-
-// =========================================================
-// VERY SUBTLE BRANDING GLOW
-//
-// Soft radial light behind the logo + slogan.
-// No rectangle, no border, no visible panel.
-// =========================================================
-
-const haloCanvas =
-  document.createElement("canvas");
-
-haloCanvas.width = 700;
-haloCanvas.height = 230;
-
-const haloCtx =
-  haloCanvas.getContext("2d");
-
-const haloGradient =
-  haloCtx.createRadialGradient(
-    300,
-    105,
-    20,
-    300,
-    105,
-    330
-  );
-
-haloGradient.addColorStop(
-  0,
-  "rgba(255,255,255,0.06)"
-);
-
-haloGradient.addColorStop(
-  0.35,
-  "rgba(255,255,255,0.04)"
-);
-
-haloGradient.addColorStop(
-  0.65,
-  "rgba(255,255,255,0.015)"
-);
-
-haloGradient.addColorStop(
-  1,
-  "rgba(255,255,255,0)"
-);
-
-haloCtx.fillStyle =
-  haloGradient;
-
-haloCtx.fillRect(
-  0,
-  0,
-  haloCanvas.width,
-  haloCanvas.height
-);
-
-const brandingGlow =
-  haloCanvas.toDataURL(
-    "image/png"
-  );
-
-pdf.addImage(
-  brandingGlow,
-  "PNG",
-  7,
-  top + 1,
-  92,
-  30
-);
-
-// =========================================================
-// LOGO
-// =========================================================
-  
-
-const logoWidth =
-  66;
-
-const logoSourceWidth =
-  logoImage.naturalWidth ||
-  logoImage.width;
-
-const logoSourceHeight =
-  logoImage.naturalHeight ||
-  logoImage.height;
-
-const logoHeight =
-  logoWidth *
-  (
-    logoSourceHeight /
-    logoSourceWidth
-  );
-
-pdf.addImage(
-  transparentLogo,
-  "PNG",
-  12,
-  top + 2,
-  logoWidth,
-  logoHeight
-);
-
-
-// =========================================================
-// SLOGAN
-//
-// Move slightly right and down so it clears HOLIDAYS.
-// =========================================================
-
-pdf.setFont(
-  "times",
-  "italic"
-);
-
-pdf.setFontSize(
-  9.5
-);
-
-pdf.setTextColor(
-  0,
-  0,
-  0
-);
-
-pdf.text(
-  COMPANY.slogan,
-  18,
-  top + 27
-);
-
-
-// =========================================================
-// SERVICES
-//
-// Keep low inside the grass area.
-// =========================================================
-
-pdf.setFont(
-  "helvetica",
-  "bold"
-);
-
-pdf.setFontSize(
-  8.5
-);
-
-pdf.text(
-  COMPANY.services,
-  14,
-  top + 52
-);
-
-
-// =========================================================
-// RIGHT INFORMATION BLOCK
-// =========================================================
-
-const rightX =
-  142;
-
-pdf.setFont(
-  "helvetica",
-  "normal"
-);
-
-pdf.setFontSize(
-  8.5
-);
-
-pdf.setTextColor(
-  0,
-  0,
-  0
-);
-
-
-// ---------------------------------------------------------
-// WEBSITE
-// ---------------------------------------------------------
-
-pdf.addImage(
-  webImage,
-  "PNG",
-  rightX,
-  top + 31,
-  4,
-  4
-);
-
-pdf.text(
-  COMPANY.website,
-  rightX + 7,
-  top + 34
-);
-
-
-// ---------------------------------------------------------
-// PHONE
-// ---------------------------------------------------------
-
-pdf.addImage(
-  phoneImage,
-  "PNG",
-  rightX,
-  top + 39,
-  4,
-  4
-);
-
-pdf.text(
-  COMPANY.phones,
-  rightX + 7,
-  top + 42
-);
-
-
-// ---------------------------------------------------------
-// ADDRESS
-// ---------------------------------------------------------
-
-pdf.addImage(
-  locationImage,
-  "PNG",
-  rightX,
-  top + 47,
-  4,
-  4
-);
-
-pdf.text(
-  COMPANY.address,
-  rightX + 7,
-  top + 50,
-  {
-    maxWidth: 50
-  }
-);
 
 
   // =========================================================
