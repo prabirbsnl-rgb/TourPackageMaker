@@ -72,7 +72,12 @@ const quoteData = {
 
   const [billingOpen, setBillingOpen] = useState(false);
 
+const [durationMode, setDurationMode] = useState("date");
 
+const [durationInput, setDurationInput] = useState("");
+
+const [durationDaysInput, setDurationDaysInput] = useState("");
+const [durationNightsInput, setDurationNightsInput] = useState("");
 
 const [expandedPolicyId, setExpandedPolicyId] =
   useState(1);
@@ -2023,7 +2028,7 @@ marginBottom: "4px",
 background: "#f8fbff",
 border: "1px solid #bfdbfe",
 borderRadius: "10px",
-overflow: "hidden",
+overflow: "visible",
     boxShadow: "0 2px 8px rgba(30, 64, 96, 0.06)",
     boxSizing: "border-box",
     width: "100%"
@@ -2357,12 +2362,35 @@ overflow: "hidden",
       placeholder="From"
       onChange={(travelFrom) => {
 
-        setCommonData({
-          ...commonData,
-          travelFrom
-        });
+  const updatedData = {
+    ...commonData,
+    travelFrom
+  };
 
-      }}
+  // If user has entered a custom duration,
+  // automatically calculate the To date.
+  if (
+    durationMode === "custom" &&
+    travelFrom &&
+    Number(commonData?.totalNights) > 0
+  ) {
+    const from = new Date(`${travelFrom}T00:00:00`);
+
+    const to = new Date(from);
+    to.setDate(
+      to.getDate() +
+      Number(commonData.totalNights)
+    );
+
+    const travelTo =
+      to.toISOString().slice(0, 10);
+
+    updatedData.travelTo = travelTo;
+  }
+
+  setCommonData(updatedData);
+
+}}
     />
 
   </div>
@@ -2406,6 +2434,7 @@ overflow: "hidden",
         commonData?.travelTo || ""
       }
       placeholder="To"
+      alignRight={true}
       minDate={
         commonData?.travelFrom || ""
       }
@@ -2416,8 +2445,10 @@ overflow: "hidden",
       }
       onChange={(travelTo) => {
 
-        let totalDays = "";
-        let totalNights = "";
+  setDurationMode("date");
+
+  let totalDays = "";
+  let totalNights = "";
 
         if (
           commonData.travelFrom &&
@@ -2446,6 +2477,9 @@ overflow: "hidden",
               diffDays - 1,
               0
             );
+            setDurationMode("date");
+setDurationDaysInput(String(totalDays));
+setDurationNightsInput(String(totalNights));
         }
 
         const updatedCommonData = {
@@ -2485,15 +2519,15 @@ overflow: "hidden",
   }}
 >
 
-  {/* =========================
-    DURATION
+ {/* =========================
+  DURATION
 ========================= */}
 
 <div
   style={{
     display: "flex",
     alignItems: "center",
-    gap: "7px",
+    gap: "6px",
     padding: "7px 10px",
     border: "1px solid #d1d5db",
     borderRadius: "7px",
@@ -2503,59 +2537,167 @@ overflow: "hidden",
     whiteSpace: "nowrap"
   }}
 >
-
   <span
-    style={{
-      fontSize: "13px",
-      fontWeight: 700,
-      color: "#374151"
-    }}
-  >
-    🕒 Duration
-  </span>
+  style={{
+    fontSize: "13px",
+    fontWeight: 600,
+    color: "#475569"
+  }}
+>
+  🕒 Duration
+</span>
 
-  <strong
-    style={{
-      color: "#1e3a8a",
-      fontSize: "14px"
-    }}
-  >
-    {commonData?.totalDays || 0}
-  </strong>
+{/* NIGHTS */}
+<input
+  type="number"
+  min="0"
+  value={durationNightsInput}
+  onChange={(e) => {
+    setDurationNightsInput(e.target.value);
+  }}
+  onBlur={() => {
+    const nights = Number(durationNightsInput);
 
-  <span
-    style={{
-      fontSize: "13px"
-    }}
-  >
-    Days
-  </span>
+    if (durationNightsInput === "" || nights < 0) {
+      return;
+    }
 
-  <span
-    style={{
-      color: "#94a3b8"
-    }}
-  >
-    /
-  </span>
+    const days = nights + 1;
 
-  <strong
-    style={{
-      color: "#1e3a8a",
-      fontSize: "14px"
-    }}
-  >
-    {commonData?.totalNights || 0}
-  </strong>
+    setDurationDaysInput(String(days));
 
-  <span
-    style={{
-      fontSize: "13px"
-    }}
-  >
-    Nights
-  </span>
+    const updatedCommonData = {
+      ...commonData,
+      totalDays: days,
+      totalNights: nights
+    };
 
+    if (commonData?.travelFrom) {
+      const from = new Date(
+        `${commonData.travelFrom}T00:00:00`
+      );
+
+      const to = new Date(from);
+      to.setDate(to.getDate() + nights);
+
+      updatedCommonData.travelTo =
+        `${to.getFullYear()}-${String(
+          to.getMonth() + 1
+        ).padStart(2, "0")}-${String(
+          to.getDate()
+        ).padStart(2, "0")}`;
+    }
+
+    setDurationMode("custom");
+    setCommonData(updatedCommonData);
+    applyItineraryTemplate(updatedCommonData);
+  }}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      e.currentTarget.blur();
+    }
+  }}
+  style={{
+    width: "48px",
+    height: "28px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "5px",
+    padding: "0 5px",
+    boxSizing: "border-box",
+    background: "#fff",
+    color: "#1e3a8a",
+    fontSize: "13px",
+    fontWeight: 700,
+    outline: "none",
+    textAlign: "center"
+  }}
+/>
+
+<span
+  style={{
+    fontSize: "13px",
+    fontWeight: 600,
+    color: "#475569"
+  }}
+>
+  n
+</span>
+
+{/* DAYS */}
+<input
+  type="number"
+  min="1"
+  value={durationDaysInput}
+  onChange={(e) => {
+    setDurationDaysInput(e.target.value);
+  }}
+  onBlur={() => {
+    const days = Number(durationDaysInput);
+
+    if (!days || days < 1) {
+      return;
+    }
+
+    const nights = days - 1;
+
+    setDurationNightsInput(String(nights));
+
+    const updatedCommonData = {
+      ...commonData,
+      totalDays: days,
+      totalNights: nights
+    };
+
+    if (commonData?.travelFrom) {
+      const from = new Date(
+        `${commonData.travelFrom}T00:00:00`
+      );
+
+      const to = new Date(from);
+      to.setDate(to.getDate() + nights);
+
+      updatedCommonData.travelTo =
+        `${to.getFullYear()}-${String(
+          to.getMonth() + 1
+        ).padStart(2, "0")}-${String(
+          to.getDate()
+        ).padStart(2, "0")}`;
+    }
+
+    setDurationMode("custom");
+    setCommonData(updatedCommonData);
+    applyItineraryTemplate(updatedCommonData);
+  }}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      e.currentTarget.blur();
+    }
+  }}
+  style={{
+    width: "48px",
+    height: "28px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "5px",
+    padding: "0 5px",
+    boxSizing: "border-box",
+    background: "#fff",
+    color: "#1e3a8a",
+    fontSize: "13px",
+    fontWeight: 700,
+    outline: "none",
+    textAlign: "center"
+  }}
+/>
+
+<span
+  style={{
+    fontSize: "13px",
+    fontWeight: 600,
+    color: "#475569"
+  }}
+>
+  d
+</span>
 </div>
 
 
@@ -2937,7 +3079,7 @@ marginBottom: "6px",
       alignItems: "center",
       justifyContent: "center",
       width: "14px",
-marginLeft: "-2px",
+marginLeft: "6px",
       height: "24px",
       flexShrink: 0
     }}
@@ -3837,7 +3979,7 @@ marginBottom: "6px",
       justifyContent: "center",
       width: "14px",
       height: "24px",
-      marginLeft: "-2px",
+      marginLeft: "6px",
       flexShrink: 0
     }}
   >

@@ -69,7 +69,7 @@ const STORAGE_KEY = "orbitz_itinerary_templates";
 
 const defaultCommonData = {
 
-   quoteMode: "package",
+  quoteMode: "itinerary",
    showInclusionExclusion: false,
     quotationNo: `ORB-${Date.now()}`,
 

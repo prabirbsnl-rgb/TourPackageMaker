@@ -622,7 +622,7 @@ const sightseeingOptions =
     style={{
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between",
+      justifyContent: "flex-start",
       gap: "10px"
     }}
   >
@@ -632,8 +632,8 @@ const sightseeingOptions =
         display: "flex",
         alignItems: "center",
         gap: "7px",
-        minWidth: 0,
-        flex: 1
+        minWidth: 0
+       
       }}
     >
 
@@ -678,16 +678,26 @@ const sightseeingOptions =
 
       }}
       style={{
-        padding: "4px 9px",
-        fontSize: "11px",
-        fontWeight: 700,
-        border: "1px solid #cbd5e1",
-        borderRadius: "5px",
-        background: "#ffffff",
-        color: "#1e3a8a",
-        cursor: "pointer",
-        whiteSpace: "nowrap"
-      }}
+  padding: "4px 12px",
+  minWidth: "48px",
+  height: "26px",
+  border: openDayDescription[index]
+    ? "1px solid #334155"
+    : "1px solid #b8cfe0",
+  borderRadius: "6px",
+  background: openDayDescription[index]
+    ? "#334155"
+    : "#e8f1f8",
+  color: openDayDescription[index]
+    ? "#ffffff"
+    : "#1e4d6b",
+  fontSize: "11px",
+  fontWeight: 700,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+  lineHeight: "1",
+  boxSizing: "border-box"
+}}
     >
       {openDayDescription[index]
         ? "Close"
@@ -785,7 +795,7 @@ const sightseeingOptions =
     style={{
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between",
+     justifyContent: "flex-start",
       gap: "10px",
       padding: "6px 9px",
       border: "1px solid #e2e8f0",
@@ -847,16 +857,26 @@ const sightseeingOptions =
 
         }}
         style={{
-          padding: "4px 9px",
-          fontSize: "11px",
-          fontWeight: 700,
-          border: "1px solid #cbd5e1",
-          borderRadius: "5px",
-          background: "#ffffff",
-          color: "#1e3a8a",
-          cursor: "pointer",
-          whiteSpace: "nowrap"
-        }}
+  padding: "4px 12px",
+  minWidth: "48px",
+  height: "26px",
+  border: openDayNote[index]
+    ? "1px solid #334155"
+    : "1px solid #b8cfe0",
+  borderRadius: "6px",
+  background: openDayNote[index]
+    ? "#334155"
+    : "#e8f1f8",
+  color: openDayNote[index]
+    ? "#ffffff"
+    : "#1e4d6b",
+  fontSize: "11px",
+  fontWeight: 700,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+  lineHeight: "1",
+  boxSizing: "border-box"
+}}
       >
         {openDayNote[index]
           ? "Close"
@@ -1474,7 +1494,7 @@ const sightseeingOptions =
   style={{
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     gap: "10px",
     paddingBottom: "6px",
     borderBottom: "1px solid #d7e1e8",
@@ -1516,19 +1536,20 @@ const sightseeingOptions =
         });
 
       }}
-      style={{
-  padding: "5px 14px",
-  minWidth: "58px",
-  height: "28px",
-  border: "1px solid #dc2626",
-  borderRadius: "999px",
-  background: "#dc2626",
+     style={{
+  padding: "4px 12px",
+  minWidth: "48px",
+  height: "26px",
+  border: "1px solid #334155",
+  borderRadius: "6px",
+  background: "#334155",
   color: "#ffffff",
   fontSize: "11px",
-  fontWeight: 800,
+  fontWeight: 700,
   cursor: "pointer",
   whiteSpace: "nowrap",
-  lineHeight: "1"
+  lineHeight: "1",
+  boxSizing: "border-box"
 }}
     >
       {openDaySightseeing[index]
@@ -1865,26 +1886,39 @@ const sightseeingOptions =
     {openSightseeingSelector[index] && (
 
       <div
-        style={{
-          marginTop: "4px",
-          padding: "8px 10px",
-          border: "1px solid #a3a3a3",
-          borderRadius: "6px",
-          background: "#fff",
-          maxHeight: "180px",
-          overflowY: "auto"
-        }}
-      >
+  style={{
+    marginTop: "4px",
+    padding: "8px 10px",
+    border: "1px solid #a3a3a3",
+    borderRadius: "6px",
+    background: "#fff",
+    maxHeight: "180px",
+    overflowY: "auto",
+    display: "grid",
+   gridTemplateColumns: "repeat(3, max-content)",
+columnGap: "28px",
+    rowGap: "4px",
+    alignItems: "center",
+    justifyItems: "start",
+    boxSizing: "border-box"
+  }}
+>
 
         {sightseeingOptions.map((spot) => (
 
           <label
             key={spot}
-            style={{
-              display: "block",
-              marginBottom: "5px",
-              fontSize: "12px"
-            }}
+           style={{
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  gap: "4px",
+  margin: 0,
+  minWidth: 0,
+  fontSize: "12px",
+  lineHeight: "20px",
+  whiteSpace: "nowrap"
+}}
           >
 
             <input
@@ -2472,7 +2506,7 @@ style={{
 
 
   
-{day.mealMode === "chips" && (
+{(day.mealMode || "chips") === "chips" && (
 <div
   style={{
     width: "100%",
@@ -2516,12 +2550,15 @@ style={{
   {openMealSelector[index] && (
 
     <div
-      style={{
-        padding: "10px",
-        border:
-          "1px solid #a3a3a3",
-        borderTop: "none"
-      }}
+     style={{
+  padding: "8px 10px",
+  border: "1px solid #a3a3a3",
+  borderTop: "none",
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "flex-start",
+  boxSizing: "border-box"
+}}
     >
 
       {[
@@ -2537,10 +2574,15 @@ style={{
 
         <label
           key={meal}
-          style={{
-            display: "block",
-            marginBottom: "5px"
-          }}
+         style={{
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
+  margin: "0 18px 5px 0",
+  fontSize: "12px",
+  lineHeight: "20px",
+  whiteSpace: "nowrap"
+}}
         >
 
           <input
@@ -2589,7 +2631,7 @@ style={{
 )}
 
 
-{day.mealMode === "chips" &&
+{(day.mealMode || "chips") === "chips" &&
   (day.meals || []).length > 0 && (
 
   <div
@@ -3029,11 +3071,14 @@ itinerary: updated
 
     <div
       style={{
-        padding: "10px",
-        border:
-          "1px solid #a3a3a3",
-        borderTop: "none"
-      }}
+  padding: "8px 10px",
+  border: "1px solid #a3a3a3",
+  borderTop: "none",
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "flex-start",
+  boxSizing: "border-box"
+}}
     >
 
       {[
@@ -3051,9 +3096,14 @@ itinerary: updated
         <label
           key={transfer}
           style={{
-            display: "block",
-            marginBottom: "5px"
-          }}
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
+  margin: "0 18px 5px 0",
+  fontSize: "12px",
+  lineHeight: "20px",
+  whiteSpace: "nowrap"
+}}
         >
 
           <input

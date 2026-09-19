@@ -8,7 +8,8 @@ export default function DatePicker({
     placeholder = "Select date",
     minDate = "",
     initialViewDate = "",
-    onOpen
+    onOpen,
+    alignRight = false
 }) {
 
     const [open, setOpen] = useState(false);
@@ -235,31 +236,39 @@ export default function DatePicker({
 
     const selectDate = (day) => {
 
-        const selectedDate =
-            new Date(
-                year,
-                month,
-                day
-            );
+    const selectedDate =
+        new Date(
+            year,
+            month,
+            day
+        );
 
-        if (
-            isBeforeMinDate(
-                selectedDate
-            )
-        ) {
-            return;
-        }
+    if (
+        isBeforeMinDate(
+            selectedDate
+        )
+    ) {
+        return;
+    }
 
-        const dateValue =
-            formatInputDate(
-                selectedDate
-            );
-
-        onChange(dateValue);
-
+    // Clicking the currently selected date again
+    // clears the date.
+    if (isSameDay(selectedDate, value)) {
+        onChange("");
         setOpen(false);
+        return;
+    }
 
-    };
+    const dateValue =
+        formatInputDate(
+            selectedDate
+        );
+
+    onChange(dateValue);
+
+    setOpen(false);
+
+};
 
 
     return (
@@ -339,10 +348,11 @@ export default function DatePicker({
                 <div
                     style={{
                         position: "absolute",
-                        top: "46px",
-                        left: 0,
+top: "46px",
+left: alignRight ? "auto" : 0,
+right: alignRight ? 0 : "auto",
 
-                        width: "290px",
+width: "290px",
 
                         background: "#fff",
 

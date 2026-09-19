@@ -1786,14 +1786,33 @@ function drawTourSummary(
   ensureSpace(45);
 
 
+    // ---------- PROFORMA INVOICE ----------
+
+  pdf.setTextColor(37, 51, 79);
+  pdf.setFont("times", "bold");
+  pdf.setFontSize(11);
+
+  pdf.text(
+    "PROFORMA INVOICE",
+    PAGE.width / 2,
+    cursorY,
+    {
+      align: "center"
+    }
+  );
+
+  cursorY += 7;
+
+
   // ---------- TOUR SUMMARY ----------
 
   cursorY = drawSectionHeading(
-  pdf,
-  "TOUR SUMMARY",
-  cursorY,
-  sectionColor
-);
+    pdf,
+    "TOUR SUMMARY",
+    cursorY,
+    sectionColor
+  );
+  
 
 pdf.setTextColor(0, 0, 0);
 pdf.setFont("times", "normal");
