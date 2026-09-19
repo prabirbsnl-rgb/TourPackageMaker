@@ -1454,7 +1454,7 @@ async function drawCommonHeader(
 
 const headerImage =
   await loadImage(
-    "/quotation-headers/header-international.png"
+    "/quotation-headers/header-beach.png"
   );
 
 // =========================================================
