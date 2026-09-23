@@ -321,6 +321,64 @@ export default async function handler(
     }
 
 
+       // -----------------------------------------------------
+    // DUPLICATE PROTECTION
+    // -----------------------------------------------------
+
+    const submissionId =
+        cleanValue(
+            body.submissionId
+        );
+
+    if (submissionId) {
+
+        const existingLeadSnapshot =
+            await db
+                .collection("leads")
+                .where(
+                    "websiteSubmissionId",
+                    "==",
+                    submissionId
+                )
+                .limit(1)
+                .get();
+
+        if (
+            !existingLeadSnapshot.empty
+        ) {
+
+            const existingLeadDoc =
+                existingLeadSnapshot
+                    .docs[0];
+
+            const existingLeadData =
+                existingLeadDoc.data();
+
+            return sendJson(
+                res,
+                200,
+                {
+                    success: true,
+
+                    duplicate: true,
+
+                    leadId:
+                        existingLeadData
+                            .leadId || "",
+
+                    leadDocId:
+                        existingLeadDoc.id,
+
+                    message:
+                        "Lead already captured."
+                }
+            );
+
+        }
+
+    }
+
+
     // -----------------------------------------------------
     // GENERATE ORBITZ LEAD ID
     // -----------------------------------------------------
@@ -443,10 +501,8 @@ children:
             ),
 
         // Optional website reference
-        websiteSubmissionId:
-            cleanValue(
-                body.submissionId
-            ),
+               websiteSubmissionId:
+            submissionId,
 
         // Empty CRM relationship fields
         clientId:
