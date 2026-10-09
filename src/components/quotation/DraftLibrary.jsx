@@ -746,8 +746,8 @@ color:
     <div
     style={{
         display: "grid",
-       gridTemplateColumns:
-    "1.25fr 1.4fr 1.15fr 0.8fr 1.45fr 1fr 0.75fr",
+      gridTemplateColumns:
+    "1.25fr 1.4fr 1.15fr 0.8fr 1.05fr 1.45fr 1fr 0.75fr",
         padding: "6px 8px",
         background: "#e5e7eb",
         borderBottom: "2px solid #9ca3af",
@@ -775,6 +775,12 @@ color:
 <div style={{ textAlign: "left" }}>
     Duration
 </div>
+
+<div style={{ textAlign: "center" }}>
+    Quotation Date
+</div>
+
+
 
 <div style={{ textAlign: "center" }}>
     Saved
@@ -826,8 +832,8 @@ color:
         ? "#ffffff"
         : "#fafafa",
                     display: "grid",
-                    gridTemplateColumns:
-    "1.25fr 1.4fr 1.15fr 0.8fr 1.45fr 1fr 0.75fr",
+                   gridTemplateColumns:
+    "1.25fr 1.4fr 1.15fr 0.8fr 1.05fr 1.45fr 1fr 0.75fr",
                     alignItems: "center",
                     padding: "5px 0",
                     borderBottom: "1px solid #e5e7eb",
@@ -837,7 +843,7 @@ color:
                 }}
             >
 
-                <div
+               <div
     style={{
         display: "flex",
         flexDirection: "column",
@@ -854,22 +860,35 @@ color:
     >
         {displayQuotationNo(draft.quotationNo)}
     </div>
-    
-{draft.revisionNo > 0 && (
+
     <div
-    style={{
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "#7c3aed",
-        lineHeight: 1.1
-    }}
->
-    Revision {draft.revisionNo}
-</div>
-)}
-    
+        style={{
+            fontSize: "10px",
+            fontWeight: 600,
+            color: "#64748b",
+            lineHeight: 1.1
+        }}
+    >
+        Lead: {draft.leadId || "—"}
+    </div>
+
+    {draft.revisionNo > 0 && (
+        <div
+            style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#7c3aed",
+                lineHeight: 1.1
+            }}
+        >
+            Revision {draft.revisionNo}
+        </div>
+    )}
 
 </div>
+
+
+
                 <div
     style={{
         minWidth: 0,
@@ -898,6 +917,46 @@ color:
     {draft.commonData?.totalDays || 0}D / {draft.commonData?.totalNights || 0}N
 </div>
 
+
+{/* QUOTATION DATE */}
+<div
+    style={{
+        minWidth: 0,
+        textAlign: "center"
+    }}
+>
+    {(
+        draft.quotationDate ||
+        draft.commonData?.quotationDate ||
+        (
+            draft.savedAt
+                ? new Date(draft.savedAt)
+                    .toISOString()
+                    .slice(0, 10)
+                : ""
+        )
+    )
+        ? new Date(
+            (
+                draft.quotationDate ||
+                draft.commonData?.quotationDate ||
+                (
+                    draft.savedAt
+                        ? new Date(draft.savedAt)
+                            .toISOString()
+                            .slice(0, 10)
+                        : ""
+                )
+            ) + "T00:00:00"
+        ).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        })
+        : "—"}
+</div>
+
+{/* SAVED */}
 <div
     style={{
         minWidth: 0,
@@ -906,6 +965,8 @@ color:
 >
     {formatRelativeDate(draft.savedAt)}
 </div>
+
+
 
 <div
     style={{

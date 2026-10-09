@@ -191,6 +191,7 @@ leadTitle: leadData.leadTitle || "",
         email: leadData.email || "",
 
         destination: leadData.destination || "",
+        preferredMonth: leadData.preferredMonth || "",
         travelFrom: leadData.travelFrom || "",
         travelTo: leadData.travelTo || "",
 

@@ -4,8 +4,11 @@ import React from "react";
 
 export default function OperationWorkspace({
   onOpenQuotation,
-  onOpenLeadManagement
+  onOpenLeadManagement,
+  onOpenClientAgencyMaster,
+  onOpenProposalLibrary
 }) {
+
   const sectionStyle = {
     background: "#ffffff",
     border: "1px solid #dbe3ea",
@@ -136,10 +139,37 @@ export default function OperationWorkspace({
   </div>
 </button>
 
-          <div style={disabledCardStyle}>
-            <div style={cardTitleStyle}>Client / Agency Master</div>
-            <div style={comingStyle}>Coming Next</div>
-          </div>
+          <button
+  type="button"
+  onClick={onOpenClientAgencyMaster}
+  style={{
+    ...disabledCardStyle,
+    textAlign: "left",
+    fontFamily: "inherit",
+    cursor: "pointer",
+    background: "#f0fdfa",
+    border: "1px solid #99f6e4"
+  }}
+>
+  <div
+    style={{
+      ...cardTitleStyle,
+      color: "#0f766e"
+    }}
+  >
+    Client / Agency Master
+  </div>
+
+  <div
+    style={{
+      fontSize: "10px",
+      fontWeight: 600,
+      color: "#5f8f8a"
+    }}
+  >
+    Central client & agency database
+  </div>
+</button>
 
           <div style={disabledCardStyle}>
             <div style={cardTitleStyle}>Client Enquiries</div>
@@ -147,6 +177,51 @@ export default function OperationWorkspace({
           </div>
         </div>
       </div>
+
+
+
+      {/* PROPOSAL LIBRARY */}
+<div style={{ ...sectionStyle, marginBottom: "14px" }}>
+  <h2 style={sectionTitleStyle}>PROPOSALS</h2>
+
+  <div style={gridStyle}>
+    <button
+      type="button"
+      onClick={onOpenProposalLibrary}
+      style={{
+        ...disabledCardStyle,
+        textAlign: "left",
+        fontFamily: "inherit",
+        cursor: "pointer",
+        background: "#f0fdfa",
+        border: "1px solid #99f6e4",
+      }}
+    >
+      <div
+        style={{
+          ...cardTitleStyle,
+          color: "#0f766e",
+        }}
+      >
+        Proposal Library
+      </div>
+
+      <div
+        style={{
+          fontSize: "10px",
+          fontWeight: 600,
+          color: "#5f8f8a",
+        }}
+      >
+        Saved proposals & reusable templates
+      </div>
+    </button>
+  </div>
+</div>
+
+
+
+
 
       {/* SUPPLIERS & HOTELS */}
       <div style={{ ...sectionStyle, marginBottom: "14px" }}>

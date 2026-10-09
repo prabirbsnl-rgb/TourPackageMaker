@@ -43,6 +43,7 @@ import {
     migrateLocalDraftsToFirestore,
     deleteDraft,
     updateDraftStatus,
+    unlinkDraftFromLead,
     saveWorkingCopy,
     clearWorkingCopy,
     getWorkingCopy,
@@ -64,14 +65,24 @@ import {
 } from "../firebase";
 
 
+import {
+    getAllLeads,
+    createLead,
+    updateLead
+} from "../utils/leadStorage";
+
+
+
+
 
 const STORAGE_KEY = "orbitz_itinerary_templates";
 
 const defaultCommonData = {
 
-  quoteMode: "itinerary",
-   showInclusionExclusion: false,
+    quoteMode: "itinerary",
+    showInclusionExclusion: false,
     quotationNo: `ORB-${Date.now()}`,
+    quotationDate: new Date().toISOString().slice(0, 10),
 
     clientName: "",
     mobile: "",
@@ -255,8 +266,21 @@ gstPercent: 5,
 
 
 export default function DMCQuotationGenerator({
-    userProfile
+    userProfile,
+    onBackToWorkspace,
+    quotationContext
 }) {
+
+
+    console.log(
+    "DMC QUOTATION CONTEXT =",
+    quotationContext
+);
+
+
+
+    const [draftQuotationContext, setDraftQuotationContext] =
+    useState(null);
 
     const [showDraftLibrary, setShowDraftLibrary] =
     useState(false);
@@ -414,6 +438,21 @@ export default function DMCQuotationGenerator({
 
 }));
 
+const [quotationLink, setQuotationLink] = useState({
+    leadId: "",
+    leadDocId: "",
+    clientId: "",
+    enquiryId: ""
+});
+
+
+const [availableLeads, setAvailableLeads] =
+    useState([]);
+
+const [loadingLeads, setLoadingLeads] =
+    useState(false);
+
+
 useEffect(() => {
 
     console.log(
@@ -422,6 +461,216 @@ useEffect(() => {
     );
 
 }, [commonData]);
+
+
+useEffect(() => {
+
+    const loadAvailableLeads = async () => {
+
+        try {
+
+            setLoadingLeads(true);
+
+            const leads =
+                await getAllLeads();
+
+            setAvailableLeads(
+                Array.isArray(leads)
+                    ? leads
+                    : []
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load leads for quotation:",
+                error
+            );
+
+            setAvailableLeads([]);
+
+        } finally {
+
+            setLoadingLeads(false);
+
+        }
+
+    };
+
+    loadAvailableLeads();
+
+}, []);
+
+
+
+useEffect(() => {
+
+    if (!quotationLink.leadId) {
+        return;
+    }
+
+    let cancelled = false;
+
+    const loadLinkedQuotation = async () => {
+
+        try {
+
+            const freshDrafts =
+                await getAllDraftsFromFirestore();
+
+            if (cancelled) {
+                return;
+            }
+
+            const existingQuotation =
+                Array.isArray(freshDrafts)
+                    ? freshDrafts.find(
+                        draft =>
+                            draft?.leadId ===
+                            quotationLink.leadId
+                    )
+                    : null;
+
+            if (!existingQuotation) {
+
+    // Start a genuine new quotation.
+    // This also generates a fresh quotation number.
+    resetQuotation();
+
+
+    setQuotationLink({
+    leadId:
+        quotationLink.leadId || "",
+
+    leadDocId:
+        quotationLink.leadDocId || "",
+
+    clientId:
+        quotationLink.clientId || "",
+
+    enquiryId:
+        quotationLink.enquiryId || ""
+});
+
+
+ // Re-apply the selected Lead's information
+    // after resetQuotation() clears the quotation form.
+    const selectedLead =
+        availableLeads.find(
+            lead =>
+                lead?.leadId ===
+                quotationLink.leadId
+        );
+
+    if (selectedLead) {
+
+        const standardDestinations = [
+            "Kashmir",
+            "Kerala",
+            "Goa",
+            "Rajasthan",
+            "Sikkim",
+            "Andaman",
+            "Ladakh",
+            "Madhya Pradesh",
+            "Sri Lanka",
+            "Thailand",
+            "Dubai",
+            "Singapore",
+            "Malaysia",
+            "Bali",
+            "Vietnam",
+            "Maldives"
+        ];
+
+        const selectedDestination =
+            String(
+                selectedLead.destination || ""
+            ).trim();
+
+        const isStandardDestination =
+            standardDestinations.includes(
+                selectedDestination
+            );
+
+        setCommonData(prev => ({
+            ...prev,
+
+            clientName:
+                selectedLead.name || "",
+
+            mobile:
+                selectedLead.mobile || "",
+
+            email:
+                selectedLead.email || "",
+
+            destination:
+                isStandardDestination
+                    ? selectedDestination
+                    : "",
+
+            customDestination:
+                isStandardDestination
+                    ? ""
+                    : selectedDestination,
+
+            travelFrom:
+                selectedLead.travelFrom || "",
+
+            travelTo:
+                selectedLead.travelTo || "",
+
+            adults:
+                Number(
+                    selectedLead.adults || 0
+                ),
+
+            children:
+                Number(
+                    selectedLead.children || 0
+                ),
+
+            requirement:
+                selectedLead.requirement || ""
+        }));
+
+    }
+
+    return;
+}
+
+            if (
+                editingDraft?.quotationNo ===
+                existingQuotation.quotationNo
+            ) {
+                return;
+            }
+
+            handleOpenDraft(
+                existingQuotation
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Unable to check for existing Lead quotation:",
+                error
+            );
+
+        }
+    };
+
+    loadLinkedQuotation();
+
+    return () => {
+        cancelled = true;
+    };
+
+}, [
+    quotationLink.leadId
+]);
+
 
 
 const [currentRevision, setCurrentRevision] =
@@ -972,16 +1221,31 @@ const handleReviewPdf = async (draft) => {
    
     const blob = await handleGeneratePdf(
 
+    {
+        ...draft.commonData,
 
-        draft.commonData,
+        quotationDate:
+            draft.quotationDate ||
+            draft.commonData?.quotationDate ||
+            (
+                draft.savedAt
+                    ? new Date(draft.savedAt)
+                        .toISOString()
+                        .slice(0, 10)
+                    : new Date()
+                        .toISOString()
+                        .slice(0, 10)
+            )
+    },
 
-        draft.packageData,
+    draft.packageData,
 
-        draft.itineraryData,
+    draft.itineraryData,
 
-         "preview"
+    "preview"
 
-    );
+);
+
 
     const url = URL.createObjectURL(blob);
 
@@ -1139,6 +1403,16 @@ const handleGeneratePdf = async (
    return await generateQuotationPdf({
 
     ...quoteData,
+
+
+      // =====================================================
+    // REVISION DATE
+    // =====================================================
+
+    savedAt:
+    viewingRevision?.originalSavedAt ||
+    viewingRevision?.savedAt,
+
 
     // =====================================================
     // HOTEL USED
@@ -1453,54 +1727,443 @@ console.log(
 
 
       
-        
+        /*
+ * =====================================================
+ * AUTO-CREATE / LINK LEAD
+ *
+ * If this quotation does not already have a Lead,
+ * create one from the quotation details first.
+ *
+ * Existing linked Leads are never duplicated.
+ * =====================================================
+ */
+
+if (!quotationLink.leadId) {
+
+    try {
+
+       const generatedLeadTitle =
+    [
+        commonData.customDestination?.trim()
+            || commonData.destination,
+
+        "Holiday",
+
+        commonData.clientName
+    ]
+        .filter(Boolean)
+        .join(" – ");
+
+        const createdLead =
+            await createLead({
+
+                leadTitle:
+                    generatedLeadTitle,
+
+                source:
+                    "Other",
+
+                sourceDetail:
+                    "Quotation System",
+
+                    createdFrom:
+                        "quotation",
+
+                name:
+                    commonData.clientName || "",
+
+                mobile:
+                    commonData.mobile || "",
+
+                email:
+                    commonData.email || "",
+
+                destination:
+                    commonData.customDestination?.trim()
+                        || commonData.destination
+                        || "",
+
+                travelFrom:
+                    commonData.travelFrom || "",
+
+                travelTo:
+                    commonData.travelTo || "",
+
+                adults:
+                    Number(
+                        commonData.adults || 0
+                    ),
+
+                children:
+                    Number(
+                        commonData.children || 0
+                    ),
+
+                budget:
+                    commonData.budget || "",
+
+                requirement:
+                    commonData.requirement || "",
+
+                status:
+                    "Quotation Prepared",
+
+                createdBy:
+                    userProfile?.uid || "",
+
+                createdByName:
+                    userProfile?.name || ""
+
+            });
+
+        /*
+         * Keep the newly generated Lead connected
+         * to this quotation.
+         */
+        setQuotationLink({
+
+    leadId:
+        createdLead.leadId || "",
+
+    leadDocId:
+        createdLead.id || "",
+
+    clientId:
+        createdLead.clientId || "",
+
+    enquiryId:
+        createdLead.enquiryId || ""
+
+});
+
+        /*
+         * Also make the new Lead immediately
+         * available in the Lead selector.
+         */
+        setAvailableLeads(prev => [
+            createdLead,
+            ...prev
+        ]);
+
+        /*
+         * IMPORTANT:
+         * The save below must use the newly created
+         * Lead ID, not the old empty quotationLink.
+         */
+        quotationLink.leadId =
+            createdLead.leadId || "";
+
+            quotationLink.leadDocId =
+    createdLead.id || "";
+
+        quotationLink.clientId =
+            createdLead.clientId || "";
+
+        quotationLink.enquiryId =
+            createdLead.enquiryId || "";
+
+    } catch (error) {
+
+        console.error(
+            "Automatic Lead creation failed:",
+            error
+        );
+
+        alert(
+            "Unable to create the Lead. The quotation was not saved."
+        );
+
+        return;
+
+    }
+
+}
 
 
-    await saveDraft({
+/*
+ * =====================================================
+ * UPDATE LINKED LEAD FROM QUOTATION
+ *
+ * Only runs when a Lead is linked.
+ * The Firestore document ID is used for the update.
+ * =====================================================
+ */
 
+if (quotationLink.leadDocId) {
+
+    try {
+
+        await updateLead(
+            quotationLink.leadDocId,
+            {
+
+                leadTitle:
+                    [
+                        commonData.customDestination?.trim()
+                            || commonData.destination,
+
+                        "Holiday",
+
+                        commonData.clientName
+                    ]
+                        .filter(Boolean)
+                        .join(" – "),
+
+                name:
+                    commonData.clientName || "",
+
+                mobile:
+                    commonData.mobile || "",
+
+                email:
+                    commonData.email || "",
+
+                destination:
+                    commonData.customDestination?.trim()
+                        || commonData.destination
+                        || "",
+
+                travelFrom:
+                    commonData.travelFrom || "",
+
+                travelTo:
+                    commonData.travelTo || "",
+
+                adults:
+                    Number(
+                        commonData.adults || 0
+                    ),
+
+                children:
+                    Number(
+                        commonData.children || 0
+                    ),
+
+                requirement:
+                    commonData.requirement || "",
+
+                status:
+                    "Quotation Prepared"
+
+            }
+        );
+
+        /*
+ * Keep the Lead selector in sync with the
+ * Lead data just saved to Firebase.
+ */
+setAvailableLeads(prev =>
+    prev.map(lead =>
+        lead.id === quotationLink.leadDocId
+            ? {
+                ...lead,
+
+                name:
+                    commonData.clientName || "",
+
+                mobile:
+                    commonData.mobile || "",
+
+                email:
+                    commonData.email || "",
+
+                destination:
+                    commonData.customDestination?.trim()
+                        || commonData.destination
+                        || "",
+
+                travelFrom:
+                    commonData.travelFrom || "",
+
+                travelTo:
+                    commonData.travelTo || "",
+
+                adults:
+                    Number(
+                        commonData.adults || 0
+                    ),
+
+                children:
+                    Number(
+                        commonData.children || 0
+                    ),
+
+                requirement:
+                    commonData.requirement || "",
+
+                leadTitle:
+                    [
+                        commonData.customDestination?.trim()
+                            || commonData.destination,
+
+                        "Holiday",
+
+                        commonData.clientName
+                    ]
+                        .filter(Boolean)
+                        .join(" – "),
+
+                status:
+                    "Quotation Prepared"
+            }
+            : lead
+    )
+);
+
+    } catch (error) {
+
+        console.error(
+            "Linked Lead update failed:",
+            error
+        );
+
+        alert(
+            "Unable to update the linked Lead. The quotation was not saved."
+        );
+
+        return;
+
+    }
+
+}
+
+
+
+const savedTotalAmountPayable =
+    commonData?.totalAmountPayable !== undefined &&
+    commonData?.totalAmountPayable !== ""
+        ? Number(commonData.totalAmountPayable)
+        : Number(
+            calculateQuotationTotals({
+                commonData,
+                usdRate: 86
+            })?.grandTotal
+        ) || 0;
+
+
+
+
+
+        console.log(
+    "QUOTATION SAVE LINK CHECK:",
+    {
         quotationNo:
             commonData.quotationNo,
 
-        displayQuotationNo:
-            `ORB-${commonData.quotationNo.replace(
-                "ORB-",
-                ""
-            ).slice(-6)}`,
+        leadId:
+            quotationLink.leadId,
 
-        destination:
-            commonData.customDestination?.trim()
-                || commonData.destination,
+        leadDocId:
+            quotationLink.leadDocId,
 
-        clientName:
-            commonData.clientName,
+        clientId:
+            quotationLink.clientId,
 
-        savedAt:
-            new Date().toISOString(),
+        enquiryId:
+            quotationLink.enquiryId
+    }
+);
 
-        status:
-            "Draft",
+
+
+        
+
+
+   await saveDraft({
+
+    quotationNo:
+        commonData.quotationNo,
+
+    displayQuotationNo:
+        `ORB-${commonData.quotationNo.replace(
+            "ORB-",
+            ""
+        ).slice(-6)}`,
+
+    destination:
+        commonData.customDestination?.trim()
+            || commonData.destination,
+
+    clientName:
+    commonData.clientName,
+
+quotationDate:
+    commonData.quotationDate,
+
+totalAmountPayable:
+    savedTotalAmountPayable,
+
+/*
+ * Lead / Client / Enquiry linkage
+ *
+ * quotationLink is the current relationship
+ * for this quotation.
+ *
+ * Empty values are intentionally omitted so
+ * existing standalone quotations remain clean.
+ */
+...(quotationLink.leadId
+    ? {
+        leadId:
+            quotationLink.leadId
+    }
+    : {}),
+
+
+    ...(quotationLink.leadDocId
+    ? {
+        leadDocId:
+            quotationLink.leadDocId
+    }
+    : {}),
+
+
+...(quotationLink.clientId
+    ? {
+        clientId:
+            quotationLink.clientId
+    }
+    : {}),
+
+...(quotationLink.enquiryId
+    ? {
+        enquiryId:
+            quotationLink.enquiryId
+    }
+    : {}),
+
+    savedAt:
+        new Date().toISOString(),
+
+    status:
+        "Draft",
 
         originalData:
-            editingDraft?.originalData
-                ? structuredClone(
-                    editingDraft.originalData
+    editingDraft?.originalData
+        ? structuredClone(
+            editingDraft.originalData
+        )
+        : {
+            originalSavedAt:
+                new Date().toISOString(),
+
+            commonData:
+                structuredClone({
+                    ...commonData,
+                    totalAmountPayable:
+                        savedTotalAmountPayable
+                }),
+
+            packageData:
+                structuredClone(
+                    packageData
+                ),
+
+            itineraryData:
+                structuredClone(
+                    itineraryData
                 )
-                : {
-                  commonData:
-    structuredClone(
-        commonData
-    ),
-
-                    packageData:
-                        structuredClone(
-                            packageData
-                        ),
-
-                    itineraryData:
-                        structuredClone(
-                            itineraryData
-                        )
-                },
+        },
 
         ...(isSavedDraftEdit
             ? {
@@ -1719,19 +2382,42 @@ const handleOpenLastDraft = () => {
 
     }
 
-    setCommonData(
-        draft.commonData
-    );
+    setCommonData({
+    ...draft.commonData,
 
-    setPackageData(
-        draft.packageData
-    );
+    quotationDate:
+        draft.commonData?.quotationDate ||
+        (
+            draft.savedAt
+                ? new Date(draft.savedAt)
+                    .toISOString()
+                    .slice(0, 10)
+                : new Date()
+                    .toISOString()
+                    .slice(0, 10)
+        )
+});
 
-    setItineraryData(
-        draft.itineraryData
-    );
+setPackageData(
+    draft.packageData
+);
 
-    alert("Draft loaded successfully.");
+setItineraryData(
+    draft.itineraryData
+);
+
+setQuotationLink({
+    leadId:
+        draft.leadId || "",
+
+    clientId:
+        draft.clientId || "",
+
+    enquiryId:
+        draft.enquiryId || ""
+});
+
+alert("Draft loaded successfully.");
 
 };
 
@@ -1766,10 +2452,6 @@ const handleOpenDraftLibrary =
 
 const handleRevisionHistory = (draft) => {
 
-    
-
-    
-
     setHistoryOpenedFromLibrary(true);
 
     setRevisionHistoryReturnQuotationNo(
@@ -1791,6 +2473,12 @@ const handleViewOriginalDraft = () => {
     const original =
         revisionHistoryDraft.originalData;
 
+
+       
+
+
+
+
     // Keep the saved quotation available
     // for Return to Current.
     const savedDraft =
@@ -1798,11 +2486,45 @@ const handleViewOriginalDraft = () => {
             revisionHistoryDraft
         );
 
-    setCommonData(
-        structuredClone(
-            original.commonData
+    setCommonData({
+    ...structuredClone(
+        original.commonData
+    ),
+
+    quotationDate:
+        original.commonData?.quotationDate ||
+        savedDraft.quotationDate ||
+        savedDraft.commonData?.quotationDate ||
+        (
+            savedDraft.savedAt
+                ? new Date(
+                    savedDraft.savedAt
+                )
+                    .toISOString()
+                    .slice(0, 10)
+                : new Date()
+                    .toISOString()
+                    .slice(0, 10)
         )
-    );
+});
+
+
+setQuotationLink({
+    leadId:
+        savedDraft.leadId || "",
+
+    leadDocId:
+        savedDraft.leadDocId || "",
+
+    clientId:
+        savedDraft.clientId || "",
+
+    enquiryId:
+        savedDraft.enquiryId || ""
+});
+
+
+
 
     setPackageData(
         structuredClone(
@@ -1822,6 +2544,10 @@ const handleViewOriginalDraft = () => {
     isOriginalDraft: true,
 
     revisionNo: 0,
+
+    originalSavedAt:
+    original.originalSavedAt,
+
 
     commonData:
         structuredClone(
@@ -1887,9 +2613,44 @@ const handleViewRevision = (
 
     setViewingRevision(revision);
 
-    setCommonData(
-        structuredClone(revision.commonData)
-    );
+    setCommonData({
+    ...structuredClone(revision.commonData),
+
+    quotationDate:
+        revision.commonData?.quotationDate ||
+        revisionHistoryDraft?.quotationDate ||
+        revisionHistoryDraft?.commonData?.quotationDate ||
+        (
+            revisionHistoryDraft?.savedAt
+                ? new Date(
+                    revisionHistoryDraft.savedAt
+                )
+                    .toISOString()
+                    .slice(0, 10)
+                : new Date()
+                    .toISOString()
+                    .slice(0, 10)
+        )
+});
+
+
+
+setQuotationLink({
+    leadId:
+        revisionHistoryDraft?.leadId || "",
+
+    leadDocId:
+        revisionHistoryDraft?.leadDocId || "",
+
+    clientId:
+        revisionHistoryDraft?.clientId || "",
+
+    enquiryId:
+        revisionHistoryDraft?.enquiryId || ""
+});
+
+
+
 
     setPackageData(
         structuredClone(revision.packageData)
@@ -1945,11 +2706,51 @@ const handleDuplicateDraft = (draft) => {
     const newQuotationNo =
         `ORB-${Date.now()}`;
 
-    // Preserve the quotation's current displayed data,
-    // but make it a completely independent new quotation.
+    // ------------------------------------------------
+    // DUPLICATE = reusable quotation template
+    //
+    // Retain:
+    // - Destination / package structure
+    // - Pax
+    // - Accommodation / meals
+    // - Itinerary
+    // - Sightseeing
+    // - Pricing
+    // - Includes / Excludes
+    // - Cancellation Policy
+    //
+    // Reset:
+    // - Quotation Date
+    // - Lead / CRM link
+    // - Client identity
+    // - Travel dates
+    // - Derived duration
+    // ------------------------------------------------
+
     copy.commonData = {
         ...copy.commonData,
-        quotationNo: newQuotationNo
+
+        // NEW quotation identity
+        quotationNo: newQuotationNo,
+
+        // NEW quotation date
+        quotationDate:
+            new Date()
+                .toISOString()
+                .slice(0, 10),
+
+        // Clear client identity
+        clientName: "",
+        mobile: "",
+        email: "",
+
+        // Clear travel dates
+        travelFrom: "",
+        travelTo: "",
+
+        // Duration is derived from travel dates
+        totalDays: "",
+        totalNights: ""
     };
 
     // New quotation metadata
@@ -1964,6 +2765,29 @@ const handleDuplicateDraft = (draft) => {
         new Date().toISOString();
 
     copy.status = "Draft";
+
+    // ------------------------------------------------
+    // Clear all old CRM / Lead linkage
+    // ------------------------------------------------
+
+    delete copy.leadId;
+    delete copy.leadDocId;
+    delete copy.clientId;
+    delete copy.enquiryId;
+
+    // ------------------------------------------------
+    // IMPORTANT:
+    // Reset the active quotation link state too.
+    // Otherwise the old Lead could remain attached
+    // even though the copied data was cleared.
+    // ------------------------------------------------
+
+    setQuotationLink({
+        leadId: "",
+        leadDocId: "",
+        clientId: "",
+        enquiryId: ""
+    });
 
     // ------------------------------------------------
     // IMPORTANT:
@@ -2041,11 +2865,15 @@ const handleDuplicateDraft = (draft) => {
     alert(
         "Quotation duplicated successfully.\n\n" +
         "A new quotation has been opened in the editor.\n" +
-        "It has no revision history.\n\n" +
+        "Client, Lead and travel dates have been cleared.\n" +
+        "No revision history has been carried over.\n\n" +
         "Save it when you're ready."
     );
 
 };
+
+
+
 
 const handleOpenDraft = (draft) => {
 
@@ -2081,19 +2909,58 @@ setRevisionHistory(
     setShowDraftLibrary(false);
 
     // Load quotation
-    setCommonData(
-        draft.commonData
-    );
+setCommonData({
+    ...draft.commonData,
 
-    setPackageData(
-        draft.packageData
-    );
+    quotationDate:
+        draft.commonData?.quotationDate ||
+        (
+            draft.savedAt
+                ? new Date(draft.savedAt)
+                    .toISOString()
+                    .slice(0, 10)
+                : new Date()
+                    .toISOString()
+                    .slice(0, 10)
+        )
+});
 
-    setItineraryData(
-        draft.itineraryData
-    );
+setPackageData(
+    draft.packageData
+);
 
-   setEditingDraft(draft);
+setItineraryData(
+    draft.itineraryData
+);
+
+setQuotationLink({
+    leadId:
+        draft.leadId || "",
+
+    leadDocId:
+        draft.leadDocId || "",
+
+    clientId:
+        draft.clientId || "",
+
+    enquiryId:
+        draft.enquiryId || ""
+});
+
+setEditingDraft(draft);
+
+
+
+setDraftQuotationContext({
+    leadId: draft.leadId || "",
+    leadDocId: draft.leadDocId || "",
+    clientId: draft.clientId || "",
+    enquiryId: draft.enquiryId || ""
+});
+
+
+
+
 
 window.scrollTo({
 
@@ -2105,11 +2972,66 @@ window.scrollTo({
 
 };
 
+
+useEffect(() => {
+    if (
+        quotationContext?.action !== "view" ||
+        !quotationContext?.quotation
+    ) {
+        return;
+    }
+
+    handleOpenDraft(
+        quotationContext.quotation
+    );
+}, [quotationContext]);
+
+
+
+
 const handleDeleteDraft = async (quotationNo) => {
 
-    await deleteDraft(quotationNo);
+    const draftToDelete =
+        drafts.find(
+            draft =>
+                draft?.quotationNo ===
+                quotationNo
+        );
 
-    await refreshDrafts();
+    try {
+
+        await deleteDraft(
+            quotationNo
+        );
+
+        if (
+            draftToDelete?.leadDocId
+        ) {
+
+            await updateLead(
+                draftToDelete.leadDocId,
+                {
+                    status:
+                        "Follow-up"
+                }
+            );
+
+        }
+
+        await refreshDrafts();
+
+    } catch (error) {
+
+        console.error(
+            "Draft deletion failed:",
+            error
+        );
+
+        alert(
+            "Unable to delete the quotation. Please try again."
+        );
+
+    }
 
 };
 
@@ -2429,6 +3351,16 @@ const resetQuotation = ({
         ...defaultItineraryData
 
     });
+
+
+    setQuotationLink({
+    leadId: "",
+    leadDocId: "",
+    clientId: "",
+    enquiryId: ""
+});
+
+
 
     setIsDraftModified(false);
 
@@ -3041,6 +3973,22 @@ if (currentDraft) {
     
 
 
+        <button
+        type="button"
+        onClick={onBackToWorkspace}
+        style={{
+            background: "#334155",
+            color: "#fff",
+            border: "none",
+            padding: "10px 18px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: 600
+        }}
+    >
+        ← Orbitz Operation Workspace
+    </button>
+
     <button
         onClick={() => setShowPreview(true)}
         style={{
@@ -3473,6 +4421,27 @@ setIsImportingTemplate={
 
 importingTemplateRef={
     importingTemplateRef
+}
+
+
+quotationLink={
+    quotationLink
+}
+
+setQuotationLink={
+    setQuotationLink
+}
+
+quotationContext={
+    quotationContext || draftQuotationContext
+}
+
+availableLeads={
+    availableLeads
+}
+
+loadingLeads={
+    loadingLeads
 }
 
 />
@@ -4160,14 +5129,16 @@ console.log(
                             color: "#4b5563"
                         }}
                     >
-                        ORB-{revisionHistoryDraft.quotationNo
-                            ?.replace("ORB-", "")
-                            .slice(-6)}
-                        {" • "}
-                        {revisionHistoryDraft.clientName
-                            || revisionHistoryDraft.commonData?.clientName
-                            || "No client"}
-                        {" • "}
+                       ORB-{revisionHistoryDraft.quotationNo
+    ?.replace("ORB-", "")
+    .slice(-6)}
+{" • "}
+{revisionHistoryDraft.leadId || "No Lead ID"}
+{" • "}
+{revisionHistoryDraft.clientName
+    || revisionHistoryDraft.commonData?.clientName
+    || "No client"}
+{" • "}
                         {revisionHistoryDraft.destination
                             || revisionHistoryDraft.commonData?.destination
                             || "No destination"}

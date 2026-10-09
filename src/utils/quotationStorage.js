@@ -11,6 +11,9 @@ import {
 } from "firebase/firestore";
 
 
+import { updateLead } from "./leadStorage";
+
+
 const STORAGE_KEY = "orbitzQuotationDrafts";
 
 const WORKING_COPY_KEY =
@@ -522,6 +525,18 @@ export async function getAllDraftsFromFirestore() {
                     docSnapshot.data()
             );
 
+
+            console.log(
+    "🔥 SAVED QUOTATION FIRESTORE CHECK:",
+    drafts.find(
+        draft =>
+            draft.quotationNo ===
+            "ORB-1790498920959"
+    )
+);
+
+
+
         drafts.sort((a, b) => {
 
             return (
@@ -705,6 +720,166 @@ export async function migrateLocalDraftsToFirestore() {
     }
 
 }
+
+
+
+export async function getDraftByLeadDocId(
+    leadDocId
+) {
+
+    if (!leadDocId) {
+        return null;
+    }
+
+    // ==========================================
+    // FIRESTORE SHARED DATA
+    // ==========================================
+
+    try {
+
+        const drafts =
+            await getAllDraftsFromFirestore();
+
+        if (
+            Array.isArray(drafts)
+        ) {
+
+            const matchingDraft =
+                drafts.find(
+                    draft =>
+                        draft?.leadDocId ===
+                        leadDocId
+                );
+
+            if (matchingDraft) {
+                return matchingDraft;
+            }
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Unable to find draft for Lead:",
+            error
+        );
+
+    }
+
+    // ==========================================
+    // LOCAL STORAGE FALLBACK
+    // ==========================================
+
+    const drafts =
+        getDrafts();
+
+    return (
+        drafts.find(
+            draft =>
+                draft?.leadDocId ===
+                leadDocId
+        ) || null
+    );
+
+}
+
+
+
+
+
+export async function unlinkDraftFromLead(
+    quotationNo
+) {
+
+    // ==========================================
+    // LOCAL STORAGE BACKUP
+    // ==========================================
+
+    const drafts = getDrafts();
+
+    const index =
+        drafts.findIndex(
+            draft =>
+                draft.quotationNo ===
+                quotationNo
+        );
+
+    if (index >= 0) {
+
+        drafts[index] = {
+            ...drafts[index],
+
+            leadId: "",
+            leadDocId: ""
+        };
+
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(drafts)
+        );
+
+    }
+
+
+    // ==========================================
+    // FIRESTORE SHARED UPDATE
+    // ==========================================
+
+    try {
+
+        const draftRef =
+            doc(
+                db,
+                "drafts",
+                quotationNo
+            );
+
+        const snapshot =
+            await getDoc(draftRef);
+
+        if (!snapshot.exists()) {
+
+            console.warn(
+                "🔥 FIRESTORE DRAFT NOT FOUND:",
+                quotationNo
+            );
+
+            return;
+
+        }
+
+        const firestoreDraft =
+            snapshot.data();
+
+        await setDoc(
+            draftRef,
+            {
+                ...firestoreDraft,
+
+                leadId: "",
+                leadDocId: ""
+            }
+        );
+
+        console.log(
+            "🔥 DRAFT UNLINKED FROM LEAD:",
+            quotationNo
+        );
+
+    } catch (error) {
+
+        console.error(
+            "🔥 FIRESTORE DRAFT LEAD UNLINK FAILED:",
+            error
+        );
+
+        throw error;
+
+    }
+
+}
+
+
 
 
 export async function deleteDraft(quotationNo) {
@@ -1087,6 +1262,19 @@ export async function updateDraftStatus(
             snapshot.data();
 
 
+            console.log(
+    "🔥 QUOTATION → LEAD LINK CHECK:",
+    {
+        quotationNo,
+        status,
+        leadId: firestoreDraft?.leadId,
+        leadDocId: firestoreDraft?.leadDocId
+    }
+);
+
+
+
+
         const firestoreConfirmedAt =
             isConfirming
                 ? (
@@ -1139,6 +1327,79 @@ export async function updateDraftStatus(
                 firestoreConfirmedAt
 
             );
+
+        }
+
+
+                // ==========================================
+        // SYNC LINKED LEAD STATUS
+        // ==========================================
+
+        if (firestoreDraft?.leadDocId) {
+
+            const normalizedStatus =
+                String(status || "")
+                    .trim()
+                    .toLowerCase();
+
+            let leadStatus = "";
+
+
+            console.log(
+    "🔥 QUOTATION STATUS MAPPING CHECK:",
+    {
+        rawStatus: status,
+        normalizedStatus
+    }
+);
+
+
+
+
+            if (normalizedStatus === "draft") {
+
+                leadStatus = "Quotation Prepared";
+
+          } else if (
+    normalizedStatus === "sent"
+) {
+
+    leadStatus = "Quotation Sent";
+
+            } else if (
+                normalizedStatus === "confirmed" ||
+                normalizedStatus === "booking confirmed"
+            ) {
+
+                leadStatus = "Confirmed";
+
+            }
+
+            if (leadStatus) {
+
+                await updateLead(
+                    firestoreDraft.leadDocId,
+                    {
+                        status: leadStatus
+                    }
+                );
+
+
+                console.log(
+    "🔥 LEAD STATUS UPDATE CALL COMPLETED:",
+    {
+        leadDocId: firestoreDraft.leadDocId,
+        leadStatus
+    }
+);
+
+                console.log(
+                    "🔥 LINKED LEAD STATUS UPDATED:",
+                    firestoreDraft.leadDocId,
+                    leadStatus
+                );
+
+            }
 
         }
 

@@ -49,7 +49,14 @@ itineraryTemplateLabel,
 setItineraryTemplateLabel,
 resetQuotation,
     applyItineraryTemplate,
-    userProfile
+    userProfile,
+
+   quotationLink,
+setQuotationLink,
+quotationContext,
+availableLeads,
+loadingLeads
+
 } = props;
 
 console.log(
@@ -67,6 +74,76 @@ const quoteData = {
   const [pdfThemeOpen, setPdfThemeOpen] = useState(false);
 
   const [tourSummaryOpen, setTourSummaryOpen] = useState(false);
+
+
+
+  useEffect(() => {
+    console.log(
+        "QUOTATION LINK STATE:",
+        quotationLink
+    );
+}, [quotationLink]);
+
+
+
+
+  useEffect(() => {
+    if (quotationContext) {
+        setTourSummaryOpen(true);
+    }
+}, [quotationContext]);
+
+
+
+useEffect(() => {
+    const contextLead =
+        quotationContext?.lead;
+
+    if (!contextLead?.leadId) {
+        return;
+    }
+
+    const selectedLead =
+        availableLeads.find(
+            lead =>
+                lead.leadId ===
+                contextLead.leadId
+        );
+
+    if (!selectedLead) {
+        return;
+    }
+
+    setQuotationLink(prev => ({
+        ...prev,
+
+        leadId:
+            selectedLead.leadId || "",
+
+        leadDocId:
+            selectedLead.id || "",
+
+        clientId:
+            selectedLead.clientId || "",
+
+        enquiryId:
+            selectedLead.enquiryId || ""
+    }));
+
+    console.log(
+        "AUTO LINK SET:",
+        selectedLead.leadId,
+        selectedLead.id
+    );
+}, [
+    quotationContext,
+    availableLeads,
+    setQuotationLink
+]);
+
+
+
+
 
   const [hotelUsedOpen, setHotelUsedOpen] = useState(false);
 
@@ -106,6 +183,98 @@ const [expandedPolicyId, setExpandedPolicyId] =
 
     const [showHotelColorPalette, setShowHotelColorPalette] =
      useState(false);
+
+
+
+
+    useEffect(() => {
+
+    if (
+        !commonData?.travelFrom ||
+        !commonData?.travelTo
+    ) {
+
+        setDurationDaysInput("");
+        setDurationNightsInput("");
+
+        setCommonData(prev => {
+
+            if (
+                prev.totalDays === "" &&
+                prev.totalNights === ""
+            ) {
+                return prev;
+            }
+
+            return {
+                ...prev,
+                totalDays: "",
+                totalNights: ""
+            };
+
+        });
+
+        return;
+    }
+
+    const from =
+        new Date(commonData.travelFrom);
+
+    const to =
+        new Date(commonData.travelTo);
+
+    if (
+        Number.isNaN(from.getTime()) ||
+        Number.isNaN(to.getTime())
+    ) {
+        return;
+    }
+
+    const diffDays =
+        Math.ceil(
+            (to - from) /
+            (1000 * 60 * 60 * 24)
+        ) + 1;
+
+    const totalDays = diffDays;
+
+    const totalNights =
+        Math.max(
+            diffDays - 1,
+            0
+        );
+
+    setDurationMode("date");
+
+    setDurationDaysInput(
+        String(totalDays)
+    );
+
+    setDurationNightsInput(
+        String(totalNights)
+    );
+
+    setCommonData(prev => {
+
+        if (
+            prev.totalDays === totalDays &&
+            prev.totalNights === totalNights
+        ) {
+            return prev;
+        }
+
+        return {
+            ...prev,
+            totalDays,
+            totalNights
+        };
+
+    });
+
+}, [
+    commonData?.travelFrom,
+    commonData?.travelTo
+]);
 
 
 
@@ -2135,15 +2304,307 @@ overflow: "visible",
   >
 
 
+{/* =====================================================
+    LEAD / CRM LINK
+===================================================== */}
+
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "8px",
+    padding: "5px 10px",
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px"
+  }}
+>
+
+  <div
+    style={{
+      fontSize: "10px",
+      fontWeight: 800,
+      color: "#64748b",
+      textTransform: "uppercase",
+      letterSpacing: "0.4px",
+      whiteSpace: "nowrap"
+    }}
+  >
+    LEAD / CRM LINK
+  </div>
+
+
+
+
+
+
+
+  <select
+    value={quotationLink.leadId}
+   onChange={(e) => {
+
+    const selectedLeadId =
+        e.target.value;
+
+    /*
+     * Clear Lead relationship.
+     */
+    if (!selectedLeadId) {
+
+        setQuotationLink({
+            leadId: "",
+            clientId: "",
+            enquiryId: ""
+        });
+
+        return;
+    }
+
+    /*
+     * Find the selected Lead.
+     */
+    const selectedLead =
+        availableLeads.find(
+            lead =>
+                lead.leadId === selectedLeadId
+        );
+
+    if (!selectedLead) {
+        return;
+    }
+
+
+   
+
+
+    console.log(
+    "QUOTATION EDITOR SELECTED LEAD:",
+    selectedLead
+);
+
+
+
+    /*
+     * Link quotation to Lead.
+     */
+    setQuotationLink({
+
+    leadId:
+        selectedLead.leadId || "",
+
+    leadDocId:
+        selectedLead.id || "",
+
+    clientId:
+        selectedLead.clientId || "",
+
+    enquiryId:
+        selectedLead.enquiryId || ""
+
+});
+
+
+const standardDestinations = [
+    "Kashmir",
+    "Kerala",
+    "Goa",
+    "Rajasthan",
+    "Sikkim",
+    "Andaman",
+    "Ladakh",
+    "Madhya Pradesh",
+    "Sri Lanka",
+    "Thailand",
+    "Dubai",
+    "Singapore",
+    "Malaysia",
+    "Bali",
+    "Vietnam",
+    "Maldives"
+];
+
+const selectedDestination =
+    String(
+        selectedLead.destination || ""
+    ).trim();
+
+const isStandardDestination =
+    standardDestinations.includes(
+        selectedDestination
+    );
+
+
+
+    /*
+     * Populate quotation editor from
+     * the selected Lead.
+     *
+     * Only shared enquiry/customer fields
+     * are populated here.
+     */
+   setCommonData(prev => ({
+
+    ...prev,
+
+    /*
+     * Selected Lead becomes the new source
+     * for shared customer/enquiry fields.
+     *
+     * Do NOT retain the previous Lead's values
+     * when the selected Lead has an empty field.
+     */
+    clientName:
+        selectedLead.name || "",
+
+    mobile:
+        selectedLead.mobile || "",
+
+    email:
+        selectedLead.email || "",
+
+    destination:
+    isStandardDestination
+        ? selectedDestination
+        : "",
+
+customDestination:
+    isStandardDestination
+        ? ""
+        : selectedDestination,
+
+    travelFrom:
+        selectedLead.travelFrom || "",
+
+    travelTo:
+        selectedLead.travelTo || "",
+
+    adults:
+        Number(
+            selectedLead.adults || 0
+        ),
+
+    children:
+        Number(
+            selectedLead.children || 0
+        ),
+
+    requirement:
+        selectedLead.requirement || ""
+
+}));
+}}
+
+    style={{
+      ...inputStyle,
+      width: "360px",
+      maxWidth: "100%",
+      marginBottom: 0,
+      boxSizing: "border-box",
+      cursor: "pointer",
+      height: "30px",
+      padding: "4px 8px",
+      fontSize: "12px"
+    }}
+  >
+
+    <option value="">
+      {loadingLeads
+        ? "Loading Leads..."
+        : "Select Lead (Optional)"}
+    </option>
+
+    {availableLeads.map(lead => (
+
+      <option
+    key={lead.id}
+    value={lead.leadId || ""}
+>
+    {lead.leadId
+        ? `${lead.leadId} — `
+        : ""}
+    {lead.name || "Unnamed Lead"}
+    {lead.destination
+        ? ` — ${lead.destination}`
+        : ""}
+    {lead.mobile
+        ? ` — ${lead.mobile}`
+        : ""}
+</option>
+
+    ))}
+
+  </select>
+
+  {quotationLink.leadId && (
+
+    <div
+        style={{
+            fontSize: "11px",
+            color: "#475569",
+            whiteSpace: "nowrap",
+            fontWeight: 700
+        }}
+    >
+        {quotationLink.leadId}
+    </div>
+
+)}
+
+</div>
+
+
+
 <div
   style={{
     display: "grid",
     gridTemplateColumns:
-      "minmax(220px, 1fr) minmax(170px, 0.75fr) minmax(280px, 1.25fr)",
+      "minmax(170px, 0.7fr) minmax(220px, 1fr) minmax(170px, 0.75fr) minmax(280px, 1.25fr)",
     gap: "10px",
     marginBottom: "10px"
   }}
 >
+
+
+  {/* QUOTATION DATE */}
+
+<div
+  style={{
+    minWidth: 0
+  }}
+>
+  <label
+    style={{
+      display: "block",
+      marginBottom: "4px",
+      fontSize: "11px",
+      fontWeight: 700,
+      color: "#475569"
+    }}
+  >
+    Quotation Date
+  </label>
+
+  <input
+    type="date"
+    value={commonData?.quotationDate || ""}
+    onChange={(e) =>
+      setCommonData({
+        ...commonData,
+        quotationDate: e.target.value
+      })
+    }
+    style={{
+      ...inputStyle,
+      marginBottom: 0,
+      boxSizing: "border-box",
+      width: "100%"
+    }}
+  />
+</div>
+
+
+
       <input
         placeholder="Client Name"
         value={commonData?.clientName}
@@ -2156,7 +2617,8 @@ overflow: "visible",
         style={{
   ...inputStyle,
   marginBottom: 0,
-  boxSizing: "border-box"
+  boxSizing: "border-box",
+  alignSelf: "start"
 }}
       />
 
@@ -2172,7 +2634,8 @@ overflow: "visible",
         style={{
   ...inputStyle,
   marginBottom: 0,
-  boxSizing: "border-box"
+  boxSizing: "border-box",
+  alignSelf: "start"
 }}
       />
 
@@ -2188,7 +2651,8 @@ overflow: "visible",
         style={{
   ...inputStyle,
   marginBottom: 0,
-  boxSizing: "border-box"
+  boxSizing: "border-box",
+  alignSelf: "start"
 }}
       />
 </div>

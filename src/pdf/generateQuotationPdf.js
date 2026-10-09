@@ -1611,7 +1611,9 @@ cursorY = drawSummaryRow3(
     cursorY
 );
 
-    cursorY = drawSummaryRow3(
+
+
+cursorY = drawSummaryRow3(
     pdf,
 
     "Invoice No",
@@ -1619,8 +1621,12 @@ cursorY = drawSummaryRow3(
       quoteData.quotationNo
     ),
 
-    "Date",
-    formatPdfDate(new Date()),
+ "Date",
+formatPdfDate(
+    quoteData.quotationDate ||
+    quoteData.commonData?.quotationDate ||
+    quoteData.savedAt
+),
 
     "Accomm",
     quoteData.accommodation,
