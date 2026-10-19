@@ -1,5 +1,7 @@
 
-import { useState } from "react";
+
+
+import { useEffect, useState } from "react";
 import { auth } from "../firebase";
 import LocalDataBackup from "./LocalDataBackup";
 
@@ -151,6 +153,11 @@ if (controllerAvailable) {
       setCheckingConnection(false);
     }
   }
+
+
+    useEffect(() => {
+    checkConnection();
+  }, []);
 
 
 
