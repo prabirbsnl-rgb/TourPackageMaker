@@ -6,7 +6,8 @@ export default function OperationWorkspace({
   onOpenQuotation,
   onOpenLeadManagement,
   onOpenClientAgencyMaster,
-  onOpenProposalLibrary
+  onOpenProposalLibrary,
+  onOpenBackupRecovery
 }) {
 
   const sectionStyle = {
@@ -337,6 +338,49 @@ export default function OperationWorkspace({
             <div style={comingStyle}>Coming Next</div>
           </div>
         </div>
+
+
+        
+      {/* BACKUP & RECOVERY */}
+      {onOpenBackupRecovery && (
+        <div style={sectionStyle}>
+          <h2 style={sectionTitleStyle}>BACKUP & RECOVERY</h2>
+
+          <div style={gridStyle}>
+            <button
+              type="button"
+              onClick={onOpenBackupRecovery}
+              style={{
+                ...quotationCardStyle,
+                textAlign: "left",
+                fontFamily: "inherit",
+              }}
+            >
+              <div
+                style={{
+                  ...cardTitleStyle,
+                  color: "#1d4ed8",
+                }}
+              >
+                Backup &amp; Recovery Center
+              </div>
+
+              <div
+                style={{
+                  fontSize: "10px",
+                  fontWeight: 600,
+                  color: "#64748b",
+                  marginTop: "5px",
+                }}
+              >
+                Manual Firestore backup, verification &amp; recovery
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+
       </div>
     </div>
   );

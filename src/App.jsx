@@ -21,6 +21,10 @@ import OperationWorkspace from "./pages/OperationWorkspace";
 import LeadManagement from "./pages/LeadManagement";
 import ClientAgencyMaster from "./pages/ClientAgencyMaster";
 
+import BackupRecoveryCenter from "./components/BackupRecoveryCenter";
+
+
+
 
 
 
@@ -493,6 +497,9 @@ if (
   />
 )}
       </button>
+
+      
+
     </div>
   )}
 
@@ -522,12 +529,17 @@ if (
 </div>
 
            {page === "workspace" ? (
- <OperationWorkspace
+  <OperationWorkspace
     onOpenQuotation={() => setPage("dmc")}
     onOpenLeadManagement={() => setPage("leads")}
     onOpenClientAgencyMaster={() => setPage("clients")}
     onOpenProposalLibrary={() => setPage("proposal-library")}
-/>
+    onOpenBackupRecovery={
+      userProfile?.role === "admin"
+        ? () => setPage("backup-recovery")
+        : undefined
+    }
+  />
   
 ) : page === "leads" ? (
     <LeadManagement
@@ -943,6 +955,17 @@ onChange={(e) => setProposalSearch(e.target.value)}
     ))}
 </div>
 </div>
+
+
+
+
+) : page === "backup-recovery" &&
+  userProfile?.role === "admin" ? (
+  <BackupRecoveryCenter
+    onBack={() => setPage("workspace")}
+  />
+
+
 
 
 

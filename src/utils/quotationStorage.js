@@ -128,6 +128,11 @@ export async function getUserProfile(uid) {
         const snapshot =
             await getDoc(userRef);
 
+
+            
+
+
+
         if (!snapshot.exists()) {
 
             console.warn(
