@@ -528,18 +528,20 @@ if (
   </div>
 </div>
 
-           {page === "workspace" ? (
+
+{page === "workspace" ? (
   <OperationWorkspace
     onOpenQuotation={() => setPage("dmc")}
     onOpenLeadManagement={() => setPage("leads")}
     onOpenClientAgencyMaster={() => setPage("clients")}
     onOpenProposalLibrary={() => setPage("proposal-library")}
     onOpenBackupRecovery={
-      userProfile?.role === "admin"
+      import.meta.env.DEV && userProfile?.role === "admin"
         ? () => setPage("backup-recovery")
         : undefined
     }
   />
+
   
 ) : page === "leads" ? (
     <LeadManagement
@@ -957,18 +959,12 @@ onChange={(e) => setProposalSearch(e.target.value)}
 </div>
 
 
-
-
 ) : page === "backup-recovery" &&
+  import.meta.env.DEV &&
   userProfile?.role === "admin" ? (
   <BackupRecoveryCenter
     onBack={() => setPage("workspace")}
   />
-
-
-
-
-
 
 ) : page === "tour" ? (
   
