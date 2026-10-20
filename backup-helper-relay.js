@@ -20,13 +20,6 @@ const CONTROLLER_SECRET =
   ''
 
 
-  
-if (!CONTROLLER_SECRET || CONTROLLER_SECRET.length < 32) {
-  throw new Error(
-    'Orbitz Backup Relay: controller secret is missing or invalid.'
-  )
-}
-
 
 const PROJECT_ROOT = path.dirname(fileURLToPath(import.meta.url))
 const SERVICE_MANAGER_SCRIPT = path.join(
@@ -215,7 +208,13 @@ async function startServiceManager(firebaseToken) {
 
 
 export function registerBackupHelperRelay(middlewares) {
-  middlewares.use(async (req, res, next) => {
+  if (!CONTROLLER_SECRET || CONTROLLER_SECRET.length < 32) {
+    throw new Error(
+      'Orbitz Backup Relay: controller secret is missing or invalid.'
+    )
+  }
+middlewares.use(async (req, res, next) => {
+
     const pathname = (req.url || '').split('?')[0]
 
         const isHelperRoute =
