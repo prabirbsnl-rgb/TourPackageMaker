@@ -1,6 +1,7 @@
 
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 import {
     createLead,
@@ -40,9 +41,9 @@ import { generateProposalDocx } from "../components/generateProposalDocx";
 import {
     createProposal,
     updateProposal,
-    uploadProposalDocx
+    uploadProposalDocx,
+    getLeadById
 } from "../utils/proposalStorage";
-
 
 
 
@@ -136,14 +137,18 @@ const labelStyle = {
 
 
 
+
 const saveProposalToLibrary = async (
     proposal,
     deliveryChannel = "",
     leadId = "",
     clientId = "",
     userProfile = null,
-    onProposalSaved = null
+    onProposalSaved = null,
+    recordType = "lead",
+    generateDocx = true
 ) => {
+
 
     if (!proposal) {
         throw new Error(
@@ -153,30 +158,24 @@ const saveProposalToLibrary = async (
 
     try {
 
-        /*
-         * Generate DOCX.
-         *
-         * generateProposalDocx() downloads the DOCX
-         * and returns:
-         *
-         * {
-         *     blob,
-         *     fileName
-         * }
-         */
-        const docxResult =
-            await generateProposalDocx(
-                proposal
-            );
+       
+/*
+ * Generate DOCX only when requested.
+ */
+if (generateDocx) {
+    const docxResult =
+        await generateProposalDocx(proposal);
 
-        if (
-            !docxResult?.blob ||
-            !docxResult?.fileName
-        ) {
-            throw new Error(
-                "Proposal DOCX could not be generated."
-            );
-        }
+    if (
+        !docxResult?.blob ||
+        !docxResult?.fileName
+    ) {
+        throw new Error(
+            "Proposal DOCX could not be generated."
+        );
+    }
+}
+
 
         const now =
             new Date().toISOString();
@@ -205,11 +204,31 @@ const saveProposalToLibrary = async (
         /*
          * Build the permanent Proposal Library record.
          */
+
+
+const proposalToSave = {
+    ...proposal,
+    proposalType:
+        proposal?.proposalType ||
+        (recordType === "template"
+            ? "Template"
+            : "Lead Proposal")
+};
+
+
         const proposalData = {
 
-            proposalType:
-                proposal?.proposalType ||
-                "Lead Proposal",
+            
+recordType:
+    recordType === "template"
+        ? "template"
+        : "lead",
+
+proposalType:
+    recordType === "template"
+        ? "Template"
+        : proposal?.proposalType || "Lead Proposal",
+
 
             proposalTitle:
                 proposal?.proposalTitle ||
@@ -235,13 +254,13 @@ const saveProposalToLibrary = async (
 
             clientId,
 
-            aiInputs,
+           aiInputs,
 
-            proposal,
+proposal: proposalToSave,
 
-            deliveryStatus:
-                proposal?.deliveryStatus ||
-                "Not Sent",
+deliveryStatus:
+    proposal?.deliveryStatus ||
+    "Not Sent",
 
             deliveryChannel:
                 deliveryChannel ||
@@ -302,6 +321,9 @@ const saveProposalToLibrary = async (
          */
        else {
 
+
+
+
     const updated =
         await updateProposal(
             proposalLibraryId,
@@ -309,20 +331,16 @@ const saveProposalToLibrary = async (
         );
 
     if (updated) {
+    savedProposal = {
+        ...proposalData,
+        id: proposalLibraryId
+    };
+} else {
+    throw new Error(
+        "The existing Proposal Library record could not be updated. No new record was created."
+    );
+}
 
-        savedProposal = {
-            ...proposalData,
-            id: proposalLibraryId
-        };
-
-    } else {
-
-        savedProposal =
-            await createProposal(
-                proposalData
-            );
-
-    }
 }
 
        
@@ -372,11 +390,15 @@ const saveProposalToLibrary = async (
 
 
 
-const buildAIProposalPayload = (inputs) => {
+const buildAIProposalPayload = (
+    inputs,
+    isTemplateCreation = false
+) => {
     if (!inputs) return null;
 
     return {
         customer: inputs.customer || "",
+        isTemplateCreation: isTemplateCreation,
         destination: inputs.destination || "",
         travelMonth: inputs.travelMonth || "",
         duration: inputs.duration || "",
@@ -563,20 +585,50 @@ IMPORTANT RULES:
 1. Use the supplied destination, traveller information, travel window, budget,
    preferences and requirements as the primary planning inputs.
 
-   1A. The customer-facing proposal must begin with a warm, personal greeting
-using the customer's name.
+   
+   
+   1A. The customer-facing proposal must begin with a warm, personal greeting.
 
-The greeting should feel welcoming and human, for example:
+   GREETING RULES:
 
-"Dear [Customer Name],
-Warm greetings from Orbitz Holidays! ✨"
+   a. Use the supplied customer name in the salutation whenever a valid
+      customer name is available in the planning inputs.
 
-Follow this with a short, friendly introduction to the proposed journey.
+      Example:
+      "Dear [Customer Name],
+      Warm greetings from Orbitz Holidays! ✨"
 
-Do not use generic greetings such as "Dear Customer" when a customer name
-is available.
+   b. For a newly created Template Proposal, if the Customer field is empty,
+      use the following salutation:
 
-Keep the greeting warm, premium and concise. Do not make it overly promotional.
+      "Dear Valued Traveller,
+      Warm greetings from Orbitz Holidays! ✨"
+
+   c. For every proposal, follow the salutation with a short, friendly,
+      destination-specific introduction to the proposed journey. Generate
+      this introduction using the supplied destination, itinerary, travel
+      window, traveller requirements and other relevant planning inputs.
+      Do not use a fixed or generic destination introduction.
+
+   d. When a saved Template Proposal is reused for a selected Lead, the
+      selected Lead's actual name must be used in the salutation, regardless
+      of whether the original template contained a customer name.
+      Preserve the existing destination-specific introduction, greeting body
+      and all other proposal content. Do not regenerate or rewrite the
+      introduction just to change the customer's name.
+
+   e. When a saved Lead Proposal is reused for a different selected Lead,
+      update the salutation to that Lead's actual name while preserving the
+      original destination-specific introduction and remaining proposal
+      content.
+
+   f. Do not use generic greetings such as "Dear Customer" when a customer
+      name is available.
+
+   Keep the greeting warm, premium and concise. Do not make it overly
+   promotional.
+
+
 
 2. If duration is supplied, evaluate whether it is practical for the proposed
    route and season. Do not blindly preserve an impractical route.
@@ -3006,6 +3058,7 @@ const MUST_VISIT_OPTIONS = {
 
 
 
+
 export default function LeadManagement({
     userProfile,
     onBackToWorkspace,
@@ -3013,8 +3066,12 @@ export default function LeadManagement({
     onOpenQuotation,
     initialLead,
     resumeProposal,
-    onBackToProposalLibrary
+    reuseProposal,
+    onBackToProposalLibrary,
+    startTemplateCreation = false,
+    onTemplateCreationStarted
 }) {
+
 
     const [leads, setLeads] = useState([]);
 
@@ -3082,6 +3139,9 @@ const [showClientLinker, setShowClientLinker] =
     const [aiProposalLeadId, setAIProposalLeadId] =
     useState(null);
 
+    const [isTemplateCreation, setIsTemplateCreation] =
+    useState(false);
+
     const [aiProposalResult, setAIProposalResult] =
     useState(null);
 
@@ -3148,6 +3208,11 @@ const [showClientLinker, setShowClientLinker] =
 
 
 useEffect(() => {
+    // Do not overwrite a proposal currently opened from the Library.
+    if (isLibraryResume) {
+        return;
+    }
+
     const leadId =
         selectedLead?.id;
 
@@ -3314,27 +3379,219 @@ useEffect(() => {
 
 
 
+
+
 useEffect(() => {
-    if (!resumeProposal?.proposal) {
+    if (!startTemplateCreation) {
         return;
     }
 
-
-    setIsLibraryResume(true);
-
-
-
-
-    setAIProposalResult(
-        resumeProposal.proposal
-    );
-
+    setSelectedLead(null);
+    setLinkedClient(null);
+    setIsTemplateCreation(true);
+    setAIProposalInputs(null);
+    setAIProposalLeadId(null);
+    setAIProposalResult(null);
     setAIProposalPreviewMode(false);
     setAIProposalEditing(false);
-    setShowAIProposal(false);
-    setShowAIWhatsAppEditor(true);
+    setShowAIWhatsAppEditor(false);
+    setShowAIProposal(true);
+
+    if (typeof onTemplateCreationStarted === "function") {
+        onTemplateCreationStarted();
+    }
+}, [startTemplateCreation, onTemplateCreationStarted]);
+
+
+
+
+useEffect(() => {
+    let cancelled = false;
+
+    const restoreLibraryProposal = async () => {
+        if (!resumeProposal?.proposal) {
+            return;
+        }
+
+        setIsLibraryResume(true);
+
+setIsTemplateCreation(
+    resumeProposal.recordType === "template" ||
+    (
+        !resumeProposal.leadId &&
+        resumeProposal.proposalType === "Template"
+    )
+);
+
+
+      setAIProposalResult({
+    ...resumeProposal.proposal,
+    proposalLibraryId:
+        resumeProposal.id ||
+        resumeProposal.proposalLibraryId ||
+        resumeProposal.proposal?.proposalLibraryId ||
+        null
+});
+
+        // Restore the Lead context for delivery when this
+        // library proposal is linked to an existing Lead.
+        if (resumeProposal.leadId) {
+            try {
+                const lead = await getLeadById(
+                    resumeProposal.leadId
+                );
+
+                if (cancelled) return;
+
+                if (lead) {
+                    setSelectedLead(lead);
+                } else {
+                    setSelectedLead(null);
+                }
+            } catch (error) {
+                console.error(
+                    "Failed to restore proposal Lead:",
+                    error
+                );
+
+                if (!cancelled) {
+                    setSelectedLead(null);
+                }
+            }
+        } else {
+            // Templates and standalone proposals must not
+            // inherit a previously selected Lead.
+            setSelectedLead(null);
+        }
+
+        if (cancelled) return;
+
+        setAIProposalPreviewMode(false);
+        setAIProposalEditing(false);
+        setShowAIProposal(false);
+        setShowAIWhatsAppEditor(true);
+    };
+
+    restoreLibraryProposal();
+
+    return () => {
+        cancelled = true;
+    };
 }, [resumeProposal]);
 
+
+
+
+
+useEffect(() => {
+    let cancelled = false;
+
+    const prepareReusedProposal = async () => {
+
+       
+
+
+        if (!reuseProposal?.proposal) {
+            return;
+        }
+
+        const leadId = reuseProposal.reuseLeadId;
+
+        if (!leadId) {
+            return;
+        }
+
+        try {
+            const lead = await getLeadById(leadId);
+
+            
+
+            if (cancelled) return;
+
+            if (!lead) {
+                alert(
+                    "The selected Lead could not be found. Please select a Lead again."
+                );
+                return;
+            }
+
+            const originalProposal = reuseProposal.proposal;
+
+            // Make a new working copy without changing the original.
+           
+const customerName = String(
+    lead.name || "Customer"
+)
+    .replace(/\r?\n/g, " ")
+    .trim();
+
+const originalGreeting = String(
+    originalProposal.customerGreeting || ""
+);
+
+const updatedGreeting = originalGreeting
+    ? /^(\s*)Dear\s+[^,\n]+,/i.test(originalGreeting)
+        ? originalGreeting.replace(
+            /^(\s*)Dear\s+[^,\n]+,/i,
+            `$1Dear ${customerName},`
+        )
+        : `Dear ${customerName},\n${originalGreeting}`
+    : `Dear ${customerName},\nWarm greetings from Orbitz Holidays! ✨`;
+
+const reusedProposal = {
+    ...originalProposal,
+
+    // Clear the original ID so this copy can be saved as a new record.
+    proposalLibraryId: null,
+
+    proposalTitle:
+        originalProposal.proposalTitle ||
+        "Untitled Proposal",
+
+    // Change only the customer greeting.
+    customerGreeting: updatedGreeting,
+
+    aiInputs: {
+        ...(originalProposal.aiInputs || {}),
+        customer: customerName,
+    },
+};
+
+
+
+
+            setIsLibraryResume(true);
+            setSelectedLead(lead);
+            setAIProposalLeadId(lead.id);
+            setAIProposalResult(reusedProposal);
+            setAIProposalPreviewMode(false);
+            setAIProposalEditing(false);
+            setShowAIProposal(false);
+            setShowAIWhatsAppEditor(true);
+
+           
+
+
+        } catch (error) {
+            console.error(
+                "Failed to prepare reused proposal:",
+                error
+            );
+
+            if (!cancelled) {
+                alert(
+                    "Could not prepare the reused proposal. Please try again."
+                );
+            }
+        }
+    };
+
+    prepareReusedProposal();
+
+    return () => {
+        cancelled = true;
+    };
+}, [reuseProposal]);
 
 
 
@@ -6526,18 +6783,27 @@ Create Proposal
                     Create / Link Client
                 </div>
 
-                <div
-                    style={{
-                        marginTop: "2px",
-                        fontSize: "11px",
-                        color: "#64748b"
-                    }}
-                >
-                   Lead:{" "}
-{linkedClient?.client?.clientName ||
-    selectedLead.name ||
-    "—"}
-                </div>
+               <div
+    style={{
+        marginTop: "3px",
+        fontSize: "11px",
+        color: "#64748b"
+    }}
+>
+    {isTemplateCreation
+        ? "Create a reusable travel proposal without customer details"
+        : (
+            <>
+                Lead:{" "}
+                {linkedClient?.client?.clientName ||
+                    selectedLead?.name ||
+                    "—"}
+                {" • "}
+                {selectedLead?.destination ||
+                    "Destination not specified"}
+            </>
+        )}
+</div>
             </div>
 
             <button
@@ -6792,7 +7058,7 @@ contactPerson:
 
 
 
-{showAIProposal && selectedLead && (
+{showAIProposal && (selectedLead || isTemplateCreation) && createPortal(
 
     
     <div
@@ -6840,7 +7106,9 @@ contactPerson:
                         color: "#172033"
                     }}
                 >
-                    ✨ Travel Proposal
+                    {isTemplateCreation
+    ? "✨ Create Template Proposal"
+    : "✨ Travel Proposal"}
                 </div>
 
                 <div
@@ -6850,27 +7118,37 @@ contactPerson:
                         color: "#64748b"
                     }}
                 >
-                    Lead:{" "}
-{linkedClient?.client?.clientName ||
-    selectedLead.name ||
-    "—"}
-{"  •  "}
-                    {selectedLead.destination ||
-                        "Destination not specified"}
+                    {isTemplateCreation
+    ? "Create a reusable travel proposal without customer details"
+    : (
+        <>
+            Lead:{" "}
+            {linkedClient?.client?.clientName ||
+                selectedLead?.name ||
+                "—"}
+            {" • "}
+            {selectedLead?.destination ||
+                "Destination not specified"}
+        </>
+    )}
                 </div>
 
             </div>
 
 
           
-
-
-
             <button
                 type="button"
-                onClick={() =>
-                    setShowAIProposal(false)
-                }
+               onClick={() => {
+    setShowAIProposal(false);
+
+    if (isTemplateCreation) {
+        if (typeof onBackToProposalLibrary === "function") {
+            onBackToProposalLibrary();
+        }
+        setIsTemplateCreation(false);
+    }
+}}
                 style={{
                     width: "32px",
                     height: "32px",
@@ -9020,9 +9298,16 @@ contactPerson:
 
             <button
                 type="button"
-                onClick={() =>
-                    setShowAIProposal(false)
-                }
+               onClick={() => {
+    setShowAIProposal(false);
+
+    if (isTemplateCreation) {
+        if (typeof onBackToProposalLibrary === "function") {
+            onBackToProposalLibrary();
+        }
+        setIsTemplateCreation(false);
+    }
+}}
                 style={{
                     border: "1px solid #cbd5e1",
                     background: "#fff",
@@ -9103,7 +9388,10 @@ setAIProposalPreviewMode(false);
     type="button"
     disabled={aiProposalGenerating}
     onClick={async () => {
-        const payload = buildAIProposalPayload(aiProposalInputs);
+       const payload = buildAIProposalPayload(
+    aiProposalInputs,
+    isTemplateCreation
+);
 
 
         setAIProposalResult(current => ({
@@ -9153,6 +9441,18 @@ if (!response.ok || !result.success) {
 }
 
 
+console.log(
+    "TEMPLATE GENERATION RESULT:",
+    {
+        isTemplateCreation,
+        hasProposal: Boolean(result.proposal),
+        proposalKeys: result.proposal
+            ? Object.keys(result.proposal)
+            : []
+    }
+);
+
+
 
 // The generated proposal belongs to the currently selected Lead
 setAIProposalLeadId(
@@ -9163,14 +9463,12 @@ setAIProposalResult(
     result.proposal
 );
 
-
-
-
-
 setAIProposalPreviewMode(false);
 
 setShowAIProposal(false);
+
 setShowAIWhatsAppEditor(true);
+
         } finally {
             setAIProposalGenerating(false);
         }
@@ -9235,16 +9533,70 @@ setShowAIWhatsAppEditor(true);
 
 
 
-        </div>
+               </div>
 
-    </div>
+    </div>,
+    document.body
 )}
+
+
+
+
 
 {showAIWhatsAppEditor && aiProposalResult && (
     <ProposalEditor
         proposal={aiProposalResult}
         onChange={setAIProposalResult}
         isLibraryResume={isLibraryResume}
+        isTemplateCreation={isTemplateCreation}
+
+
+        
+onSaveToLibrary={async (proposal) => {
+    const savingTemplate = isTemplateCreation;
+
+
+
+    try {
+        await saveProposalToLibrary(
+            {
+                ...proposal,
+                proposalType: savingTemplate
+                    ? "Template"
+                    : proposal?.proposalType
+            },
+            "",
+            savingTemplate
+                ? ""
+                : selectedLead?.id || "",
+            savingTemplate
+                ? ""
+                : selectedLead?.clientId || "",
+                       userProfile,
+            setAIProposalResult,
+            savingTemplate ? "template" : "lead",
+            false
+        );
+
+        alert(
+            savingTemplate
+                ? "Template saved to Proposal Library."
+                : "Proposal saved to Proposal Library."
+        );
+    } catch (error) {
+        console.error(
+            "Save to Library error:",
+            error
+        );
+
+        alert(
+            savingTemplate
+                ? "The template could not be saved to Proposal Library."
+                : "The proposal could not be saved to Proposal Library."
+        );
+    }
+}}
+
         
        onClose={() => {
     setShowAIWhatsAppEditor(false);
@@ -9420,21 +9772,43 @@ setShowAIWhatsAppEditor(true);
             }
         }}
 
-        onDownloadDocx={async (proposal) => {
+       
+
+onDownloadDocx={async (proposal) => {
+
+
+    
 
     try {
+        await saveProposalToLibrary(
+            {
+                ...proposal,
+                proposalType: isTemplateCreation
+                    ? "Template"
+                    : proposal?.proposalType
+            },
+            "",
+            isTemplateCreation
+                ? ""
+                : selectedLead?.id || "",
+            isTemplateCreation
+                ? ""
+                : selectedLead?.clientId || "",
+            userProfile,
+            setAIProposalResult,
+            isTemplateCreation ? "template" : "lead"
+        );
 
-       await saveProposalToLibrary(
-    proposal,
-    "",
-    selectedLead?.id || "",
-    selectedLead?.clientId || "",
-    userProfile,
-    setAIProposalResult
-);
+
+                alert(
+            isTemplateCreation
+                ? "Template saved to Proposal Library and DOCX downloaded."
+                : "Proposal saved to Proposal Library and DOCX downloaded."
+        );
+
+
 
     } catch (error) {
-
         console.error(
             "Save & Generate DOCX error:",
             error
@@ -9445,6 +9819,7 @@ setShowAIWhatsAppEditor(true);
         );
     }
 }}
+
     />
 )}
 

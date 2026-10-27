@@ -92,6 +92,29 @@ export async function getLeadName(
 
 
 
+
+
+export async function getLeadById(leadId) {
+    if (!leadId) {
+        return null;
+    }
+
+    const leadRef = doc(db, "leads", leadId);
+    const snapshot = await getDoc(leadRef);
+
+    if (!snapshot.exists()) {
+        return null;
+    }
+
+    return {
+        id: snapshot.id,
+        ...snapshot.data(),
+    };
+}
+
+
+
+
 export async function getLeadBusinessId(
     leadId
 ) {
@@ -230,13 +253,15 @@ export async function updateProposal(
         );
 
     const snapshot =
-        await getDoc(
-            proposalRef
-        );
+    await getDoc(
+        proposalRef
+    );
 
-    if (!snapshot.exists()) {
-        return false;
-    }
+
+
+if (!snapshot.exists()) {
+    return false;
+}
 
     await updateDoc(
         proposalRef,

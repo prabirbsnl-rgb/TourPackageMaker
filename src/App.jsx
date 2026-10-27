@@ -1,15 +1,28 @@
 
 
-import { useEffect, useState } from "react";
+
+import React, { useState, useEffect } from "react";
+
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebase";
+
+
 import { getUserProfile } from "./utils/quotationStorage";
+
 
 import {
     getProposals,
     getLeadName,
-    getLeadBusinessId
+    getLeadBusinessId,
+    getLeadById,
+    deleteProposal,
+    updateProposal
 } from "./utils/proposalStorage";
+
+
+
+import { getAllLeads } from "./utils/leadStorage";
+
 
 import AdminUserManagement from "./components/admin/AdminUserManagement";
 
@@ -48,11 +61,79 @@ const [quotationContext, setQuotationContext] =
     const [proposalToResume, setProposalToResume] =
     useState(null);
 
+
+    const [proposalToReuse, setProposalToReuse] =
+    useState(null);
+
+    const [reuseLead, setReuseLead] = useState(null);
+
+
+    const [reuseLeads, setReuseLeads] = useState([]);
+    const [reuseLeadsLoading, setReuseLeadsLoading] = useState(false);
+
+
+    const [startTemplateCreation, setStartTemplateCreation] =
+    useState(false);
+
     const [proposalSearch, setProposalSearch] = useState("");
+
+    const [proposalLibraryFilter, setProposalLibraryFilter] =
+    useState("all");
 
     const [proposalLeadNames, setProposalLeadNames] = useState({});
 
     const [proposalLeadIds, setProposalLeadIds] = useState({});
+
+
+    
+const handleUpdateProposalDelivery = async (
+    item,
+    deliveryStatus,
+    deliveryChannel
+) => {
+    if (!item?.id) {
+        alert("Proposal Library record ID is missing.");
+        return;
+    }
+
+    try {
+        const updated = await updateProposal(
+            item.id,
+            {
+                deliveryStatus,
+                deliveryChannel
+            }
+        );
+
+        if (!updated) {
+            alert("Proposal Library record was not found.");
+            return;
+        }
+
+        setProposalLibrary((current) =>
+            current.map((proposal) =>
+                proposal.id === item.id
+                    ? {
+                        ...proposal,
+                        deliveryStatus,
+                        deliveryChannel
+                    }
+                    : proposal
+            )
+        );
+    } catch (error) {
+        console.error(
+            "Failed to update proposal delivery status:",
+            error
+        );
+
+        alert(
+            "Could not update delivery status. Please try again."
+        );
+    }
+};
+
+
 
      const [page, setPage] = useState("workspace");
 
@@ -64,6 +145,8 @@ const [quotationContext, setQuotationContext] =
     try {
 
      const proposals = await getProposals();
+
+
 
 const leadNameEntries =
     await Promise.all(
@@ -546,6 +629,8 @@ if (
 ) : page === "leads" ? (
     <LeadManagement
         userProfile={userProfile}
+        startTemplateCreation={startTemplateCreation}
+        onTemplateCreationStarted={() => setStartTemplateCreation(false)}
         onBackToWorkspace={() => setPage("workspace")}
 
             onBackToProposalLibrary={() => {
@@ -560,6 +645,8 @@ if (
 
               resumeProposal={proposalToResume}
 
+
+              reuseProposal={proposalToReuse}
 
 
          onEditClient={client => {
@@ -602,6 +689,29 @@ if (
             boxSizing: "border-box",
         }}
     >
+
+
+      
+        <div style={{ display: "none" }}>
+            <LeadManagement
+                userProfile={userProfile}
+               startTemplateCreation={false}
+                onTemplateCreationStarted={() =>
+                    setStartTemplateCreation(false)
+                }
+                onBackToWorkspace={() =>
+                    setPage("workspace")
+                }
+                onBackToProposalLibrary={() => {
+                    setProposalToResume(null);
+                    setPage("proposal-library");
+                }}
+                initialLead={null}
+                resumeProposal={null}
+            />
+        </div>
+
+
         <div
     style={{
         display: "flex",
@@ -625,7 +735,7 @@ if (
         onClick={() => setPage("workspace")}
         style={{
             border: "1px solid #cbd5e1",
-            background: "#ffffff",
+            background: "#b0f52f",
             color: "#334155",
             borderRadius: "7px",
             padding: "7px 11px",
@@ -645,7 +755,7 @@ if (
                 margin: 0,
                 fontSize: "22px",
                 fontWeight: 750,
-                color: "#172033",
+                color: "#2718f5",
             }}
         >
             Proposal Library
@@ -660,8 +770,14 @@ if (
         >
             Saved proposals & reusable templates
         </div>
+
+
+        
+
     </div>
     </div>
+
+
 
     {/* MIDDLE — SEARCH */}
     <input
@@ -696,54 +812,117 @@ onChange={(e) => setProposalSearch(e.target.value)}
             flex: "0 0 auto",
         }}
     >
-        <button
-            type="button"
-            style={{
-                border: "none",
-                borderRadius: "6px",
-                padding: "6px 12px",
-                background: "#ffffff",
-                color: "#172033",
-                fontSize: "11px",
-                fontWeight: 700,
-                cursor: "pointer",
-            }}
-        >
-            All
-        </button>
+        
+<button
+    type="button"
+    onClick={() => setProposalLibraryFilter("all")}
+    style={{
+        border: "none",
+        borderRadius: "6px",
+        padding: "6px 12px",
+        background:
+            proposalLibraryFilter === "all"
+                ? "#b0f52f"
+                : "transparent",
+        color:
+            proposalLibraryFilter === "all"
+                ? "#172033"
+                : "#64748b",
+        fontSize: "11px",
+        fontWeight:
+            proposalLibraryFilter === "all" ? 700 : 600,
+        cursor: "pointer",
+    }}
+>
+    All
+</button>
 
-        <button
-            type="button"
-            style={{
-                border: "none",
-                borderRadius: "6px",
-                padding: "6px 12px",
-                background: "transparent",
-                color: "#64748b",
-                fontSize: "11px",
-                fontWeight: 600,
-                cursor: "pointer",
-            }}
-        >
-            Lead Proposals
-        </button>
+<button
+    type="button"
+    onClick={() => setProposalLibraryFilter("lead")}
+    style={{
+        border: "none",
+        borderRadius: "6px",
+        padding: "6px 12px",
+        background:
+            proposalLibraryFilter === "lead"
+                ? "#b0f52f"
+                : "transparent",
+        color:
+            proposalLibraryFilter === "lead"
+                ? "#172033"
+                : "#64748b",
+        fontSize: "11px",
+        fontWeight:
+            proposalLibraryFilter === "lead" ? 700 : 600,
+        cursor: "pointer",
+    }}
+>
+    Lead Proposals
+</button>
 
-        <button
-            type="button"
-            style={{
-                border: "none",
-                borderRadius: "6px",
-                padding: "6px 12px",
-                background: "transparent",
-                color: "#64748b",
-                fontSize: "11px",
-                fontWeight: 600,
-                cursor: "pointer",
-            }}
-        >
-            Templates
-        </button>
+<button
+    type="button"
+    onClick={() => setProposalLibraryFilter("templates")}
+    style={{
+        border: "none",
+        borderRadius: "6px",
+        padding: "6px 12px",
+        background:
+            proposalLibraryFilter === "templates"
+                ? "#b0f52f"
+                : "transparent",
+        color:
+            proposalLibraryFilter === "templates"
+                ? "#172033"
+                : "#64748b",
+        fontSize: "11px",
+        fontWeight:
+            proposalLibraryFilter === "templates" ? 700 : 600,
+        cursor: "pointer",
+    }}
+>
+    Templates
+</button>
+
     </div>
+</div>
+
+
+
+{/* CREATE TEMPLATE — SECOND ROW */}
+<div
+    style={{
+        display: "flex",
+        justifyContent: "flex-end",
+        alignItems: "center",
+        width: "100%",
+        marginTop: "-10px",
+        marginBottom: "10px",
+        paddingRight: "16px",
+        boxSizing: "border-box",
+    }}
+>
+    <button
+        type="button"
+        onClick={() => {
+            setProposalToResume(null);
+            setPage("leads");
+            setStartTemplateCreation(true);
+        }}
+        style={{
+            border: "1px solid #cbd5e1",
+            background: "#ffffff",
+            color: "#334155",
+            borderRadius: "7px",
+            padding: "8px 12px",
+            fontSize: "11px",
+            fontWeight: 700,
+            cursor: "pointer",
+        }}
+    >
+        + Create Template Proposal
+    </button>
 </div>
 
 
@@ -761,8 +940,8 @@ onChange={(e) => setProposalSearch(e.target.value)}
   <div
     style={{
         display: "grid",
-       gridTemplateColumns:
-    "minmax(280px, 2.2fr) 160px 120px 120px 130px 100px 100px",
+      gridTemplateColumns:
+    "minmax(280px, 2.2fr) 160px 120px 120px 130px 100px 160px",
         alignItems: "center",
         gap: "16px",
         padding: "9px 16px",
@@ -777,7 +956,7 @@ onChange={(e) => setProposalSearch(e.target.value)}
 >
     <div style={{ textAlign: "left" }}>Proposal Title</div>
 <div style={{ textAlign: "left" }}>Name</div>
-<div style={{ textAlign: "left" }}>Lead ID</div>
+<div style={{ textAlign: "left" }}>TYPE / LEAD ID</div>
 <div style={{ textAlign: "left" }}>Destination</div>
 <div style={{ textAlign: "left" }}>Delivery Status</div>
 <div style={{ textAlign: "left" }}>Created By</div>
@@ -788,7 +967,27 @@ onChange={(e) => setProposalSearch(e.target.value)}
 
    {proposalLibrary
     .filter((item) => {
-        const search =
+
+
+if (
+    proposalLibraryFilter === "lead" &&
+    (
+        item.recordType === "template" ||
+        !item.leadId
+    )
+) {
+    return false;
+}
+
+if (
+    proposalLibraryFilter === "templates" &&
+    item.recordType !== "template"
+) {
+    return false;
+}
+
+
+       const search =
             proposalSearch.trim().toLowerCase();
 
         if (!search) return true;
@@ -814,7 +1013,7 @@ onChange={(e) => setProposalSearch(e.target.value)}
             style={{
                 display: "grid",
                 gridTemplateColumns:
-                    "minmax(280px, 2.2fr) 160px 120px 120px 130px 100px 100px",
+                    "minmax(280px, 2.2fr) 160px 120px 120px 130px 100px 160px",
                 alignItems: "center",
                 gap: "16px",
                 padding: "16px",
@@ -859,18 +1058,24 @@ onChange={(e) => setProposalSearch(e.target.value)}
                 {proposalLeadNames[item.leadId] || "—"}
             </div>
 
-            {/* Lead ID */}
-            <div
-                style={{
-                    textAlign: "left",
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    color: "#64748b",
-                    whiteSpace: "nowrap",
-                }}
-            >
-                {proposalLeadIds[item.leadId] || "—"}
-            </div>
+           
+{/* Type / Lead ID */}
+<div
+    style={{
+        textAlign: "left",
+        fontSize: "11px",
+        fontWeight: 600,
+        whiteSpace: "nowrap",
+        color:
+            item.recordType === "template"
+                ? "#7c3aed"
+                : "#2563eb",
+    }}
+>
+    {item.recordType === "template"
+        ? "TEMPLATE"
+        : proposalLeadIds[item.leadId] || "—"}
+</div>
 
             {/* Destination */}
             <div
@@ -884,34 +1089,224 @@ onChange={(e) => setProposalSearch(e.target.value)}
                 {item.destination || "—"}
             </div>
 
-            {/* Delivery Status */}
-            <div
+
+
+           
+
+
+{/* Delivery Status */}
+<div
+    style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: "4px",
+    minWidth: 0,
+    width: "max-content",
+    maxWidth: "100%",
+    whiteSpace: "nowrap",
+}}
+>
+    {/* Status capsule */}
+    <div style={{ position: "relative" }}>
+        <button
+            type="button"
+            title="Click to change delivery status"
+            
+onClick={() => {
+    const nextStatus =
+        (item.deliveryStatus || "Not Sent") === "Sent"
+            ? "Not Sent"
+            : "Sent";
+
+    handleUpdateProposalDelivery(
+        item,
+        nextStatus,
+        nextStatus === "Not Sent"
+            ? ""
+            : item.deliveryChannel || ""
+    );
+}}
+
+            style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "80px",
+                boxSizing: "border-box",
+                gap: "6px",
+                padding: "5px 10px",
+                borderRadius: "999px",
+                border: "1px solid",
+                borderColor:
+                    item.deliveryStatus === "Sent"
+                        ? "#a7e8bf"
+                        : "#f5d58a",
+                background:
+                    item.deliveryStatus === "Sent"
+                        ? "#e5f9ec"
+                        : "#fff5dc",
+                color:
+                    item.deliveryStatus === "Sent"
+                        ? "#166534"
+                        : "#946200",
+                fontSize: "11px",
+                fontWeight: 700,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+            }}
+        >
+            {item.deliveryStatus === "Sent" ? (
+                <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 15 15"
+                    aria-hidden="true"
+                >
+                    <circle cx="7.5" cy="7.5" r="7" fill="#16803d" />
+                    <path
+                        d="M4 7.6 6.4 10 11 5.2"
+                        fill="none"
+                        stroke="#ffffff"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </svg>
+            ) : null}
+            {item.deliveryStatus || "Not Sent"}
+        </button>
+
+        
+    </div>
+
+    {/* Delivery channel capsule */}
+    {item.deliveryStatus === "Sent" && (
+        <div style={{ position: "relative" }}>
+            <button
+                type="button"
+                title="Click to change delivery channel"
+                onClick={(e) => {
+                    const menu = e.currentTarget.nextElementSibling;
+                    if (menu) {
+                        menu.style.display =
+                            menu.style.display === "block"
+                                ? "none"
+                                : "block";
+                    }
+                }}
                 style={{
-                    textAlign: "left",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    padding: "5px 10px",
+                    borderRadius: "999px",
+                    border: "1px solid #bfd8fb",
+                    background: "#edf5ff",
+                    color: "#174b91",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
                 }}
             >
-                <span
-                    style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        padding: "5px 12px",
-                        borderRadius: "999px",
-                        background:
-                            item.deliveryStatus === "Sent"
-                                ? "#dcfce7"
-                                : "#fef3c7",
-                        color:
-                            item.deliveryStatus === "Sent"
-                                ? "#166534"
-                                : "#a16207",
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        whiteSpace: "nowrap",
-                    }}
-                >
-                    {item.deliveryStatus || "Not Sent"}
-                </span>
+                {item.deliveryChannel === "WhatsApp" ? (
+                    <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#2878e8"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M20.5 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.6A8.5 8.5 0 1 1 20.5 11.5Z" />
+                        <path d="M8.5 8.2c.4-.6.8-.4 1.1.2l.7 1.4c.2.4 0 .7-.4 1l-.5.4c.6 1.2 1.5 2.1 2.7 2.7l.4-.5c.3-.4.6-.6 1-.4l1.4.7c.6.3.8.7.2 1.1-.6.7-1.4.9-2.3.6-2.4-.7-4.9-3.2-5.6-5.6-.3-.9-.1-1.7.6-2.3Z" />
+                    </svg>
+                ) : item.deliveryChannel === "Email" ? (
+                    <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#2878e8"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                    >
+                        <rect x="3" y="5" width="18" height="14" rx="2" />
+                        <path d="m4 7 8 6 8-6" />
+                    </svg>
+                ) : null}
+
+                {item.deliveryChannel === "WhatsApp"
+                    ? "Via WhatsApp"
+                    : item.deliveryChannel === "Email"
+                    ? "Via Email"
+                    : item.deliveryChannel === "Both"
+                    ? "Both"
+                    : "Select channel"}
+            </button>
+
+            <div
+                style={{
+                    display: "none",
+                    position: "absolute",
+                    top: "calc(100% + 4px)",
+                    left: 0,
+                    minWidth: "125px",
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 12px rgba(15,23,42,0.12)",
+                    zIndex: 30,
+                    overflow: "hidden",
+                }}
+            >
+                {[
+                    { label: "Via WhatsApp", value: "WhatsApp" },
+                    { label: "Via Email", value: "Email" },
+                    { label: "Both", value: "Both" },
+                ].map((channel) => (
+                    <button
+                        key={channel.value}
+                        type="button"
+                        onClick={(e) => {
+                            handleUpdateProposalDelivery(
+                                item,
+                                "Sent",
+                                channel.value
+                            );
+
+                            e.currentTarget.parentElement.style.display =
+                                "none";
+                        }}
+                        style={{
+                            display: "block",
+                            width: "100%",
+                            padding: "8px 10px",
+                            border: "none",
+                            background: "#ffffff",
+                            color: "#334155",
+                            textAlign: "left",
+                            fontSize: "11px",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                        }}
+                    >
+                        {channel.label}
+                    </button>
+                ))}
             </div>
+        </div>
+    )}
+</div>
+
+
 
             {/* Created By */}
             <div
@@ -925,41 +1320,271 @@ onChange={(e) => setProposalSearch(e.target.value)}
                 {item.createdByUsername || "—"}
             </div>
 
-            {/* Actions */}
+           
+{/* Actions */}
+<div
+    style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        gap: "4px",
+        flexWrap: "nowrap",
+        whiteSpace: "nowrap",
+        width: "100%",
+    }}
+>
+    <button
+        type="button"
+        onClick={() => {
+            setProposalToResume(item);
+            setPage("leads");
+        }}
+        style={{
+            border: "1px solid #cbd5e1",
+            background: "#ffffff",
+            color: "#334155",
+            borderRadius: "6px",
+           padding: "5px 7px",
+fontSize: "11px",
+            fontWeight: 700,
+            cursor: "pointer",
+        }}
+    >
+        Resume
+    </button>
+
+
+    <button
+    type="button"
+    onClick={async () => {
+    setProposalToReuse(item);
+    setReuseLead(null);
+    setReuseLeadsLoading(true);
+
+    try {
+        const leads = await getAllLeads();
+        setReuseLeads(Array.isArray(leads) ? leads : []);
+    } catch (error) {
+        console.error("Failed to load Leads for reuse:", error);
+        setReuseLeads([]);
+        alert("Could not load Leads. Please try again.");
+    } finally {
+        setReuseLeadsLoading(false);
+    }
+}}
+    style={{
+        border: "1px solid #bfdbfe",
+        background: "#eff6ff",
+        color: "#1d4ed8",
+        borderRadius: "6px",
+       padding: "5px 7px",
+fontSize: "11px",
+        fontWeight: 700,
+        cursor: "pointer",
+    }}
+>
+    Reuse
+</button>
+
+
+<button
+    type="button"
+    disabled={userProfile?.role !== "admin"}
+    onClick={async () => {
+        if (userProfile?.role !== "admin") return;
+
+        const confirmed = window.confirm(
+            `Are you sure you want to delete "${
+                item.proposal?.proposalTitle ||
+                "Untitled Proposal"
+            }" from the Proposal Library? This action cannot be undone.`
+        );
+
+        if (!confirmed) return;
+
+        try {
+            await deleteProposal(item.id);
+
+            setProposalLibrary((current) =>
+                current.filter(
+                    (proposal) => proposal.id !== item.id
+                )
+            );
+        } catch (error) {
+            console.error(
+                "Failed to delete proposal:",
+                error
+            );
+
+            alert(
+                "The proposal could not be deleted. Please try again."
+            );
+        }
+    }}
+    style={{
+        border: "1px solid #cbd5e1",
+        background:
+            userProfile?.role === "admin"
+                ? "#fff1f2"
+                : "#e5e7eb",
+        color:
+            userProfile?.role === "admin"
+                ? "#b91c1c"
+                : "#9ca3af",
+        borderRadius: "6px",
+        padding: "5px 7px",
+fontSize: "11px",
+        fontWeight: 700,
+        cursor:
+            userProfile?.role === "admin"
+                ? "pointer"
+                : "not-allowed",
+        opacity:
+            userProfile?.role === "admin"
+                ? 1
+                : 0.75,
+    }}
+>
+    Delete
+</button>
+
+</div>
+
+        </div>
+   
+    ))}
+
+    {/* Reuse Proposal Dialog */}
+    {proposalToReuse && (
+        <div
+            style={{
+                position: "fixed",
+                inset: 0,
+                background: "rgba(15, 23, 42, 0.55)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 10000,
+                padding: "20px",
+            }}
+        >
             <div
                 style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
+                    background: "#ffffff",
+                    width: "100%",
+                    maxWidth: "480px",
+                    borderRadius: "12px",
+                    padding: "24px",
+                    boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
                 }}
             >
-                <button
-                    type="button"
-                   onClick={() => {
-    setProposalToResume(item);
-    setPage("leads");
-}}
+                <h2 style={{ marginTop: 0, color: "#0f172a" }}>
+                    Reuse Proposal
+                </h2>
+
+                <p style={{ color: "#475569", fontSize: "14px" }}>
+                    Select an existing Lead for this new proposal.
+                    The original proposal will remain unchanged.
+                </p>
+
+                {reuseLeadsLoading ? (
+                    <p>Loading Leads...</p>
+                ) : reuseLeads.length === 0 ? (
+                    <p style={{ color: "#b91c1c" }}>
+                        No Leads were found. Please check Lead Management.
+                    </p>
+                ) : (
+                    <select
+                        value={reuseLead?.id || ""}
+                        onChange={(event) => {
+                            const selected = reuseLeads.find(
+                                (lead) => lead.id === event.target.value
+                            );
+                            setReuseLead(selected || null);
+                        }}
+                        style={{
+                            width: "100%",
+                            padding: "10px",
+                            border: "1px solid #cbd5e1",
+                            borderRadius: "8px",
+                            marginBottom: "20px",
+                        }}
+                    >
+                        <option value="">-- Select a Lead --</option>
+                        {reuseLeads.map((lead) => (
+                            <option key={lead.id} value={lead.id}>
+                                {lead.name || "Unnamed Lead"}
+                                {lead.leadId ? ` (${lead.leadId})` : ""}
+                            </option>
+                        ))}
+                    </select>
+                )}
+
+                <div
                     style={{
-                        border: "1px solid #cbd5e1",
-                        background: "#ffffff",
-                        color: "#334155",
-                        borderRadius: "6px",
-                        padding: "5px 10px",
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        cursor: "pointer",
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: "10px",
                     }}
                 >
-                    Resume
-                </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setProposalToReuse(null);
+                            setReuseLead(null);
+                        }}
+                        style={{
+                            padding: "9px 14px",
+                            border: "1px solid #cbd5e1",
+                            borderRadius: "7px",
+                            background: "#ffffff",
+                            cursor: "pointer",
+                        }}
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        disabled={!reuseLead || reuseLeadsLoading}
+                      onClick={() => {
+    if (!proposalToReuse || !reuseLead) {
+        return;
+    }
+
+    setProposalToResume(null);
+
+    setProposalToReuse({
+        ...proposalToReuse,
+        reuseLeadId: reuseLead.id,
+    });
+
+    setReuseLead(null);
+    setPage("leads");
+}}
+                        style={{
+                            padding: "9px 14px",
+                            border: "none",
+                            borderRadius: "7px",
+                            background: reuseLead ? "#1d4ed8" : "#94a3b8",
+                            color: "#ffffff",
+                            fontWeight: 700,
+                            cursor: reuseLead ? "pointer" : "not-allowed",
+                        }}
+                    >
+                        Continue
+                    </button>
+                </div>
             </div>
         </div>
-    ))}
+    )}
+
 </div>
 </div>
 
 
 ) : page === "backup-recovery" &&
+
   import.meta.env.DEV &&
   userProfile?.role === "admin" ? (
   <BackupRecoveryCenter
@@ -971,7 +1596,9 @@ onChange={(e) => setProposalSearch(e.target.value)}
   <TourPackageMaker />
 ) : page === "admin" &&
   userProfile?.role === "admin" ? (
-  <AdminUserManagement />
+  <AdminUserManagement
+  onBackToWorkspace={() => setPage("workspace")}
+/>
 ) : (
   <DMCQuotationGenerator
   userProfile={userProfile}

@@ -12,9 +12,11 @@ export default function ProposalEditor({
     onChange,
     onClose,
     isLibraryResume,
+    isTemplateCreation,
     onWhatsApp,
     onEmail,
-    onDownloadDocx
+    onDownloadDocx,
+    onSaveToLibrary
 }) {
 
     if (!proposal) return null;
@@ -2177,6 +2179,27 @@ data-pdf-section="tips"
 
 
 
+{/* SAVE TO LIBRARY */}
+<button
+    type="button"
+    onClick={() => onSaveToLibrary?.(proposal)}
+    style={{
+        padding: "9px 14px",
+        borderRadius: "6px",
+        border: "1px solid #cbd5e1",
+        background: "#fff",
+        color: "#334155",
+        cursor: "pointer",
+        fontSize: "13px",
+        fontWeight: 600
+    }}
+>
+    💾 Save to Library
+</button>
+
+
+
+
         {/* Generate DOCX */}
 
        <button
@@ -2193,7 +2216,7 @@ data-pdf-section="tips"
         fontWeight: 600
     }}
 >
-    📄 Generate DOCX
+    📄 Generate DOCX + Save
 </button>
     </div>
 </div>
