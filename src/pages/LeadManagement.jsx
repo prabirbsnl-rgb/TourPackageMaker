@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { auth } from "../firebase";
+
 
 import {
     createLead,
@@ -9402,32 +9404,34 @@ setAIProposalPreviewMode(false);
 
 
 
-        setAIProposalGenerating(true);
+               setAIProposalGenerating(true);
 
         try {
-           const prompt = buildAIProposalPrompt(payload);
+            const currentUser = auth.currentUser;
 
-console.log(
-    "AI PROPOSAL PROMPT:",
-    prompt
-);
+            if (!currentUser) {
+                throw new Error(
+                    "Please sign in before generating an AI proposal."
+                );
+            }
 
-const response = await fetch(
-    "http://127.0.0.1:38765/generate-ai-proposal",
-    {
-        method: "POST",
+            const idToken = await currentUser.getIdToken();
+            const prompt = buildAIProposalPrompt(payload);
 
-        headers: {
-            "Content-Type":
-                "application/json"
-        },
-
-        body: JSON.stringify({
-            prompt,
-            payload
-        })
-    }
-);
+            const response = await fetch(
+                "http://127.0.0.1:38765/generate-ai-proposal",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-firebase-id-token": idToken
+                    },
+                    body: JSON.stringify({
+                        prompt,
+                        payload
+                    })
+                }
+            );
 
 const result =
     await response.json();
