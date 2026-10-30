@@ -1,8 +1,9 @@
 
 
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { auth } from "../firebase";
+import { createPortal } from "react-dom";
+
 
 
 import {
@@ -511,12 +512,20 @@ transferPerDay:
 
 
 
+
 const createAIProposalResultTemplate = () => ({
     customerGreeting: "",
 
     proposalTitle: "",
 
+    finalPlanningNights: 0,
+
+    planningBudgetTotal: 0,
+
+    overnightStayLocations: [],
+
     tripOverview: {
+
         destination: "",
         recommendedTravelWindow: "",
         requestedTravelWindow: "",
@@ -571,6 +580,234 @@ const createAIProposalResultTemplate = () => ({
     finalPricingNote:
         "Final pricing will be confirmed based on availability and the final selection of services."
 });
+
+
+
+
+const validateAIProposalConsistency = (proposal) => {
+    const errors = [];
+
+    if (
+        !proposal ||
+        typeof proposal !== "object" ||
+        Array.isArray(proposal)
+    ) {
+        return {
+            valid: false,
+            errors: ["Invalid proposal structure."]
+        };
+    }
+
+    const nights = proposal.finalPlanningNights;
+    const stays = proposal.overnightStayLocations;
+    const itinerary = proposal.dayWiseItinerary;
+
+    if (!Number.isInteger(nights) || nights < 1) {
+        errors.push(
+            "Final planning nights must be a positive integer."
+        );
+    }
+
+    const normalizedLocations = new Set();
+    let totalNights = 0;
+
+    if (!Array.isArray(stays) || stays.length === 0) {
+        errors.push("Overnight stay locations are missing.");
+    } else {
+        stays.forEach((stay, index) => {
+            if (
+                !stay ||
+                typeof stay.location !== "string" ||
+                !stay.location.trim() ||
+                !Number.isInteger(stay.nights) ||
+                stay.nights < 1
+            ) {
+                errors.push(
+                    `Invalid overnight stay entry at position ${index + 1}.`
+                );
+                return;
+            }
+
+            const normalizedLocation =
+                stay.location.trim().toLowerCase();
+
+            if (normalizedLocations.has(normalizedLocation)) {
+                errors.push(
+                    `Duplicate overnight location: ${stay.location}. Combine its nights into one entry.`
+                );
+            }
+
+            normalizedLocations.add(normalizedLocation);
+            totalNights += stay.nights;
+        });
+
+        if (totalNights !== nights) {
+            errors.push(
+                `Overnight nights total ${totalNights}, but final planning nights are ${nights}.`
+            );
+        }
+    }
+
+    if (
+        !Array.isArray(itinerary) ||
+        itinerary.length !== nights + 1
+    ) {
+        errors.push(
+            `Itinerary must contain ${nights + 1} days for ${nights} nights.`
+        );
+    } else {
+        itinerary.forEach((day, index) => {
+            if (
+                !day ||
+                day.day !== index + 1 ||
+                !String(day.title || "").trim() ||
+                !String(day.description || "").trim()
+            ) {
+                errors.push(
+                    `Itinerary day ${index + 1} is missing or incorrectly numbered.`
+                );
+            }
+        });
+    }
+
+   if (
+    !Array.isArray(proposal.whyThisItinerary) ||
+    proposal.whyThisItinerary.length === 0 ||
+    proposal.whyThisItinerary.some(
+        item =>
+            typeof item !== "string" ||
+            !item.trim()
+    )
+) {
+    errors.push(
+        "Itinerary explanation is missing or contains invalid entries."
+    );
+
+} else if (
+    Array.isArray(stays) &&
+    stays.length > 0
+) {
+    const escapeRegex = value =>
+        value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const numberWords = {
+        one: 1,
+        two: 2,
+        three: 3,
+        four: 4,
+        five: 5,
+        six: 6,
+        seven: 7,
+        eight: 8,
+        nine: 9,
+        ten: 10
+    };
+
+    const nightPattern =
+        /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s*[- ]?\s*nights?\b/gi;
+
+    const reportedErrors = new Set();
+
+    proposal.whyThisItinerary.forEach(item => {
+        const nightMatches = [
+            ...item.matchAll(nightPattern)
+        ];
+
+        if (nightMatches.length === 0) {
+            return;
+        }
+
+        const locationMentions = [];
+
+        stays.forEach(stay => {
+            if (
+                !stay ||
+                typeof stay.location !== "string" ||
+                !Number.isInteger(stay.nights) ||
+                stay.nights < 1
+            ) {
+                return;
+            }
+
+            const locationPattern = new RegExp(
+                `\\b${escapeRegex(stay.location.trim())}\\b`,
+                "gi"
+            );
+
+            for (const match of item.matchAll(locationPattern)) {
+                locationMentions.push({
+                    location: stay.location.trim(),
+                    nights: stay.nights,
+                    start: match.index,
+                    end: match.index + match[0].length
+                });
+            }
+        });
+
+        nightMatches.forEach(match => {
+            const rawNumber = match[1].toLowerCase();
+
+            const mentionedNights =
+                numberWords[rawNumber] ??
+                Number(rawNumber);
+
+            if (!Number.isInteger(mentionedNights)) {
+                return;
+            }
+
+            const nightStart = match.index;
+            const nightEnd = nightStart + match[0].length;
+
+            const candidates = locationMentions
+                .map(location => {
+                    const distance =
+                        nightEnd < location.start
+                            ? location.start - nightEnd
+                            : location.end < nightStart
+                                ? nightStart - location.end
+                                : 0;
+
+                    return {
+                        ...location,
+                        distance
+                    };
+                })
+                .sort((a, b) => a.distance - b.distance);
+
+            if (candidates.length === 0) {
+                return;
+            }
+
+            // Avoid assigning an ambiguous night count
+            // when two destinations are equally close.
+            if (
+                candidates.length > 1 &&
+                candidates[0].distance === candidates[1].distance
+            ) {
+                return;
+            }
+
+            const nearestLocation = candidates[0];
+
+            if (mentionedNights !== nearestLocation.nights) {
+                const error =
+                    `The explanation mentions ${mentionedNights} nights for ${nearestLocation.location}, but the overnight allocation specifies ${nearestLocation.nights} nights.`;
+
+                reportedErrors.add(error);
+            }
+        });
+    });
+
+    errors.push(...reportedErrors);
+}
+
+
+    return {
+        valid: errors.length === 0,
+        errors
+    };
+};
+
 
 
 
@@ -1404,6 +1641,159 @@ It also does not represent the complete cost of the entire trip.
     itinerary.
 
 
+    
+18E. ROUTE AND TRANSFER PRACTICALITY:
+
+Before finalizing the route, evaluate the practical journey between
+each consecutive destination.
+
+Consider:
+
+• Geographical distance and realistic road travel conditions
+• Terrain, mountain roads and difficult driving conditions where relevant
+• Likely transfer duration and the impact on sightseeing time
+• Entry and exit points, including arrival and departure logistics
+• The overall sequence of destinations and unnecessary backtracking
+• Traveller age, comfort, mobility and requested travel pace
+
+Do NOT create a route merely because the destinations appear geographically
+close on a map.
+
+Do NOT overload a day with extensive sightseeing when a substantial
+intercity transfer is required.
+
+Avoid unnecessarily exhausting travel days, repeated long-distance journeys
+and impractical destination combinations.
+
+Where a transfer is likely to consume a substantial part of the day,
+keep the sightseeing plan for that day appropriately limited.
+
+If the supplied duration cannot accommodate the requested destinations
+comfortably, recommend a more practical duration rather than forcing
+an unrealistic schedule.
+
+Do NOT invent exact driving times, road conditions or current accessibility
+information. Where verification is necessary, identify it for confirmation
+before final customer communication.
+
+
+18F. OVERNIGHT SEQUENCE VERIFICATION:
+
+The overnightStayLocations must follow the chronological sequence
+of the final recommended route and day-wise itinerary.
+
+For every overnight location, verify that:
+
+• Its position makes geographical and operational sense.
+• Its allocated nights support the sightseeing planned around that location.
+• The traveller is not required to make unnecessary hotel changes.
+• The sequence does not introduce avoidable backtracking.
+• The arrival and departure arrangements are compatible with the
+  proposed overnight distribution.
+
+The final overnight distribution must represent a realistic progression
+of the journey, not merely a mathematical allocation of nights.
+
+Do NOT allocate nights to a destination without a corresponding
+logical place in the final journey.
+
+Do NOT introduce an overnight location that conflicts with the
+recommended route or day-wise itinerary.
+
+
+18G. DAY-WISE SIGHTSEEING FEASIBILITY:
+
+Before returning dayWiseItinerary, verify that each day's proposed
+sightseeing and experiences are practically achievable.
+
+Consider:
+
+• Geographical proximity of sightseeing locations
+• Realistic travel requirements between sightseeing areas
+• Time required for major experiences
+• Transfer requirements between overnight destinations
+• Traveller profile and requested pace
+• Seasonal accessibility and weather-related limitations
+
+Do NOT combine distant attractions into one day merely to include
+more sightseeing.
+
+Do NOT repeat the same sightseeing experience unnecessarily.
+
+Do NOT overload a day with too many major attractions or experiences.
+
+Allow appropriate flexibility on days involving substantial transfers.
+
+The day-wise itinerary must reflect a logical chronological journey
+from arrival through departure.
+
+Maintain the existing concise, customer-facing format required
+under Rule 8A.
+
+Do NOT add operational timings, hotel details, meal arrangements
+or detailed transfer schedules.
+
+
+18H. DESTINATION-SPECIFIC SEASONAL SUITABILITY:
+
+Evaluate the suitability of each proposed destination and major
+experience for the supplied travel month or travel window.
+
+Consider relevant seasonal factors, including:
+
+• Typical weather and climate patterns
+• Monsoon and heavy rainfall
+• Snowfall and extreme cold
+• Extreme heat and humidity
+• Altitude-related seasonal considerations
+• Seasonal road and destination accessibility
+• Weather-sensitive sightseeing and outdoor activities
+• Seasonal closures or restrictions where relevant
+• Festivals and seasonal experiences where relevant
+
+Do NOT assume that every destination or activity is suitable
+throughout the year.
+
+If a destination or experience may be unsuitable or restricted
+during the proposed travel period, explain the concern and
+recommend a practical alternative where appropriate.
+
+Distinguish typical seasonal expectations from verified current
+conditions.
+
+Do NOT invent current weather forecasts, road closures, snowfall,
+festival dates, attraction opening status or operational restrictions.
+
+Where current verification is required, clearly identify the information
+that must be confirmed before final customer communication.
+
+Seasonal recommendations must be destination-specific and must
+influence the final route, duration, overnight distribution and
+day-wise sightseeing plan where necessary.
+
+
+
+
+WHY THIS ITINERARY — OVERNIGHT ALLOCATION CONSISTENCY:
+
+The whyThisItinerary explanation must accurately reflect the final
+overnightStayLocations and their allocated nights.
+
+If the explanation mentions a specific destination's overnight
+duration, the number of nights MUST exactly match the corresponding
+overnightStayLocations entry.
+
+Do NOT describe a three-night stay as a two-night stay, or otherwise
+misrepresent the overnight allocation.
+
+Do NOT invent, assume or summarize different overnight durations.
+
+The explanation may describe geographical efficiency, route logic,
+sightseeing balance and travel comfort without mentioning night counts.
+
+Before returning the proposal, cross-check every explicit
+destination-and-night statement in whyThisItinerary against
+overnightStayLocations.
 
 
 
@@ -9402,7 +9792,7 @@ setAIProposalPreviewMode(false);
 }));
 
 
-
+setError("");
 
                setAIProposalGenerating(true);
 
@@ -9432,7 +9822,7 @@ setAIProposalPreviewMode(false);
                     })
                 }
             );
-
+                      
 const result =
     await response.json();
 
@@ -9443,6 +9833,25 @@ if (!response.ok || !result.success) {
         "AI proposal generation failed."
     );
 }
+
+
+const validation =
+    validateAIProposalConsistency(result.proposal);
+
+if (!validation.valid) {
+    console.error(
+        "AI PROPOSAL CONSISTENCY FAILURE:",
+        validation.errors
+    );
+
+    setError(
+        "The generated proposal contains itinerary inconsistencies. Please generate it again. " +
+        validation.errors.join(" ")
+    );
+
+    return;
+}
+
 
 
 console.log(
