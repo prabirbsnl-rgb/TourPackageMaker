@@ -5808,6 +5808,72 @@ marginLeft: "10px",
                             📞 {linkedClient.client.mobile}
                         </div>
                     )}
+
+
+                    <button
+    type="button"
+    onClick={async () => {
+        const confirmed = window.confirm(
+            "Unlink this Lead from Client Master? The Lead and its quotation history will be preserved."
+        );
+
+        if (!confirmed) return;
+
+        try {
+            await updateLead(selectedLead.id, {
+                clientId: null,
+                clientDocId: null,
+                clientRelationshipType: null
+            });
+
+            setLeads(previous =>
+                previous.map(lead =>
+                    lead.id === selectedLead.id
+                        ? {
+                            ...lead,
+                            clientId: null,
+                            clientDocId: null,
+                            clientRelationshipType: null
+                        }
+                        : lead
+                )
+            );
+
+            setSelectedLead(previous =>
+                previous
+                    ? {
+                        ...previous,
+                        clientId: null,
+                        clientDocId: null,
+                        clientRelationshipType: null
+                    }
+                    : previous
+            );
+
+            setLinkedClient(null);
+            setShowClientLinker(false);
+
+        } catch (error) {
+            console.error("Failed to unlink Lead:", error);
+            alert("Unable to unlink Lead. Please try again.");
+        }
+    }}
+    style={{
+        padding: "7px 11px",
+        border: "1px solid #fecaca",
+        borderRadius: "6px",
+        background: "#fff7f7",
+        color: "#b91c1c",
+        fontSize: "11px",
+        fontWeight: 800,
+        cursor: "pointer"
+    }}
+>
+    Unlink from Client Master
+</button>
+
+
+
                 </div>
             ) : (
                 <div
@@ -7225,6 +7291,8 @@ Create Proposal
                 padding: "18px"
             }}
         >
+
+
             {linkedClient?.possibleClients?.length > 0 ? (
                 <div>
                     <div

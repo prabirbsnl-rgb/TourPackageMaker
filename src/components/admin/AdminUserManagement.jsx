@@ -7,7 +7,7 @@ import {
     updateUserStatus
 } from "../../utils/quotationStorage";
 
-export default function AdminUserManagement() {
+export default function AdminUserManagement({ onBackToWorkspace }) {
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -117,8 +117,40 @@ export default function AdminUserManagement() {
             Manage staff access to the quotation system
         </p>
     </div>
+
+
+    <div
+  style={{
+  position: "absolute",
+  right: "15px",
+  top: "50%",
+  transform: "translateY(-50%)",
+}}
+>
+  <button
+    type="button"
+    onClick={onBackToWorkspace}
+    style={{
+      padding: "10px 18px",
+      borderRadius: "8px",
+      border: "1px solid #1E3A8A",
+      background: "#1E3A8A",
+      color: "#FFFFFF",
+      fontSize: "13px",
+      fontWeight: 600,
+      cursor: "pointer",
+    }}
+  >
+    ← Back to Workspace
+  </button>
 </div>
-            {loading && (
+
+</div>
+
+
+
+
+       {loading && (
                 <p>Loading users...</p>
             )}
 

@@ -266,6 +266,7 @@ gstPercent: 5,
 
 
 export default function DMCQuotationGenerator({
+    currentUser,
     userProfile,
     onBackToWorkspace,
     quotationContext
@@ -2368,6 +2369,9 @@ totalAmountPayable:
     }
 
 };
+
+
+
 
 const handleOpenLastDraft = () => {
 

@@ -23,6 +23,7 @@ import {
 
 import { getAllLeads } from "./utils/leadStorage";
 
+import { getActiveServices } from "./utils/serviceCatalogueStorage";
 
 import AdminUserManagement from "./components/admin/AdminUserManagement";
 
@@ -36,7 +37,14 @@ import ClientAgencyMaster from "./pages/ClientAgencyMaster";
 
 import BackupRecoveryCenter from "./components/BackupRecoveryCenter";
 
+ 
 
+import ServiceBooking from "./components/services/ServiceBooking";
+
+import ServiceTransactions from "./components/services/ServiceTransactions";
+
+
+import ManageServices from "./components/services/ManageServices";
 
 
 
@@ -136,6 +144,59 @@ const handleUpdateProposalDelivery = async (
 
 
      const [page, setPage] = useState("workspace");
+
+     const [servicesView, setServicesView] = useState("home");
+
+     const [activeServices, setActiveServices] = useState([]);
+     const [servicesLoading, setServicesLoading] = useState(false);
+     const [servicesError, setServicesError] = useState("");
+
+     const [selectedService, setSelectedService] = useState(null);
+
+     const [newlySavedServiceRecordId, setNewlySavedServiceRecordId] = useState(null);
+
+
+
+     useEffect(() => {
+    if (page !== "services" || servicesView !== "new") {
+        return;
+    }
+
+    let isMounted = true;
+
+    const loadActiveServices = async () => {
+        setServicesLoading(true);
+        setServicesError("");
+
+        try {
+            const services = await getActiveServices();
+
+            if (isMounted) {
+                setActiveServices(services);
+            }
+        } catch (error) {
+            console.error("Failed to load service catalogue:", error);
+
+            if (isMounted) {
+                setServicesError(
+                    "Unable to load services. Please try again."
+                );
+            }
+        } finally {
+            if (isMounted) {
+                setServicesLoading(false);
+            }
+        }
+    };
+
+    loadActiveServices();
+
+    return () => {
+        isMounted = false;
+    };
+}, [page, servicesView]);
+
+
 
 
     useEffect(() => {
@@ -617,6 +678,7 @@ if (
     onOpenQuotation={() => setPage("dmc")}
     onOpenLeadManagement={() => setPage("leads")}
     onOpenClientAgencyMaster={() => setPage("clients")}
+    onOpenServicesModule={() => setPage("services")}
     onOpenProposalLibrary={() => setPage("proposal-library")}
     onOpenBackupRecovery={
       import.meta.env.DEV && userProfile?.role === "admin"
@@ -668,6 +730,8 @@ if (
 
 ) : page === "clients" ? (
 <ClientAgencyMaster
+    currentUser={user}
+    userProfile={userProfile}
     onBackToWorkspace={() => setPage("workspace")}
     onOpenLead={lead => {
         setLeadFromClient(lead);
@@ -912,7 +976,7 @@ onChange={(e) => setProposalSearch(e.target.value)}
         }}
         style={{
             border: "1px solid #cbd5e1",
-            background: "#ffffff",
+            background: "#b6f5f2",
             color: "#334155",
             borderRadius: "7px",
             padding: "8px 12px",
@@ -1583,6 +1647,857 @@ fontSize: "11px",
 </div>
 
 
+
+) : page === "services" ? (
+    <div
+        style={{
+            minHeight: "calc(100vh - 58px)",
+            background: "#f5f7fa",
+            padding: "28px 32px 40px",
+            boxSizing: "border-box",
+        }}
+    >
+        <div
+    style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        marginBottom: "24px"
+    }}
+>
+    <button
+        type="button"
+        onClick={() => setPage("workspace")}
+        style={{
+            border: "1px solid #cbd5e1",
+            background: "#b0f52f",
+            color: "#334155",
+            borderRadius: "8px",
+            padding: "9px 15px",
+            fontSize: "12px",
+            fontWeight: 700,
+            cursor: "pointer",
+            whiteSpace: "nowrap"
+        }}
+    >
+        ← Workspace
+    </button>
+
+    {servicesView !== "home" && (
+    <button
+        type="button"
+        onClick={() => setServicesView("home")}
+        style={{
+            border: "1px solid #cbd5e1",
+            background: "#99dbf5",
+            color: "#334155",
+            borderRadius: "8px",
+            padding: "9px 15px",
+            fontSize: "12px",
+            fontWeight: 700,
+            cursor: "pointer",
+            whiteSpace: "nowrap"
+        }}
+    >
+        ← Services Home
+    </button>
+)}
+
+
+    {servicesView === "transactions" && selectedService && (
+    <button
+        type="button"
+        onClick={() => setServicesView("new")}
+        style={{
+            border: "1px solid #93c5fd",
+            background: "linear-gradient(110deg, #e8f2ff, #dbeafe)",
+            color: "#1e40af",
+            borderRadius: "8px",
+            padding: "9px 15px",
+            fontSize: "12px",
+            fontWeight: 700,
+            cursor: "pointer",
+            whiteSpace: "nowrap"
+        }}
+    >
+        ← Back to {selectedService.serviceName}
+    </button>
+)}
+
+
+</div>
+
+       
+
+{servicesView === "home" ? (
+    <div
+        style={{
+            display: "grid",
+            gridTemplateColumns:
+    userProfile?.role === "admin"
+        ? "repeat(3, minmax(0, 1fr))"
+        : "repeat(2, minmax(0, 1fr))",
+            gap: "22px",
+            width: "100%",
+        }}
+    >
+       
+{/* SERVICES HOME */}
+<button
+    type="button"
+    onClick={() => setServicesView("new")}
+    style={{
+        padding: 0,
+        overflow: "hidden",
+        textAlign: "left",
+        border: "1px solid #bfdbfe",
+        borderRadius: "16px",
+        background: "#ffffff",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        boxShadow: "0 8px 22px rgba(30,64,175,0.10)",
+        minWidth: 0,
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "stretch",
+        justifyContent: "flex-start",
+    }}
+>
+   {/* SERVICES HOME — PREMIUM ASYMMETRIC COLLAGE */}
+<div
+    style={{
+        height: "235px",
+        minHeight: "235px",
+        flex: "0 0 235px",
+        display: "grid",
+        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+        gridTemplateRows: "repeat(3, minmax(0, 1fr))",
+        gap: "4px",
+        position: "relative",
+        overflow: "hidden",
+        background: "#ffffff",
+        width: "100%",
+    }}
+>
+    {[
+        {
+            src: "cruise.webp",
+            alt: "Cruise Services",
+            style: {
+                gridColumn: "span 2",
+                gridRow: "span 2",
+            },
+        },
+        { src: "flights.webp", alt: "Flight Ticket" },
+        { src: "passport-services.webp", alt: "Passport Services" },
+        { src: "visa-services.webp", alt: "Visa Services" },
+        { src: "hotels.webp", alt: "Hotel Services" },
+        { src: "train-ticket.webp", alt: "Train Ticket" },
+        { src: "forex.webp", alt: "Forex and Currency Exchange" },
+        { src: "destinations.webp", alt: "Holiday Destinations" },
+        { src: "travel-insurance.webp", alt: "Travel Insurance" },
+    ].map(item => (
+        <img
+            key={item.src}
+            src={`/images/services/webp/${item.src}`}
+            alt={item.alt}
+            style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                minWidth: 0,
+                minHeight: 0,
+                ...(item.style || {}),
+            }}
+        />
+    ))}
+
+    <div
+        style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(0deg,rgba(5,30,55,.30),transparent 65%)",
+            pointerEvents: "none",
+        }}
+    />
+</div>
+
+
+
+
+    {/* SERVICES HOME TEXT PANEL */}
+    <div
+        style={{
+            padding: "20px 22px 22px",
+            background: "linear-gradient(145deg,#ffffff,#eaf5ff)",
+            flex: 1,
+            width: "100%",
+            boxSizing: "border-box",
+        }}
+    >
+        <div style={{ fontSize: "23px", fontWeight: 800, color: "#164da5" }}>
+            Services Home
+        </div>
+
+        <div style={{ marginTop: "8px", fontSize: "13px", color: "#475569", lineHeight: 1.6 }}>
+            Explore Orbitz travel services and service activities.
+        </div>
+
+        <div style={{ marginTop: "17px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#2563eb" }}>
+                EXPLORE SERVICES
+            </span>
+
+            <span style={{
+                background: "#1675dc",
+                color: "#fff",
+                borderRadius: "50%",
+                width: "38px",
+                height: "38px",
+                display: "grid",
+                placeItems: "center",
+                fontSize: "23px",
+            }}>→</span>
+        </div>
+
+       
+<div
+    style={{
+        marginTop: "15px",
+        paddingTop: "12px",
+        borderTop: "1px solid #dbeafe",
+        display: "flex",
+        flexDirection: "column",
+        gap: "6px",
+    }}
+>
+    {/* First row */}
+    <div
+        style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "3px",
+            flexWrap: "nowrap",
+        }}
+    >
+        {["Flights", "Hotels", "Packages", "Visa", "Rail", "Forex", "Cruise"].map(item => (
+            <span
+                key={item}
+                style={{
+                    border: "1px solid #93c5fd",
+                    background: "#ffffff",
+                    color: "#164da5",
+                    borderRadius: "20px",
+                    padding: "6px 6px",
+                    fontSize: "9px",
+                    fontWeight: 700,
+                    whiteSpace: "nowrap",
+                }}
+            >
+                {item}
+            </span>
+        ))}
+    </div>
+
+    {/* Second row */}
+    <div style={{ display: "flex" }}>
+        <span
+            style={{
+                border: "1px solid #93c5fd",
+                background: "#ffffff",
+                color: "#164da5",
+                borderRadius: "20px",
+                padding: "6px 9px",
+                fontSize: "10px",
+                fontWeight: 700,
+                whiteSpace: "nowrap",
+            }}
+        >
+            Travel Insurance
+        </span>
+    </div>
+</div>
+
+    </div>
+</button>
+
+
+       
+{/* SERVICE TRANSACTIONS */}
+<button
+    type="button"
+    onClick={() => setServicesView("transactions")}
+    style={{
+        padding: 0,
+        overflow: "hidden",
+        textAlign: "left",
+        border: "1px solid #99f6e4",
+        borderRadius: "16px",
+        background: "#ffffff",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        boxShadow: "0 8px 22px rgba(13,148,136,0.11)",
+        minWidth: 0,
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "stretch",
+        justifyContent: "flex-start",
+    }}
+>
+    {/* PHOTOGRAPHIC SERVICE COLLAGE */}
+<div
+    style={{
+        height: "235px",
+        minHeight: "235px",
+        flex: "0 0 235px",
+        position: "relative",
+        overflow: "hidden",
+        display: "grid",
+        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+        gridTemplateRows: "repeat(3, minmax(0, 1fr))",
+        gap: "4px",
+        background: "#ffffff",
+        width: "100%",
+    }}
+>
+    {[
+        {
+    src: "flights.webp",
+    alt: "Flight Ticket",
+    style: {
+        gridColumn: "span 2",
+        gridRow: "span 2",
+    },
+},
+        { src: "passport-services.webp", alt: "Passport Services" },
+        { src: "visa-services.webp", alt: "Visa Services" },
+        { src: "hotels.webp", alt: "Hotel Services" },
+        { src: "train-ticket.webp", alt: "Train Ticket" },
+        { src: "forex.webp", alt: "Forex and Currency Exchange" },
+        { src: "cruise.webp", alt: "Cruise Services" },
+        { src: "destinations.webp", alt: "Holiday Destinations" },
+        { src: "travel-insurance.webp", alt: "Travel Insurance" },
+    ].map((item) => (
+        <img
+            key={item.src}
+            src={`/images/services/webp/${item.src}`}
+            alt={item.alt}
+           style={{
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    minWidth: 0,
+    minHeight: 0,
+    ...(item.style || {}),
+}}
+        />
+    ))}
+
+    <div
+        style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(0deg,rgba(0,45,55,.25),transparent 60%)",
+            pointerEvents: "none",
+        }}
+    />
+</div>
+
+
+
+    {/* SERVICE TRANSACTIONS TEXT PANEL */}
+    <div
+        style={{
+            padding: "20px 22px 22px",
+            background: "linear-gradient(145deg,#ffffff,#e6faf5)",
+            flex: 1,
+            width: "100%",
+            boxSizing: "border-box",
+        }}
+    >
+        <div style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "8px",
+}}>
+    <div style={{ fontSize: "23px", fontWeight: 800, color: "#08786f" }}>
+        Service Transactions
+    </div>
+
+    <span style={{
+        background: "#ccfbf1",
+        color: "#087c69",
+        borderRadius: "20px",
+        padding: "6px 10px",
+        fontSize: "9px",
+        fontWeight: 800,
+        whiteSpace: "nowrap",
+    }}>
+        CUSTOMER SERVICE RECORDS
+    </span>
+</div>
+
+        <div style={{ marginTop: "8px", fontSize: "13px", color: "#475569", lineHeight: 1.6 }}>
+            Create, view and manage customer transactions for every active service.
+        </div>
+
+        <div style={{ marginTop: "17px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#0d9488" }}>
+                OPEN TRANSACTIONS
+            </span>
+
+            <span style={{
+                background: "#079b82",
+                color: "#fff",
+                borderRadius: "50%",
+                width: "38px",
+                height: "38px",
+                display: "grid",
+                placeItems: "center",
+                fontSize: "23px",
+            }}>→</span>
+        </div>
+
+        <div style={{
+            marginTop: "15px",
+            paddingTop: "12px",
+            borderTop: "1px solid #ccefe8",
+            fontSize: "10px",
+            color: "#397c75",
+            fontWeight: 700,
+        }}>
+            CLIENT LINKED · UNIQUE SERVICE RECORD ID
+        </div>
+    </div>
+</button>
+
+
+        
+{/* MANAGE SERVICES — ADMIN ONLY */}
+{userProfile?.role === "admin" && (
+    <button
+        type="button"
+        onClick={() => setServicesView("manage")}
+        style={{
+            padding: 0,
+            overflow: "hidden",
+            textAlign: "left",
+            border: "1px solid #ddd6fe",
+            borderRadius: "16px",
+            background: "#ffffff",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            boxShadow: "0 8px 22px rgba(109,40,217,0.10)",
+            minWidth: 0,
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "stretch",
+            justifyContent: "flex-start",
+        }}
+    >
+        {/* SERVICE MANAGEMENT PHOTOGRAPH */}
+        <div
+            style={{
+                height: "235px",
+                minHeight: "235px",
+                flex: "0 0 235px",
+                position: "relative",
+                overflow: "hidden",
+                width: "100%",
+                background: "#ede9fe",
+            }}
+        >
+            <img
+                src="/images/services/webp/service-management.webp"
+                alt="Service management workspace"
+                style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                }}
+            />
+
+            <div
+                style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "linear-gradient(0deg,rgba(49,20,90,.35),transparent 60%)",
+                    pointerEvents: "none",
+                }}
+            />
+        </div>
+
+        {/* MANAGE SERVICES TEXT PANEL */}
+        <div
+            style={{
+                padding: "20px 22px 22px",
+                background: "linear-gradient(145deg,#ffffff,#f3edff)",
+                flex: 1,
+                width: "100%",
+                boxSizing: "border-box",
+            }}
+        >
+            <div style={{ fontSize: "23px", fontWeight: 800, color: "#6425b8" }}>
+                Manage Services
+            </div>
+
+            <div style={{ marginTop: "8px", fontSize: "13px", color: "#475569", lineHeight: 1.6 }}>
+                Add, edit, activate and deactivate service definitions and configure their forms.
+            </div>
+
+            <div style={{ marginTop: "15px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{
+                    fontSize: "10px",
+                    fontWeight: 800,
+                    color: "#702bc5",
+                    background: "#e9d5ff",
+                    borderRadius: "20px",
+                    padding: "7px 12px",
+                }}>
+                    ADMIN ONLY
+                </span>
+
+                <span style={{
+                    background: "#702bc5",
+                    color: "#fff",
+                    borderRadius: "50%",
+                    width: "38px",
+                    height: "38px",
+                    display: "grid",
+                    placeItems: "center",
+                    fontSize: "23px",
+                }}>→</span>
+            </div>
+        </div>
+    </button>
+)}
+
+    </div>
+
+
+
+) : (
+    <div
+    style={{
+        background: "#ffffff",
+        border: "1px solid #e2e8f0",
+        borderRadius: "12px",
+        padding: "24px",
+    }}
+>
+    <div
+    style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "10px",
+        marginBottom: "16px",
+    }}
+>
+       
+
+
+        {servicesView === "new" && selectedService && (
+    <button
+        type="button"
+        onClick={() => setSelectedService(null)}
+        style={{
+            border: "1px solid #cbd5e1",
+            background: "#99dbf5",
+            borderRadius: "7px",
+            padding: "7px 12px",
+            fontSize: "11px",
+            fontWeight: 700,
+            cursor: "pointer",
+        }}
+    >
+        ← Back to Services
+    </button>
+)}
+
+
+
+{servicesView === "new" && selectedService && (
+    <button
+        type="button"
+       onClick={() => {
+    setNewlySavedServiceRecordId(null);
+    setServicesView("transactions");
+}}
+        style={{
+            border: "1px solid #93c5fd",
+            background: "linear-gradient(110deg, #e8f2ff, #dbeafe)",
+            color: "#1e40af",
+            borderRadius: "7px",
+            padding: "8px 14px",
+            fontSize: "11px",
+            fontWeight: 800,
+            cursor: "pointer",
+            boxShadow: "0 2px 5px rgba(30,64,175,0.10)",
+        }}
+    >
+        📋 View Service Transactions →
+    </button>
+)}
+
+
+
+        {(servicesView !== "new" || !selectedService) &&
+    servicesView !== "transactions" && (
+        <div style={{
+            width: "100%",
+            marginBottom: "18px",
+            padding: "15px 22px",
+            boxSizing: "border-box",
+            background: "linear-gradient(110deg, #123b78 0%, #1765b5 55%, #2589dc 100%)",
+            border: "1px solid rgba(255,255,255,0.18)",
+            borderRadius: "12px",
+            boxShadow: "0 5px 16px rgba(23,76,145,0.16)",
+        }}>
+            <h2 style={{
+                margin: 0,
+                fontSize: "21px",
+                fontWeight: 800,
+                letterSpacing: "0.2px",
+                color: "#ffffff",
+                textAlign: "left",
+            }}>
+                {servicesView === "new"
+                    ? "New Service Booking"
+                    : "Manage Services"}
+            </h2>
+
+            <p
+             style={{
+    display: "block",
+    width: "100%",
+    margin: "4px 0 0",
+    fontSize: "11px",
+    fontWeight: 500,
+    color: "rgba(255,255,255,0.82)",
+    letterSpacing: "0.25px",
+    textAlign: "left",
+}}
+            >
+                {servicesView === "new"
+                    ? "Create and manage customer service bookings."
+                    : "Configure and manage your service catalogue."}
+            </p>
+        </div>
+    )}
+    </div>
+
+       {servicesView === "new" ? (
+    selectedService ? (
+       <ServiceBooking
+    service={selectedService}
+    onBack={() => setSelectedService(null)}
+    onBookingSaved={(record) => {
+    setNewlySavedServiceRecordId(record.id);
+}}
+
+onViewSavedBooking={() => setServicesView("transactions")}
+/>
+    ) : (
+        <div style={{ marginTop: "20px" }}>
+            <p style={{ fontSize: "13px", color: "#64748b" }}>
+                Select a service to start a new customer transaction.
+            </p>
+
+            {servicesLoading ? (
+                <p style={{ color: "#64748b" }}>
+                    Loading available services...
+                </p>
+            ) : servicesError ? (
+                <p style={{ color: "#b91c1c" }}>
+                    {servicesError}
+                </p>
+            ) : activeServices.length === 0 ? (
+                <p style={{ color: "#64748b" }}>
+                    No active services are currently available.
+                    Please ask an administrator to configure the Service Catalogue.
+                </p>
+            ) : (
+                <div
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                        gap: "14px",
+                        marginTop: "18px",
+                    }}
+                >
+                   
+{activeServices.map(service => {
+    const serviceName = (service.serviceName || "").toLowerCase();
+
+    // Match each service with its original project image
+    const serviceImage =
+        serviceName.includes("flight") ? "flights.webp" :
+        serviceName.includes("visa") ? "visa-services.webp" :
+        serviceName.includes("hotel") ? "hotels.webp" :
+        serviceName.includes("train") || serviceName.includes("rail")? "train-ticket.webp" :
+        serviceName.includes("forex") || serviceName.includes("currency") ? "forex.webp" :
+        serviceName.includes("cruise") ? "cruise.webp" :
+        serviceName.includes("passport") ? "passport-services.webp" :
+        serviceName.includes("insurance") ? "travel-insurance.webp" :
+        null;
+
+    return (
+        <button
+            key={service.id}
+            type="button"
+            onClick={() => setSelectedService(service)}
+            style={{
+                padding: 0,
+                textAlign: "left",
+                border: "1px solid #bfdbfe",
+                borderRadius: "14px",
+                background: "#ffffff",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                overflow: "hidden",
+                width: "100%",
+                minWidth: 0,
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "0 5px 18px rgba(30,64,175,0.08)",
+                transition: "box-shadow 0.2s ease",
+            }}
+        >
+            {/* SERVICE PHOTOGRAPH */}
+            <div
+                style={{
+                    width: "100%",
+                    height: "145px",
+                    overflow: "hidden",
+                    background: "#eff6ff",
+                }}
+            >
+                {serviceImage ? (
+                    <img
+                        src={`/images/services/webp/${serviceImage}`}
+                        alt={service.serviceName}
+                        style={{
+                            width: "100%",
+                            height: "100%",
+                           objectFit: "cover",
+                            display: "block",
+                        }}
+                    />
+                ) : (
+                    <div
+                        style={{
+                            height: "100%",
+                            display: "grid",
+                            placeItems: "center",
+                            color: "#64748b",
+                            fontSize: "12px",
+                        }}
+                    >
+                        Service image unavailable
+                    </div>
+                )}
+            </div>
+
+            {/* SERVICE INFORMATION */}
+            <div
+                style={{
+                    padding: "15px 16px 17px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    background: "linear-gradient(145deg,#ffffff,#f0f7ff)",
+                }}
+            >
+                <div
+                    style={{
+                        fontSize: "15px",
+                        fontWeight: 800,
+                        color: "#164da5",
+                    }}
+                >
+                    {service.serviceName}
+                </div>
+
+                <div
+                    style={{
+                        marginTop: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                    }}
+                >
+                    <span
+                        style={{
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            color: "#64748b",
+                        }}
+                    >
+                        Select service
+                    </span>
+
+                    <span
+                        style={{
+                            width: "30px",
+                            height: "30px",
+                            borderRadius: "50%",
+                            background: "#1675dc",
+                            color: "#ffffff",
+                            display: "grid",
+                            placeItems: "center",
+                            fontSize: "18px",
+                        }}
+                    >
+                        →
+                    </span>
+                </div>
+            </div>
+        </button>
+    );
+})}
+
+                </div>
+            )}
+        </div>
+    )
+
+) : servicesView === "transactions" ? (
+   <ServiceTransactions
+   initialSelectedRecordId={newlySavedServiceRecordId}
+    onBack={() => {
+        if (selectedService) {
+            setServicesView("new");
+        } else {
+            setServicesView("home");
+        }
+    }}
+/>
+        ) : servicesView === "manage" && userProfile?.role !== "admin" ? (
+            <p style={{ color: "#b91c1c" }}>
+                Access denied. Admin permission is required.
+            </p>
+       ) : (
+    <ManageServices
+        onBack={() => setServicesView("home")}
+    />
+)
+        }
+    </div>
+)}
+
+    </div>
+
+
+
 ) : page === "backup-recovery" &&
 
   import.meta.env.DEV &&
@@ -1601,9 +2516,10 @@ fontSize: "11px",
 />
 ) : (
   <DMCQuotationGenerator
-  userProfile={userProfile}
-  onBackToWorkspace={() => setPage("workspace")}
-  quotationContext={quotationContext}
+    currentUser={user}
+    userProfile={userProfile}
+    onBackToWorkspace={() => setPage("workspace")}
+    quotationContext={quotationContext}
 />
 )}
 
