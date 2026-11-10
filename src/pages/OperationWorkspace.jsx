@@ -407,15 +407,45 @@ height: "calc(100% + 8px)",
 
 
 
-      {/* SUPPLIERS & HOTELS */}
-      <div style={{ ...sectionStyle, marginBottom: "14px" }}>
-        <h2 style={sectionTitleStyle}>SUPPLIERS & HOTELS</h2>
+     
+{/* SUPPLIER OPERATIONS & QUOTATIONS */}
+<div
+  style={{
+    ...sectionStyle,
+    marginBottom: "14px",
+    background: "linear-gradient(90deg, #92400e 0%, #d97706 12%, #fde7bd 28%, #ffffff 48%, #ffffff 100%)",
+    border: "1px solid #f2d3a0",
+  }}
+>
+  <h2
+    style={{
+      ...sectionTitleStyle,
+      color: "#ffffff",
+      textAlign: "left",
+      textShadow: "0 1px 2px rgba(0, 35, 65, 0.25)",
+    }}
+  >
+    SUPPLIER OPERATIONS & QUOTATIONS
+  </h2>
 
-        <div style={gridStyle}>
-          <div style={disabledCardStyle}>
-            <div style={cardTitleStyle}>DMC / Supplier Master</div>
-            <div style={comingStyle}>Coming Next</div>
-          </div>
+  <div style={gridStyle}>
+    
+<WorkspaceCard
+  title="DMC Quotation Import / Extraction"
+  description="Import and extract supplier quotation details"
+  image="/images/workspace/dmc-quotation-import-banner.png"
+  accent="#075985"
+  status="COMING NEXT"
+/>
+
+<WorkspaceCard
+  title="Quotation Workspace"
+  description="Prepare and manage customer quotations"
+  image="/images/workspace/quotation-workspace-banner.png"
+  accent="#087e8b"
+  clickable
+  onClick={onOpenQuotation}
+/>
 
   </div>
 </div>
