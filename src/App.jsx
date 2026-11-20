@@ -35,6 +35,8 @@ import OperationWorkspace from "./pages/OperationWorkspace";
 import LeadManagement from "./pages/LeadManagement";
 import ClientAgencyMaster from "./pages/ClientAgencyMaster";
 
+import SupplierMaster from "./pages/SupplierMaster";
+import HotelMasterSupplier from "./pages/HotelMasterSupplier";
 import BackupRecoveryCenter from "./components/BackupRecoveryCenter";
 
  
