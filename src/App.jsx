@@ -685,6 +685,11 @@ if (
         ? () => setPage("backup-recovery")
         : undefined
     }
+
+    onOpenSupplierMaster={() => setPage("supplier-master")}
+
+    onOpenHotelMasterSupplier={() => setPage("hotel-master-supplier")}
+
   />
 
   
@@ -726,6 +731,25 @@ if (
         }}
     />
 
+
+
+    ) : page === "supplier-master" ? (
+  <SupplierMaster
+    currentUser={user}
+    userProfile={userProfile}
+    onBackToWorkspace={() => setPage("workspace")}
+  />
+
+
+  ) : page === "hotel-master-supplier" ? (
+  <HotelMasterSupplier
+  onBackToWorkspace={() => setPage("workspace")}
+  isAdmin={
+    userProfile?.status === "active" &&
+    userProfile?.role === "admin"
+  }
+/>
+  
 
 
 ) : page === "clients" ? (

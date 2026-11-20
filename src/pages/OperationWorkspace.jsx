@@ -8,7 +8,9 @@ export default function OperationWorkspace({
   onOpenClientAgencyMaster,
   onOpenServicesModule,
   onOpenProposalLibrary,
-  onOpenBackupRecovery
+  onOpenBackupRecovery,
+  onOpenSupplierMaster,
+  onOpenHotelMasterSupplier
 }) {
 
   
@@ -385,21 +387,23 @@ height: "calc(100% + 8px)",
 
   <div style={gridStyle}>
     <WorkspaceCard
-      title="DMC / Supplier Master"
-      description="Supplier network, destination partners and DMC services"
-      image="/images/workspace/dmc-supplier-banner.png"
-      imagePosition="top"
-      accent="#075985"
-      status="COMING NEXT"
-    />
+  title="DMC / Supplier Master"
+  description="Supplier network, destination partners and DMC services"
+  image="/images/workspace/dmc-supplier-banner.png"
+  imagePosition="top"
+  accent="#075985"
+  clickable={true}
+  onClick={onOpenSupplierMaster}
+/>
 
-    <WorkspaceCard
-      title="Hotel Master"
-      description="Hotel properties, accommodation and room inventory"
-      image="/images/workspace/hotel-master-banner.png"
-      accent="#087e8b"
-      status="COMING NEXT"
-    />
+   <WorkspaceCard
+  title="Hotel Master & Supplier"
+  description="Domestic and international hotels, hotel suppliers, rooms, contracts and rates"
+  image="/images/workspace/hotel-master-banner.png"
+  accent="#087e8b"
+  clickable={true}
+  onClick={onOpenHotelMasterSupplier}
+/>
   </div>
 </div>
 
